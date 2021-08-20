@@ -1,5 +1,5 @@
-[![Dart](https://github.com/Wetbikeboy2500/web_content_parser/actions/workflows/dart.yml/badge.svg)](https://github.com/Wetbikeboy2500/web_content_parser/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/Wetbikeboy2500/web_content_parser/branch/master/graph/badge.svg?token=P6SR80FRHV)](https://codecov.io/gh/Wetbikeboy2500/web_content_parser)
+[![Build](https://github.com/Wetbikeboy2500/web_content_parser/actions/workflows/build.yml/badge.svg)](https://github.com/Wetbikeboy2500/web_content_parser/actions/workflows/build.yml)
+[[![codecov](https://codecov.io/gh/Wetbikeboy2500/web_content_parser/branch/main/graph/badge.svg?token=I49J6Q80WP)](https://codecov.io/gh/Wetbikeboy2500/web_content_parser)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Web Content Parser
