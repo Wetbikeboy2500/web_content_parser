@@ -1,0 +1,12 @@
+export 'package:web_content_parser/src/json/id.dart';
+export 'package:web_content_parser/src/json/author.dart';
+export 'package:web_content_parser/src/json/chapter.dart';
+export 'package:web_content_parser/src/json/post.dart';
+export 'package:web_content_parser/src/json/catalogEntry.dart';
+export 'package:web_content_parser/src/sources/source.dart';
+export 'package:web_content_parser/src/sources/sourceTemplate.dart';
+export 'package:web_content_parser/src/json/chapterID.dart';
+export 'package:web_content_parser/src/util/EmptyRequest.dart';
+export 'package:web_content_parser/src/util/FetchReturn.dart';
+export 'package:web_content_parser/src/util/FetchStatus.dart';
+export 'package:web_content_parser/src/util/RequestType.dart';

@@ -1,0 +1,4 @@
+enum FetchStatus {
+  PASS,
+  ERROR,
+}
