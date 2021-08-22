@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:web_content_parser/src/json/chapterID.dart';
+import './chapterID.dart';
 
 part 'chapter.g.dart';
 

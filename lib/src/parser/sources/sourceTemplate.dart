@@ -1,10 +1,10 @@
-import 'package:web_content_parser/web_content_parser.dart';
-import 'package:web_content_parser/src/json/catalogEntry.dart';
-import 'package:web_content_parser/src/json/chapter.dart';
-import 'package:web_content_parser/src/json/id.dart';
-import 'package:web_content_parser/src/json/post.dart';
-import 'package:web_content_parser/src/util/EmptyRequest.dart';
-import 'package:web_content_parser/src/util/RequestType.dart';
+import '../json/catalogEntry.dart';
+import '../json/chapter.dart';
+import '../json/chapterID.dart';
+import '../json/id.dart';
+import '../json/post.dart';
+import '../../util/EmptyRequest.dart';
+import '../../util/RequestType.dart';
 
 ///Base of all sources
 ///Provides a consistent API for the sources

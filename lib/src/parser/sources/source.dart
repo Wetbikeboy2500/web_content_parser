@@ -1,18 +1,22 @@
+import 'package:path/path.dart' as p;
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:web_content_parser/web_content_parser.dart';
-import 'package:web_content_parser/src/json/catalogEntry.dart';
-import 'package:web_content_parser/src/json/chapter.dart';
-import 'package:web_content_parser/src/json/id.dart';
-import 'package:web_content_parser/src/json/post.dart';
-import 'package:web_content_parser/src/sources/parseSource.dart';
-import 'package:web_content_parser/src/util/EmptyRequest.dart';
-import 'package:web_content_parser/src/util/FetchReturn.dart';
-import 'package:web_content_parser/src/util/FetchStatus.dart';
-import 'package:web_content_parser/src/util/ParseError.dart';
-import 'package:web_content_parser/src/util/RequestType.dart';
-import 'package:path/path.dart' as p;
+//source interfaces
+import './parseSource.dart';
+import './sourceTemplate.dart';
+//models
+import '../json/catalogEntry.dart';
+import '../json/chapter.dart';
+import '../json/id.dart';
+import '../json/chapterID.dart';
+import '../json/post.dart';
+//utils
+import '../../util/EmptyRequest.dart';
+import '../../util/FetchReturn.dart';
+import '../../util/FetchStatus.dart';
+import '../../util/ParseError.dart';
+import '../../util/RequestType.dart';
 
 ///Returns only post data for the requested id
 ///

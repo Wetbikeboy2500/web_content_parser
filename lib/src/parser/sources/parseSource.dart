@@ -1,9 +1,18 @@
 import 'dart:io';
 
-import 'package:web_content_parser/web_content_parser.dart';
-import 'package:web_content_parser/src/parse/eval.dart';
-import 'package:web_content_parser/src/util/ParseError.dart';
-import 'package:web_content_parser/src/util/RequestType.dart';
+//source
+import './sourceTemplate.dart';
+//scraping
+import '../../scraper/eval.dart';
+//models
+import '../json/chapter.dart';
+import '../json/chapterID.dart';
+import '../json/id.dart';
+import '../json/post.dart';
+import '../json/catalogEntry.dart';
+//utils
+import '../../util/ParseError.dart';
+import '../../util/RequestType.dart';
 
 ///Source build from extensions
 class ParseSource extends SourceTemplate {

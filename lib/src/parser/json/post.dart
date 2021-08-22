@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:web_content_parser/src/json/author.dart';
-import 'package:web_content_parser/src/json/id.dart';
+import './author.dart';
+import './id.dart';
 
 part 'post.g.dart';
 

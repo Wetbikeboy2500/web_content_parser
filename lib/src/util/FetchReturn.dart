@@ -1,4 +1,4 @@
-import 'package:web_content_parser/src/util/FetchStatus.dart';
+import './FetchStatus.dart';
 
 ///Wraps result data to determine if it can be trusted
 ///
