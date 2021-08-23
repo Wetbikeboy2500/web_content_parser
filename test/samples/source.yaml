@@ -1,0 +1,25 @@
+source: testSource
+baseUrl: testSource.com
+subdomain: null
+version: 1
+contentType: seriesImage
+programType: hetu
+requests:
+  - type: post
+    file: fetch
+    entry: main
+  - type: postUrl
+    file: fetch.ht
+    entry: url
+  - type: chapters
+    file: chapterlist.ht
+    entry: main
+  - type: images
+    file: fetchImages.ht
+    entry: main
+  - type: imagesUrl
+    file: fetchImages.ht
+    entry: url
+  - type: catalogMulti
+    file: catalog
+    entry: main

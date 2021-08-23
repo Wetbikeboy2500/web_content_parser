@@ -10,7 +10,7 @@ class TestSource extends SourceTemplate {
   TestSource(String base, String subdomain)
       : super(
             source: 'test',
-            requestTypes: {RequestType.POST, RequestType.CHAPTERS, RequestType.POSTURL},
+            requestTypes: {RequestType.post, RequestType.chapters, RequestType.postUrl},
             baseurl: base,
             subdomain: subdomain,
             version: 1);

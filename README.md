@@ -12,6 +12,30 @@ Building a versitile system for many different types of content. This includes p
 
 ## Design
 
+This project can be thought of in three different code bases based on directory inside src.
+
+* [Util](#util)
+
+    This has most of the utilty classes and important enums that work for moving data around. It is the core for making sure calls can be made, defining expections, and wrapping responses with easy to integrate classes. Most things are shared between the scraper and parser sections.
+
+* [Scraper](#scraper)
+
+    This handles custom sources which are written in [hetu-script](https://github.com/hetu-script/hetu-script). It is used to return raw data to the parser to be formatted in a known format. This is flexible and can be used without the parser part of the project to do web scraping while staying away from predefined data structures. It is desinged this way to allow developers to completely ignore the opinionated nature of how this project process and builds data. It is also my focus to create a more fluent API for scraping and to address things like dynamic data through webviews and/or sites that require javascript to function.
+
+* [Parser](#parser)
+
+    The parser is what takes the raw data from the scraper and converts it into dart classes to be used. This also reinforces data cleaning and validation. One important thing it defines is [IDs](#ids) which are very important for making sure sources don't collide. Everything else is a subset for dealing with the data. There is currently only one defined structure for data which is designed for series that have chapters of images. More formats or source types are welcome to be implemented. This is the part of the project with the most room for exploration of what should be done. If you have any suggestions, create an issue for discussion. I would like this to also include implementations for various APIs so data can be standardized.
+
+## Util
+
+WIP
+
+## Scraper
+
+WIP
+
+## Parser
+
 ### IDs
 The core of any content is how they are identified. This project uses an id/source system to create unique ids. The id and source are both strings. An ID can be created through the folloing:
 

@@ -37,11 +37,11 @@ class ParseSource extends SourceTemplate {
 
   @override
   Future<Map<int, String>> fetchChapterImages(ChapterID chapterId) async {
-    if (!supports(RequestType.IMAGES)) {
+    if (!supports(RequestType.images)) {
       return super.fetchChapterImages(chapterId);
     }
 
-    final Request request = requests.firstWhere((element) => element.type == RequestType.IMAGES);
+    final Request request = requests.firstWhere((element) => element.type == RequestType.images);
 
     return await eval(
       request.file,
@@ -53,11 +53,11 @@ class ParseSource extends SourceTemplate {
 
   @override
   Future<Map<int, String>> fetchChapterImagesURL(String url) async {
-    if (!supports(RequestType.IMAGESURL)) {
+    if (!supports(RequestType.imagesUrl)) {
       return super.fetchChapterImagesURL(url);
     }
 
-    final Request request = requests.firstWhere((element) => element.type == RequestType.IMAGESURL);
+    final Request request = requests.firstWhere((element) => element.type.imagesUrl);
 
     return await eval(
       request.file,
@@ -69,11 +69,11 @@ class ParseSource extends SourceTemplate {
 
   @override
   Future<List<Chapter>> fetchChapterList(ID id) async {
-    if (!supports(RequestType.CHAPTERS)) {
+    if (!supports(RequestType.chapters)) {
       return super.fetchChapterList(id);
     }
 
-    final Request request = requests.firstWhere((element) => element.type == RequestType.CHAPTERS);
+    final Request request = requests.firstWhere((element) => element.type.chapters);
 
     dynamic chapters = await eval(
       request.file,
@@ -93,11 +93,11 @@ class ParseSource extends SourceTemplate {
 
   @override
   Future<Post> fetchPostDataURL(String url) async {
-    if (!supports(RequestType.POSTURL)) {
+    if (!supports(RequestType.postUrl)) {
       return super.fetchPostDataURL(url);
     }
 
-    final Request request = requests.firstWhere((element) => element.type == RequestType.POSTURL);
+    final Request request = requests.firstWhere((element) => element.type.postUrl);
 
     dynamic post = await eval(
       request.file,
@@ -117,11 +117,11 @@ class ParseSource extends SourceTemplate {
 
   @override
   Future<Post> fetchPostData(ID id) async {
-    if (!supports(RequestType.POST)) {
+    if (!supports(RequestType.post)) {
       return super.fetchPostData(id);
     }
 
-    final Request request = requests.firstWhere((element) => element.type == RequestType.POST);
+    final Request request = requests.firstWhere((element) => element.type.post);
 
     dynamic post = await eval(
       request.file,
@@ -140,7 +140,7 @@ class ParseSource extends SourceTemplate {
 
   @override
   Future<List<CatalogEntry>> fetchCatalog({int page = 0}) async {
-    if (!supports(RequestType.CATALOG) && !supports(RequestType.CATALOGMULTI)) {
+    if (!supports(RequestType.catalog) && !supports(RequestType.catalogMulti)) {
       return super.fetchCatalog();
     }
 
@@ -148,9 +148,9 @@ class ParseSource extends SourceTemplate {
 
     //Always will try and use multicatalog first
     try {
-      request = requests.firstWhere((element) => element.type == RequestType.CATALOGMULTI);
+      request = requests.firstWhere((element) => element.type.catalogMulti);
     } on StateError {
-      request = requests.firstWhere((element) => element.type == RequestType.CATALOG);
+      request = requests.firstWhere((element) => element.type.catalog);
     }
 
     dynamic entries = await eval(

@@ -14,7 +14,6 @@ import '../json/post.dart';
 //utils
 import '../../util/EmptyRequest.dart';
 import '../../util/FetchReturn.dart';
-import '../../util/FetchStatus.dart';
 import '../../util/ParseError.dart';
 import '../../util/RequestType.dart';
 
@@ -22,13 +21,10 @@ import '../../util/RequestType.dart';
 ///
 ///This interfaces with all loaded sources and searchs for data return
 Future<FetchReturn<Post>> getPostData(ID id) async {
-  if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.POST)) {
+  if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.post)) {
     try {
       Post post = await sources[id.source]!.fetchPostData(id);
-      return FetchReturn(
-        status: FetchStatus.PASS,
-        data: post,
-      );
+      return FetchReturn.pass(post);
     } on EmptyRequest {
       print('An empty request was made for post data');
     } on ParseError {
@@ -40,7 +36,7 @@ Future<FetchReturn<Post>> getPostData(ID id) async {
   } else {
     print('Unable to find source ${id.source}');
   }
-  return FetchReturn(status: FetchStatus.ERROR);
+  return FetchReturn.fail();
 }
 
 ///Returns post data if it can match the url
@@ -53,7 +49,7 @@ Future<FetchReturn<Post>> getPostDataURL(String url) async {
     //compile list of all allowed sources for chapter image downloading
     List<SourceTemplate> allowedPostByURL = [];
     for (SourceTemplate a in sources.values) {
-      if (a.supports(RequestType.POSTURL)) {
+      if (a.supports(RequestType.postUrl)) {
         allowedPostByURL.add(a);
       }
     }
@@ -63,10 +59,7 @@ Future<FetchReturn<Post>> getPostDataURL(String url) async {
       try {
         SourceTemplate s = allowedPostByURL.firstWhere((a) => u.host.contains(a.host()));
         Post p = await s.fetchPostDataURL(url);
-        return FetchReturn(
-          status: FetchStatus.PASS,
-          data: p,
-        );
+        return FetchReturn.pass(p);
       } on StateError {
         print('No series match url: $url');
       } on EmptyRequest {
@@ -84,22 +77,19 @@ Future<FetchReturn<Post>> getPostDataURL(String url) async {
     print('Error in getting post by url: $e');
     print(stack);
   }
-  return FetchReturn(status: FetchStatus.ERROR);
+  return FetchReturn.fail();
 }
 
 ///Returns chapter list info for given id
 ///
 ///[id] unique id for source to get chapters from
 Future<FetchReturn<List<Chapter>>> getChapterListData(ID id) async {
-  if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.CHAPTERS)) {
+  if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.chapters)) {
     try {
       List<Chapter> chapters = await sources[id.source]!.fetchChapterList(id);
       //sort the list by chapterindex
       chapters.sort((a, b) => a.chapterID.index - b.chapterID.index);
-      return FetchReturn(
-        status: FetchStatus.PASS,
-        data: chapters,
-      );
+      return FetchReturn.pass(chapters);
     } on EmptyRequest {
       print('An empty request was made for chapter list data');
     } on ParseError {
@@ -111,7 +101,7 @@ Future<FetchReturn<List<Chapter>>> getChapterListData(ID id) async {
   } else {
     print('Unable to find source ${id.source}');
   }
-  return FetchReturn(status: FetchStatus.ERROR);
+  return FetchReturn.fail();
 }
 
 ///Requests chapter images based only on url
@@ -125,7 +115,7 @@ Future<FetchReturn<Map<int, String>>> getChapterImagesURL(String url) async {
     //compile list of all allowed sources for chapter image downloading
     List<SourceTemplate> allowedImageDownload = [];
     for (SourceTemplate a in sources.values) {
-      if (a.supports(RequestType.IMAGESURL)) {
+      if (a.supports(RequestType.imagesUrl)) {
         allowedImageDownload.add(a);
       }
     }
@@ -136,10 +126,7 @@ Future<FetchReturn<Map<int, String>>> getChapterImagesURL(String url) async {
         SourceTemplate s = allowedImageDownload.firstWhere((a) => u.host.contains(a.host()));
         print('Fetching chapter images');
         Map<int, String> images = await s.fetchChapterImagesURL(url);
-        return FetchReturn(
-          status: FetchStatus.PASS,
-          data: images,
-        );
+        return FetchReturn.pass(images);
       } on StateError {
         print('No sources match chapter image download');
       } on EmptyRequest {
@@ -154,7 +141,7 @@ Future<FetchReturn<Map<int, String>>> getChapterImagesURL(String url) async {
     print('Error in getting chapter images: $e');
     print(stack);
   }
-  return FetchReturn(status: FetchStatus.ERROR);
+  return FetchReturn.fail();
 }
 
 ///Requests chapter images based on ChapterID
@@ -162,15 +149,12 @@ Future<FetchReturn<Map<int, String>>> getChapterImagesURL(String url) async {
 ///Chapter id info should have already been defined by the source
 Future<FetchReturn<Map<int, String>>> getChapterImages(ChapterID chapterID) async {
   try {
-    if (sources.containsKey(chapterID.id.source) && sources[chapterID.id.source]!.supports(RequestType.IMAGES)) {
+    if (sources.containsKey(chapterID.id.source) && sources[chapterID.id.source]!.supports(RequestType.images)) {
       try {
         SourceTemplate s = sources[chapterID.id.source]!;
         print('Fetching chapter images');
         Map<int, String> images = await s.fetchChapterImages(chapterID);
-        return FetchReturn(
-          status: FetchStatus.PASS,
-          data: images,
-        );
+        return FetchReturn.pass(images);
       } on EmptyRequest {
         print('An empty request was made for fetch chapter images');
       } on ParseError {
@@ -183,7 +167,7 @@ Future<FetchReturn<Map<int, String>>> getChapterImages(ChapterID chapterID) asyn
     print('Error in getting chapter images: $e');
     print(stack);
   }
-  return FetchReturn(status: FetchStatus.ERROR);
+  return FetchReturn.fail();
 }
 
 ///Request catalog for the source
@@ -195,13 +179,10 @@ Future<FetchReturn<Map<int, String>>> getChapterImages(ChapterID chapterID) asyn
 Future<FetchReturn<List<CatalogEntry>>> getCatalog(String source, {int page = 0}) async {
   if (sources.containsKey(source)) {
     SourceTemplate s = sources[source]!;
-    if (s.supports(RequestType.CATALOG) || s.supports(RequestType.CATALOGMULTI)) {
+    if (s.supports(RequestType.catalog) || s.supports(RequestType.catalogMulti)) {
       try {
         List<CatalogEntry> entries = await sources[source]!.fetchCatalog(page: page);
-        return FetchReturn(
-          status: FetchStatus.PASS,
-          data: entries,
-        );
+        return FetchReturn.pass(entries);
       } on EmptyRequest {
         print('Empty request was made for getting catalog');
       } on ParseError {
@@ -217,7 +198,7 @@ Future<FetchReturn<List<CatalogEntry>>> getCatalog(String source, {int page = 0}
     print('Invalid source: $source');
   }
 
-  return FetchReturn(status: FetchStatus.ERROR);
+  return FetchReturn.fail();
 }
 
 ///Determines if the source supports a specific type of request
