@@ -52,9 +52,9 @@ class ParseSource extends SourceTemplate {
   }
 
   @override
-  Future<Map<int, String>> fetchChapterImagesURL(String url) async {
+  Future<Map<int, String>> fetchChapterImagesUrl(String url) async {
     if (!supports(RequestType.imagesUrl)) {
-      return super.fetchChapterImagesURL(url);
+      return super.fetchChapterImagesUrl(url);
     }
 
     final Request request = requests.firstWhere((element) => element.type.imagesUrl);
@@ -68,9 +68,9 @@ class ParseSource extends SourceTemplate {
   }
 
   @override
-  Future<List<Chapter>> fetchChapterList(ID id) async {
+  Future<List<Chapter>> fetchChapters(ID id) async {
     if (!supports(RequestType.chapters)) {
-      return super.fetchChapterList(id);
+      return super.fetchChapters(id);
     }
 
     final Request request = requests.firstWhere((element) => element.type.chapters);
@@ -92,9 +92,9 @@ class ParseSource extends SourceTemplate {
   }
 
   @override
-  Future<Post> fetchPostDataURL(String url) async {
+  Future<Post> fetchPostUrl(String url) async {
     if (!supports(RequestType.postUrl)) {
-      return super.fetchPostDataURL(url);
+      return super.fetchPostUrl(url);
     }
 
     final Request request = requests.firstWhere((element) => element.type.postUrl);
@@ -116,9 +116,9 @@ class ParseSource extends SourceTemplate {
   }
 
   @override
-  Future<Post> fetchPostData(ID id) async {
+  Future<Post> fetchPost(ID id) async {
     if (!supports(RequestType.post)) {
-      return super.fetchPostData(id);
+      return super.fetchPost(id);
     }
 
     final Request request = requests.firstWhere((element) => element.type.post);

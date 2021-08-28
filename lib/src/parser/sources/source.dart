@@ -20,10 +20,10 @@ import '../../util/RequestType.dart';
 ///Returns only post data for the requested id
 ///
 ///This interfaces with all loaded sources and searchs for data return
-Future<FetchReturn<Post>> getPostData(ID id) async {
+Future<FetchReturn<Post>> fetchPost(ID id) async {
   if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.post)) {
     try {
-      Post post = await sources[id.source]!.fetchPostData(id);
+      Post post = await sources[id.source]!.fetchPost(id);
       return FetchReturn.pass(post);
     } on EmptyRequest {
       print('An empty request was made for post data');
@@ -42,7 +42,7 @@ Future<FetchReturn<Post>> getPostData(ID id) async {
 ///Returns post data if it can match the url
 ///
 ///[url] this is the url to search to determine the post being searched for
-Future<FetchReturn<Post>> getPostDataURL(String url) async {
+Future<FetchReturn<Post>> fetchPostUrl(String url) async {
   try {
     final Uri u = Uri.parse(url);
 
@@ -58,7 +58,7 @@ Future<FetchReturn<Post>> getPostDataURL(String url) async {
     if (allowedPostByURL.isNotEmpty) {
       try {
         SourceTemplate s = allowedPostByURL.firstWhere((a) => u.host.contains(a.host()));
-        Post p = await s.fetchPostDataURL(url);
+        Post p = await s.fetchPostUrl(url);
         return FetchReturn.pass(p);
       } on StateError {
         print('No series match url: $url');
@@ -83,10 +83,10 @@ Future<FetchReturn<Post>> getPostDataURL(String url) async {
 ///Returns chapter list info for given id
 ///
 ///[id] unique id for source to get chapters from
-Future<FetchReturn<List<Chapter>>> getChapterListData(ID id) async {
+Future<FetchReturn<List<Chapter>>> fetchChapters(ID id) async {
   if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.chapters)) {
     try {
-      List<Chapter> chapters = await sources[id.source]!.fetchChapterList(id);
+      List<Chapter> chapters = await sources[id.source]!.fetchChapters(id);
       //sort the list by chapterindex
       chapters.sort((a, b) => a.chapterID.index - b.chapterID.index);
       return FetchReturn.pass(chapters);
@@ -108,7 +108,7 @@ Future<FetchReturn<List<Chapter>>> getChapterListData(ID id) async {
 ///
 ///This looks for mapping the given host part of url to the source to be matched
 ///It is possible to encode custom urls that you can modify later
-Future<FetchReturn<Map<int, String>>> getChapterImagesURL(String url) async {
+Future<FetchReturn<Map<int, String>>> fetchChapterImagesUrl(String url) async {
   try {
     final Uri u = Uri.parse(url);
 
@@ -125,7 +125,7 @@ Future<FetchReturn<Map<int, String>>> getChapterImagesURL(String url) async {
       try {
         SourceTemplate s = allowedImageDownload.firstWhere((a) => u.host.contains(a.host()));
         print('Fetching chapter images');
-        Map<int, String> images = await s.fetchChapterImagesURL(url);
+        Map<int, String> images = await s.fetchChapterImagesUrl(url);
         return FetchReturn.pass(images);
       } on StateError {
         print('No sources match chapter image download');
@@ -147,7 +147,7 @@ Future<FetchReturn<Map<int, String>>> getChapterImagesURL(String url) async {
 ///Requests chapter images based on ChapterID
 ///
 ///Chapter id info should have already been defined by the source
-Future<FetchReturn<Map<int, String>>> getChapterImages(ChapterID chapterID) async {
+Future<FetchReturn<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
   try {
     if (sources.containsKey(chapterID.id.source) && sources[chapterID.id.source]!.supports(RequestType.images)) {
       try {
@@ -176,7 +176,7 @@ Future<FetchReturn<Map<int, String>>> getChapterImages(ChapterID chapterID) asyn
 ///[page] starts at 0
 ///To determine if a source supports catalog call [sourceSupportsCatalog]
 ///To determine if a source supports multicatalog call [sourceSupportsMultiCatalog]
-Future<FetchReturn<List<CatalogEntry>>> getCatalog(String source, {int page = 0}) async {
+Future<FetchReturn<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0}) async {
   if (sources.containsKey(source)) {
     SourceTemplate s = sources[source]!;
     if (s.supports(RequestType.catalog) || s.supports(RequestType.catalogMulti)) {

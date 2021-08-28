@@ -27,15 +27,15 @@ abstract class SourceTemplate {
     this.subdomain,
   });
 
-  Future<Post> fetchPostData(ID id) async {
+  Future<Post> fetchPost(ID id) async {
     throw EmptyRequest('Fetch post');
   }
 
-  Future<Post> fetchPostDataURL(String url) async {
+  Future<Post> fetchPostUrl(String url) async {
     throw EmptyRequest('Fetch post URL');
   }
 
-  Future<List<Chapter>> fetchChapterList(ID id) async {
+  Future<List<Chapter>> fetchChapters(ID id) async {
     throw EmptyRequest('Fetch chapter list');
   }
 
@@ -43,7 +43,7 @@ abstract class SourceTemplate {
     throw EmptyRequest('Fetch chapter images');
   }
 
-  Future<Map<int, String>> fetchChapterImagesURL(String url) async {
+  Future<Map<int, String>> fetchChapterImagesUrl(String url) async {
     throw EmptyRequest('Fetch chapter images URL');
   }
 
