@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 //source
+import 'package:computer/computer.dart';
+
 import './sourceTemplate.dart';
 //scraping
 import '../../scraper/eval.dart';
@@ -19,6 +22,39 @@ class ParseSource extends SourceTemplate {
   final List<Request> requests;
   final String dir;
   final String programType;
+
+  ///Enable computes for data conversion
+  ///This provides better performance for multiple async calls
+  static bool computeEnabled = true;
+
+  static final _computer = Computer();
+  static int _running = 0;
+
+  ///Number of workers to be made for compute calls
+  static int workers = 2;
+
+  static void _startUp() {
+    _running++;
+    if (!_computer.isRunning) {
+      _computer.turnOn();
+    }
+  }
+
+  static Timer? _finalTimer;
+
+  ///Time after a data conversion finishes to close all isolates. They are kept open for performance.
+  static int computeCooldownMilliseconds = 5000;
+
+  static void _shutDown() {
+    _running--;
+    if (_computer.isRunning && _running == 0 && (_finalTimer == null || !_finalTimer!.isActive)) {
+      _finalTimer = Timer(Duration(seconds: 5), () {
+        if (_running == 0) {
+          _computer.turnOff();
+        }
+      });
+    }
+  }
 
   ParseSource({
     required String source,
@@ -75,16 +111,28 @@ class ParseSource extends SourceTemplate {
 
     final Request request = requests.firstWhere((element) => element.type.chapters);
 
-    dynamic chapters = await eval(
+    List chapters = await eval(
       request.file,
       functionName: request.entry,
       args: [id.toJson()],
       workingDirectory: dir,
-    );
+    ) as List;
 
     try {
-      return List<Chapter>.from(chapters.map((value) => Chapter.fromJson(value)));
+      if (computeEnabled) {
+        _startUp();
+        final List<Chapter> response =
+            await Chapter.computeChaptersFromJson(_computer, chapters.cast<Map<String, dynamic>>());
+        _shutDown();
+        return response;
+      } else {
+        return List<Chapter>.from(chapters.map((value) => Chapter.fromJson(value)));
+      }
     } catch (e, stack) {
+      if (computeEnabled) {
+        //going to assume there was a parse error which means there is an open compute
+        _shutDown();
+      }
       print('Error fetching chapter list: $e');
       print(stack);
       throw ParseError('Error parsing chapter list: $e');

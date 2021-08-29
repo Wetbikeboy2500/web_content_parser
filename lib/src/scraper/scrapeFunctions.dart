@@ -22,7 +22,6 @@ const _cacheTimeMilliseconds = 1000;
 final Map<String, Tuple2<int, Response>> _getCache = {};
 
 void _cleanGetCache(List<String> uriStrings) {
-  print('clean');
   print(uriStrings);
   //Remove outdated
   for (final key in uriStrings) {
