@@ -1,4 +1,0 @@
-enum FetchStatus {
-  pass,
-  fail,
-}

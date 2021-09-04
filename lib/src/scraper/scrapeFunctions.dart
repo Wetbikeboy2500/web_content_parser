@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:hetu_script/type/type.dart';
 import 'package:http/http.dart';
 import 'package:tuple/tuple.dart';
+import '../util/log.dart';
 
 //TODO: postRequest() {}
 
@@ -22,7 +23,7 @@ const _cacheTimeMilliseconds = 1000;
 final Map<String, Tuple2<int, Response>> _getCache = {};
 
 void _cleanGetCache(List<String> uriStrings) {
-  print(uriStrings);
+  log(uriStrings);
   //Remove outdated
   for (final key in uriStrings) {
     _getCache.remove(key);

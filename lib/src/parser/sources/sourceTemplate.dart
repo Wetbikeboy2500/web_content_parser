@@ -1,9 +1,11 @@
+import 'package:web_content_parser/src/util/Result.dart';
+import 'package:web_content_parser/src/util/log.dart';
+
 import '../json/catalogEntry.dart';
 import '../json/chapter.dart';
 import '../json/chapterID.dart';
 import '../json/id.dart';
 import '../json/post.dart';
-import '../../util/EmptyRequest.dart';
 import '../../util/RequestType.dart';
 
 ///Base of all sources
@@ -27,28 +29,34 @@ abstract class SourceTemplate {
     this.subdomain,
   });
 
-  Future<Post> fetchPost(ID id) async {
-    throw EmptyRequest('Fetch post');
+  Future<Result<Post>> fetchPost(ID id) async {
+    log('Empty request for fetch post');
+    return Result.fail();
   }
 
-  Future<Post> fetchPostUrl(String url) async {
-    throw EmptyRequest('Fetch post URL');
+  Future<Result<Post>> fetchPostUrl(String url) async {
+    log('Empty request for fetch post url');
+    return Result.fail();
   }
 
-  Future<List<Chapter>> fetchChapters(ID id) async {
-    throw EmptyRequest('Fetch chapter list');
+  Future<Result<List<Chapter>>> fetchChapters(ID id) async {
+    log('Empty request for fetch chapters');
+    return Result.fail();
   }
 
-  Future<Map<int, String>> fetchChapterImages(ChapterID chapterId) async {
-    throw EmptyRequest('Fetch chapter images');
+  Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterId) async {
+    log('Empty request for fetch chapter images');
+    return Result.fail();
   }
 
-  Future<Map<int, String>> fetchChapterImagesUrl(String url) async {
-    throw EmptyRequest('Fetch chapter images URL');
+  Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
+    log('Empty request for chapter images url');
+    return Result.fail();
   }
 
-  Future<List<CatalogEntry>> fetchCatalog({int page = 0}) async {
-    throw EmptyRequest('Fetch Catalog');
+  Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0}) async {
+    log('Empty request for fetch catalog');
+    return Result.fail();
   }
 
   bool supports(RequestType type) {

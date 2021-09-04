@@ -20,7 +20,7 @@ This project can be thought of in three different code bases based on directory 
 
 * [Util](#util)
 
-    This has most of the utilty classes and important enums that work for moving data around. It is the core for making sure calls can be made, defining expections, and wrapping responses with easy to integrate classes. Most things are shared between the scraper and parser sections.
+    This has most of the utilty classes and important enums that work for moving data around. It is the core for making sure calls can be made and wrapping responses with easy to integrate classes instead of throwing exceptions. Most things are shared between the scraper and parser sections.
 
 * [Scraper](#scraper)
 
@@ -32,7 +32,57 @@ This project can be thought of in three different code bases based on directory 
 
 ## Util
 
-WIP
+The util directory has vital code for how things interact with each other.
+
+### Result
+
+The most important part of the project is how data is moved between methods and functions. Result is a class that defines if data passes or fails which indicated if data can be trusted. This is used in place of exception for this project due to catches having very bad performance. This also enforces a practice of checking if the data is valid.
+
+The data type annotation for the result can be set like so:
+
+```
+void Result<String> someFunction() { return Result.error() };
+```
+
+The result class has two attributes:
+
+* `ResultStatus status`
+
+    The `Result` class only has two constructors that sets the `status` to either `ResultStatus.pass` or `ResultStatus.fail`. You should check what the status is by calling the '.pass' or '.fail' getters on the `Result` class.
+
+* `T? data`
+
+    T is the type annotation set by the dev. With the `?`, data will always be nullable while the type annotation can be non-nullable, but checking status is how to avoid any unintentional nulls.
+
+```
+Result<String>.pass('valid'); //valid
+Result<String>.pass(null); //invalid
+Result<String?>.pass('valid'); //valid
+Result<String?>.pass(null); //valid
+Result<String>.fail(); //valid
+```
+
+Note that the `pass` constructor type will always reflect the type annotation while data will always be nullable.
+
+The following is the best way to check for if a result has passed or failed. This avoids the need to keep checking if `status` equals a specific `ResultStatus` enum.
+
+```
+Result<String>.pass('valid').pass; //returns true
+Result<String>.pass('valid').fail; //returns false
+Result<String>.fail().pass; //returns false
+Result<String>.fail().fail; //retuns true
+```
+
+```
+Result<String> result = Result<String>.pass('valid');
+if (result.pass) {
+    result.data!; //use ! so dart knows that this is null-safe
+}
+```
+
+If the result is passing, then the data can be trusted and will be the expected type. No need to worry about it being null unless it has been specificed in the intial type annotation.
+
+
 
 ## Scraper
 
@@ -41,6 +91,7 @@ WIP
 ## Parser
 
 ### IDs
+
 The core of any content is how they are identified. This project uses an id/source system to create unique ids. The id and source are both strings. An ID can be created through the folloing:
 
 ```

@@ -16,26 +16,26 @@ class TestSource extends SourceTemplate {
             version: 1);
 
   @override
-  Future<Post> fetchPostData(ID id) async {
-    return await fetchPostDataURL('https://${host()}/manga/get/${id.id}');
+  Future<Result<Post>> fetchPost(ID id) async {
+    return await fetchPostUrl('https://${host()}/manga/get/${id.id}');
   }
 
   @override
-  Future<Post> fetchPostDataURL(String url) async {
+  Future<Result<Post>> fetchPostUrl(String url) async {
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       var j = jsonDecode(response.body);
       j['id'] = ID(id: j['id'], source: 'heroku').toJson();
-      return Post.fromJson(j);
+      return Result.pass(Post.fromJson(j));
     } else {
       Logger.root.warning('Status Error: ${response.statusCode.toString()}, $url');
-      throw 'Status Error';
+      return Result.fail();
     }
   }
 
   @override
-  Future<List<Chapter>> fetchChapterList(ID id) async {
+  Future<Result<List<Chapter>>> fetchChapters(ID id) async {
     final url = Uri.parse('https://${host()}/manga/chapters/${id.id}');
 
     final response = await http.get(url);
@@ -49,10 +49,10 @@ class TestSource extends SourceTemplate {
         };
         return Chapter.fromJson(obj);
       }).toList();
-      return chapters;
+      return Result.pass(chapters);
     } else {
       Logger.root.warning('Failed to load ${id.uid}');
-      throw 'Status Error';
+      return Result.fail();
     }
   }
 }

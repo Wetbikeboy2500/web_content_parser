@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 
 //source
 import 'package:computer/computer.dart';
+import 'package:web_content_parser/src/scraper/scraperSource.dart';
+import 'package:web_content_parser/src/util/Result.dart';
+import '../../util/log.dart';
 
 import './sourceTemplate.dart';
-//scraping
-import '../../scraper/eval.dart';
 //models
 import '../json/chapter.dart';
 import '../json/chapterID.dart';
@@ -14,13 +14,11 @@ import '../json/id.dart';
 import '../json/post.dart';
 import '../json/catalogEntry.dart';
 //utils
-import '../../util/ParseError.dart';
 import '../../util/RequestType.dart';
 
 ///Source build from extensions
 class ParseSource extends SourceTemplate {
-  final List<Request> requests;
-  final String dir;
+  final ScraperSource scraper;
   final String programType;
 
   ///Enable computes for data conversion
@@ -56,170 +54,143 @@ class ParseSource extends SourceTemplate {
     }
   }
 
-  ParseSource({
-    required String source,
-    required this.requests,
-    required int version,
-    required String baseurl,
-    required String? subdomain,
-    required this.programType,
-    required this.dir,
-  }) : super(
-            source: source,
-            requestTypes: requests.map((request) => request.type).toSet(),
-            version: version,
-            baseurl: baseurl,
-            subdomain: subdomain);
+  ///Builds a parse source from a scraper source
+  ///
+  ///[strict] Should contentType be specified as a supported type. If it isn't, an exception will be thrown
+  ///This is to account for scraper sources being made that are not in a supported format. It currently is not an issue, but in the future, there can be times where checking the contentType will be needed for flexability.
+  ParseSource(this.scraper, {bool strict = true})
+      : programType = scraper.info['programType'],
+        super(
+          source: scraper.info['source'],
+          requestTypes: scraper.requests.values.map((request) => request.type).toSet(),
+          version: scraper.info['version'],
+          baseurl: scraper.info['baseUrl'],
+          subdomain: scraper.info['subdomain'],
+        ) {
+    if (strict && !['seriesImage'].contains(scraper.info['contentType'])) {
+      throw FormatException('Doesn\'t have valid contentType');
+    }
+  }
 
   @override
-  Future<Map<int, String>> fetchChapterImages(ChapterID chapterId) async {
+  Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterId) async {
     if (!supports(RequestType.images)) {
       return super.fetchChapterImages(chapterId);
     }
 
-    final Request request = requests.firstWhere((element) => element.type == RequestType.images);
-
-    return await eval(
-      request.file,
-      functionName: request.entry,
-      args: [chapterId.toJson()],
-      workingDirectory: dir,
-    );
+    return await scraper.makeRequest<Map<int, String>>(RequestType.images.string, [chapterId.toJson()]);
   }
 
   @override
-  Future<Map<int, String>> fetchChapterImagesUrl(String url) async {
+  Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
     if (!supports(RequestType.imagesUrl)) {
       return super.fetchChapterImagesUrl(url);
     }
 
-    final Request request = requests.firstWhere((element) => element.type.imagesUrl);
-
-    return await eval(
-      request.file,
-      functionName: request.entry,
-      args: [url],
-      workingDirectory: dir,
-    );
+    return await scraper.makeRequest<Map<int, String>>(RequestType.imagesUrl.string, [url]);
   }
 
   @override
-  Future<List<Chapter>> fetchChapters(ID id) async {
+  Future<Result<List<Chapter>>> fetchChapters(ID id) async {
     if (!supports(RequestType.chapters)) {
       return super.fetchChapters(id);
     }
 
-    final Request request = requests.firstWhere((element) => element.type.chapters);
+    Result<List> chapters = await scraper.makeRequest<List>(RequestType.chapters.string, [id.toJson()]);
 
-    List chapters = await eval(
-      request.file,
-      functionName: request.entry,
-      args: [id.toJson()],
-      workingDirectory: dir,
-    ) as List;
+    if (chapters.fail) {
+      return Result.fail();
+    }
 
     try {
       if (computeEnabled) {
         _startUp();
+        //I currently am only using computer here since lists of chapters can have a lot of data to be processed
         final List<Chapter> response =
-            await Chapter.computeChaptersFromJson(_computer, chapters.cast<Map<String, dynamic>>());
+            await Chapter.computeChaptersFromJson(_computer, chapters.data!.cast<Map<String, dynamic>>());
         _shutDown();
-        return response;
+        return Result.pass(response);
       } else {
-        return List<Chapter>.from(chapters.map((value) => Chapter.fromJson(value)));
+        return Result.pass(List<Chapter>.from(chapters.data!.map((value) => Chapter.fromJson(value))));
       }
     } catch (e, stack) {
       if (computeEnabled) {
         //going to assume there was a parse error which means there is an open compute
         _shutDown();
       }
-      print('Error fetching chapter list: $e');
-      print(stack);
-      throw ParseError('Error parsing chapter list: $e');
+      log('Error parsing chapter list: $e');
+      log(stack);
+      return Result.fail();
     }
   }
 
   @override
-  Future<Post> fetchPostUrl(String url) async {
+  Future<Result<Post>> fetchPostUrl(String url) async {
     if (!supports(RequestType.postUrl)) {
       return super.fetchPostUrl(url);
     }
 
-    final Request request = requests.firstWhere((element) => element.type.postUrl);
+    Result post = await scraper.makeRequest(RequestType.postUrl.string, [url]);
 
-    dynamic post = await eval(
-      request.file,
-      functionName: request.entry,
-      args: [url],
-      workingDirectory: dir,
-    );
+    if (post.fail) {
+      return Result.fail();
+    }
 
     try {
-      return Post.fromJson(Map<String, dynamic>.from(post));
+      return Result.pass(Post.fromJson(Map<String, dynamic>.from(post.data)));
     } catch (e, stack) {
-      print('Error parsing post data: $e');
-      print(stack);
-      throw ParseError('Error parsing post data: $e');
+      log('Error parsing post data: $e');
+      log(stack);
+      return Result.fail();
     }
   }
 
   @override
-  Future<Post> fetchPost(ID id) async {
+  Future<Result<Post>> fetchPost(ID id) async {
     if (!supports(RequestType.post)) {
       return super.fetchPost(id);
     }
 
-    final Request request = requests.firstWhere((element) => element.type.post);
+    Result post = await scraper.makeRequest(RequestType.postUrl.string, [id.toJson()]);
 
-    dynamic post = await eval(
-      request.file,
-      functionName: request.entry,
-      args: [id.toJson()],
-      workingDirectory: dir,
-    );
+    if (post.fail) {
+      return Result.fail();
+    }
+
     try {
-      return Post.fromJson(Map<String, dynamic>.from(post));
+      return Result.pass(Post.fromJson(Map<String, dynamic>.from(post.data)));
     } catch (e, stack) {
-      print('Error parsing post data: $e');
-      print(stack);
-      throw ParseError('Error parsing post data: $e');
+      log('Error parsing post data: $e');
+      log(stack);
+      return Result.fail();
     }
   }
 
   @override
-  Future<List<CatalogEntry>> fetchCatalog({int page = 0}) async {
-    if (!supports(RequestType.catalog) && !supports(RequestType.catalogMulti)) {
+  Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0}) async {
+    late final RequestType requestType;
+
+    //Always will try and use multicatalog first
+    if (supports(RequestType.catalogMulti)) {
+      requestType = RequestType.catalogMulti;
+    } else if (supports(RequestType.catalog)) {
+      requestType = RequestType.catalog;
+    } else {
       return super.fetchCatalog();
     }
 
-    Request request;
+    Result<List> entries = await scraper.makeRequest<List>(requestType.string, [page]);
 
-    //Always will try and use multicatalog first
-    try {
-      request = requests.firstWhere((element) => element.type.catalogMulti);
-    } on StateError {
-      request = requests.firstWhere((element) => element.type.catalog);
+    if (entries.fail) {
+      return Result.fail();
     }
 
-    dynamic entries = await eval(
-      request.file,
-      functionName: request.entry,
-      args: [page],
-      workingDirectory: dir,
-    );
     try {
-      return List<CatalogEntry>.from(entries.map((entry) => CatalogEntry.fromJson(entry)));
+      return Result.pass(List<CatalogEntry>.from(entries.data!.map((entry) => CatalogEntry.fromJson(entry))));
     } catch (e, stack) {
-      print('Error fetching catalog: $e');
-      print(stack);
-      throw ParseError('Error pasing catalog: $e');
+      log('Error fetching catalog: $e');
+      log(stack);
+      return Result.fail();
     }
   }
-}
-
-class Request {
-  final RequestType type;
-  final File file;
-  final String entry;
-  Request({required this.type, required this.file, required this.entry});
 }

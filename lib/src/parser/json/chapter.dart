@@ -1,5 +1,3 @@
-import 'dart:isolate';
-
 import 'package:computer/computer.dart';
 import 'package:json_annotation/json_annotation.dart';
 import './chapterID.dart';
@@ -57,7 +55,6 @@ class Chapter {
   }
 
   static Future<List<Chapter>> computeChaptersFromJson(Computer computer, List<Map<String, dynamic>> chapters) async {
-    print('compute');
     return computer.compute<List<Map<String, dynamic>>, List<Chapter>>(chaptersFromJson, param: chapters);
   }
 

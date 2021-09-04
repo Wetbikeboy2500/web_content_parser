@@ -13,14 +13,26 @@ import 'package:dotenv/dotenv.dart' show load, env;
 
 void main() {
   group('Utility', () {
-    test('Passing FetchReturn', () {
-      FetchReturn<String> f = FetchReturn<String>.pass('Test');
+    test('Passing Result', () {
+      Result<String> f = Result<String>.pass('Test');
+      expect(f.pass, isTrue);
+      expect(f.fail, isFalse);
+      expect(f.data, equals('Test'));
+    });
+    test('Passing Result Nullable With Null', () {
+      Result<String?> f = Result<String?>.pass(null);
+      expect(f.pass, isTrue);
+      expect(f.data, null);
+    });
+    test('Passing Result Nullable With String', () {
+      Result<String?> f = Result<String?>.pass('Test');
       expect(f.pass, isTrue);
       expect(f.data, equals('Test'));
     });
-    test('Failing FetchReturn', () {
-      FetchReturn<String> f = FetchReturn<String>.fail();
+    test('Failing Result', () {
+      Result<String> f = Result<String>.fail();
       expect(f.pass, isFalse);
+      expect(f.fail, isTrue);
       expect(f.data, equals(null));
     });
     test('RequestType extension comparisons', () {
@@ -32,16 +44,31 @@ void main() {
       expect(RequestType.catalog.catalog, isTrue);
       expect(RequestType.catalogMulti.catalogMulti, isTrue);
       expect(RequestType.chapters.chapters, isTrue);
+      expect(RequestType.unknown.unknown, isTrue);
     });
 
     test('RequestType string conversions', () {
-      expect(requestMap['post']!.post, isTrue);
-      expect(requestMap['postUrl']!.postUrl, isTrue);
-      expect(requestMap['images']!.images, isTrue);
-      expect(requestMap['imagesUrl']!.imagesUrl, isTrue);
-      expect(requestMap['catalog']!.catalog, isTrue);
-      expect(requestMap['catalogMulti']!.catalogMulti, isTrue);
-      expect(requestMap['chapters']!.chapters, isTrue);
+      expect(requestMap('post').post, isTrue);
+      expect(requestMap('postUrl').postUrl, isTrue);
+      expect(requestMap('images').images, isTrue);
+      expect(requestMap('imagesUrl').imagesUrl, isTrue);
+      expect(requestMap('catalog').catalog, isTrue);
+      expect(requestMap('catalogMulti').catalogMulti, isTrue);
+      expect(requestMap('chapters').chapters, isTrue);
+      expect(requestMap('unknown').unknown, isTrue);
+      expect(requestMap('').unknown, isTrue);
+    });
+
+    test('RequestType extension string', () {
+      expect(requestMap(RequestType.catalog.string).catalog, isTrue);
+      expect(requestMap(RequestType.post.string).post, isTrue);
+      expect(requestMap(RequestType.postUrl.string).postUrl, isTrue);
+      expect(requestMap(RequestType.images.string).images, isTrue);
+      expect(requestMap(RequestType.imagesUrl.string).imagesUrl, isTrue);
+      expect(requestMap(RequestType.catalog.string).catalog, isTrue);
+      expect(requestMap(RequestType.catalogMulti.string).catalogMulti, isTrue);
+      expect(requestMap(RequestType.chapters.string).chapters, isTrue);
+      expect(requestMap(RequestType.unknown.string).unknown, isTrue);
     });
   });
 
@@ -114,24 +141,24 @@ void main() {
       });
 
       test('Get post', () async {
-        FetchReturn<Post> post = await fetchPost(ID(source: '', id: ''));
+        Result<Post> post = await fetchPost(ID(source: '', id: ''));
         expect(post.fail, isTrue);
       });
       test('Get post url', () async {
-        FetchReturn<Post> post = await fetchPostUrl('');
+        Result<Post> post = await fetchPostUrl('');
         expect(post.fail, isTrue);
       });
       test('Get chapters', () async {
-        FetchReturn<List<Chapter>> chapter = await fetchChapters(ID(source: '', id: ''));
+        Result<List<Chapter>> chapter = await fetchChapters(ID(source: '', id: ''));
         expect(chapter.fail, isTrue);
       });
       test('Get chapter images', () async {
-        FetchReturn<Map<int, String>> chapter =
+        Result<Map<int, String>> chapter =
             await fetchChapterImages(ChapterID(url: '', index: 0, id: ID(source: '', id: '')));
         expect(chapter.fail, isTrue);
       });
       test('Get chapter images url', () async {
-        FetchReturn<Map<int, String>> chapter = await fetchChapterImagesUrl('');
+        Result<Map<int, String>> chapter = await fetchChapterImagesUrl('');
         expect(chapter.fail, isTrue);
       });
     });
@@ -142,31 +169,31 @@ void main() {
       ID id = ID(id: '', source: 'blank');
 
       test('Fail get catalog', () async {
-        FetchReturn<List<CatalogEntry>> catalog = await fetchCatalog('blank');
+        Result<List<CatalogEntry>> catalog = await fetchCatalog('blank');
         expect(catalog.fail, isTrue);
       });
       test('Fail get post', () async {
-        FetchReturn<Post> post = await fetchPost(id);
+        Result<Post> post = await fetchPost(id);
         expect(post.fail, isTrue);
       });
       test('Fail get post url with valid url', () async {
-        FetchReturn<Post> post = await fetchPostUrl('test.test');
+        Result<Post> post = await fetchPostUrl('test.test');
         expect(post.fail, isTrue);
       });
       test('Fail get post url with invalid url', () async {
-        FetchReturn<Post> post = await fetchPostUrl('test.com');
+        Result<Post> post = await fetchPostUrl('test.com');
         expect(post.fail, isTrue);
       });
       test('Fail get chapter', () async {
-        FetchReturn<List<Chapter>> chapter = await fetchChapters(id);
+        Result<List<Chapter>> chapter = await fetchChapters(id);
         expect(chapter.fail, isTrue);
       });
       test('Fail get chapter images', () async {
-        FetchReturn<Map<int, String>> images = await fetchChapterImages(ChapterID(url: '', index: 0, id: id));
+        Result<Map<int, String>> images = await fetchChapterImages(ChapterID(url: '', index: 0, id: id));
         expect(images.fail, isTrue);
       });
       test('Fail get chapter images url', () async {
-        FetchReturn<Map<int, String>> images = await fetchChapterImagesUrl('test.test');
+        Result<Map<int, String>> images = await fetchChapterImagesUrl('test.test');
         expect(images.fail, isTrue);
       });
       test('Get correct info', () {
@@ -232,31 +259,31 @@ void main() {
       });
 
       test('Get post', () async {
-        FetchReturn<Post> p = await fetchPost(ID(id: '1', source: 'test'));
+        Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
         expect(p.pass, isTrue);
       });
 
       test('Get post url', () async {
-        FetchReturn<Post> p = await fetchPostUrl('${env["SOURCE"]}/manga/get/1');
+        Result<Post> p = await fetchPostUrl('${env["SOURCE"]}/manga/get/1');
         expect(p.pass, isTrue);
       });
 
       test('Post to json', () async {
-        FetchReturn<Post> p = await fetchPost(ID(id: '1', source: 'test'));
+        Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
         expect(p.data?.toJson(), isMap);
       });
 
       test('Fail post', () async {
-        FetchReturn<Post> p = await fetchPost(ID(id: '0', source: 'test'));
+        Result<Post> p = await fetchPost(ID(id: '0', source: 'test'));
         expect(p.fail, isTrue);
       });
 
       test('Get chapter list', () async {
-        FetchReturn<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
+        Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
         expect(chapters.pass, isTrue);
       });
       test('Get chapter list not empty', () async {
-        FetchReturn<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
+        Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
         expect(chapters.data, isNotEmpty);
       });
     });
