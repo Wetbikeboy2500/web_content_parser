@@ -1,7 +1,7 @@
-import 'package:path/path.dart' as p;
+import 'package:web_content_parser/src/scraper/scraper.dart';
+import '../../scraper/scraperSource.dart';
 import '../../util/log.dart';
 import '../../webContentParser.dart';
-import 'dart:convert';
 import 'dart:io';
 
 //source interfaces
@@ -185,67 +185,32 @@ bool sourceSupports(String source, RequestType type) {
   return sources.containsKey(source) && sources[source]!.supports(type);
 }
 
-///Load parsed extensions for all json files within a directory
+///Load scraper sources from all yaml(.yaml or .yml) files in a directory.
 ///
-///[dir] is directory to be searched recursively for json files
-///Supports loading multiple json sources at once
-void loadExternalSource(Directory dir) {
-  //We can use this to expand supported versions/iterations and prevent running none-backwards compatible code
-  /*const supportedProgramTypes = ['hetu'];
-
-  List<FileSystemEntity> files = dir.listSync(recursive: true).where((a) => p.extension(a.path) == '.json').toList();
-  for (var file in files) {
+///[dir] is directory to be searched recursively for yaml config files.
+///
+///Supports loading multiple sources at once inside a directory.
+void loadExternalParseSources(Directory dir) {
+  final List<ScraperSource> scrapers = loadExternalScarperSources(dir);
+  for (final scraper in scrapers) {
     try {
-      Map<String, dynamic> j = jsonDecode(File(file.path).readAsStringSync()) as Map<String, dynamic>;
-      if (j.containsKey('programType') && supportedProgramTypes.contains(j['programType'])) {
-        if (j.containsKey('source')) {
-          if (j.containsKey('requests') && j['requests'].length != 0) {
-            List<Request> requests = [];
-
-            for (Map req in j['requests']) {
-              if (req.containsKey('type') && req.containsKey('file')) {
-                requests.add(Request(
-                    type: requestMap(req['type']),
-                    file: File(p.join(file.parent.path, req['file'])),
-                    entry: req.containsKey('entry') ? req['entry'] : 'main'));
-              } else {
-                log('No valid type found');
-              }
-            }
-
-            addSource(
-              j['source'],
-              ParseSource(
-                source: j['source'],
-                requests: requests,
-                version: j['version'],
-                baseurl: j['baseurl'],
-                subdomain: j['subdomain'],
-                programType: j['programType'],
-                dir: file.parent.path,
-              ),
-            );
-          } else {
-            log('No requests found');
-          }
-        } else {
-          log('Missing source declaration');
-        }
-      } else {
-        log('Unsupported program');
-      }
+      //pass scraper to the parse interface
+      ParseSource source = ParseSource(scraper);
+      //add the new source
+      addSource(source.source, source);
     } catch (e, stack) {
-      log('Error loading in a json file: $e');
+      log('Error loading external source: $e');
       log(stack);
     }
-  }*/
+  }
 }
 
 ///Adds a source object
 ///
 ///[name] unique name to identify the source
 ///[source] object built off of source template
-///Source will only by overriden if version number is higher than the currently used source
+///
+///Source will only by overriden if version number is higher than the currently used source.
 void addSource(String name, SourceTemplate source) {
   if (sources.containsKey(name)) {
     //overwrite previous version only if added source is newer
@@ -259,9 +224,9 @@ void addSource(String name, SourceTemplate source) {
 
 ///Gets info for a source
 ///
-///[name] unique name to identify the source
-///Includes {'parse': true/false} to let you know if this is a parsed source or not which has different information
-///Throws ['Unknown source'] if name does not exist
+///[name] unique name to identify the source.
+///Includes {'parse': true/false} to let you know if this is a parsed source or not which has different information.
+///Throws ['Unknown source'] if name does not exist.
 Map<String, dynamic> getSourceInfo(String name) {
   if (sources.containsKey(name)) {
     dynamic source = sources[name];

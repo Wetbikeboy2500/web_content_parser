@@ -13,6 +13,8 @@ import '../util/RequestType.dart';
 class ScraperSource {
   static final Map<String, ScraperSource> _globalSources = {};
 
+  static final Set<String> supportedProgramTypes = {'hetu'};
+
   final Map<String, Request> requests = {};
 
   late final Map<String, dynamic> info;
@@ -20,12 +22,12 @@ class ScraperSource {
   ///Returns a global scrapper by name
   ///
   ///Throws an [Exception] if [name] doesn't for a global scrapper
-  static ScraperSource scrapper(String name) {
+  static Result<ScraperSource> scrapper(String name) {
     if (_globalSources.containsKey(name)) {
-      return _globalSources[name]!;
+      return Result.pass(_globalSources[name]!);
     }
 
-    throw Exception('Scapper source does not exist');
+    return Result.fail();
   }
 
   ///Creates a scrapper that is added to global and can be referenced without having the object
@@ -51,6 +53,10 @@ class ScraperSource {
       if (!requiredAttributes.every((element) => yaml.containsKey(element))) {
         log('Missing fields');
         throw FormatException('Missing fields');
+      }
+
+      if (!supportedProgramTypes.contains(yaml['programType'])) {
+        throw FormatException('Unknown program type');
       }
 
       //save all yaml into info

@@ -13,6 +13,10 @@ import 'package:dotenv/dotenv.dart' show load, env;
 
 void main() {
   group('Utility', () {
+    test('Enable log', () {
+      WebContentParser.verbose = true;
+      expect(WebContentParser.verbose, isTrue);
+    });
     test('Passing Result', () {
       Result<String> f = Result<String>.pass('Test');
       expect(f.pass, isTrue);
@@ -126,7 +130,68 @@ void main() {
   });
 
   group('Scraper', () {
-    //
+    test('Load yaml file', () {
+      List<ScraperSource> scrapers = loadExternalScarperSources(Directory('test/samples/scraper'));
+      //have one scraper
+      expect(scrapers.length, equals(1));
+      //scraper has 6 requests
+      expect(scrapers[0].requests.length, equals(6));
+      //info is correct
+      expect(
+        scrapers[0].info,
+        equals(<String, dynamic>{
+          'source': 'testSource',
+          'baseUrl': 'testSource.com',
+          'subdomain': null,
+          'version': 1,
+          'contentType': 'seriesImage',
+          'programType': 'hetu',
+          'requests': [
+            {
+              'type': 'post',
+              'file': 'fetch.ht',
+              'entry': 'main',
+            },
+            {
+              'type': 'postUrl',
+              'file': 'fetch.ht',
+              'entry': 'url',
+            },
+            {
+              'type': 'chapters',
+              'file': 'chapterlist.ht',
+              'entry': 'main',
+            },
+            {
+              'type': 'images',
+              'file': 'fetchImages.ht',
+              'entry': 'main',
+            },
+            {
+              'type': 'imagesUrl',
+              'file': 'fetchImages.ht',
+              'entry': 'url',
+            },
+            {
+              'type': 'catalogMulti',
+              'file': 'catalog.ht',
+              'entry': 'main',
+            },
+          ],
+        }),
+      );
+    });
+    test('Invalid global load', () {
+      Result<ScraperSource> result = ScraperSource.scrapper('invalid');
+      expect(result.fail, isTrue);
+    });
+    test('Load global scraper source', () {
+      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
+
+      Result<ScraperSource> result = ScraperSource.scrapper('testSource');
+
+      expect(result.pass, isTrue);
+    });
   });
 
   group('Parser', () {

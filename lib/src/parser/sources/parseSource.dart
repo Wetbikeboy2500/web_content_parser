@@ -56,7 +56,7 @@ class ParseSource extends SourceTemplate {
 
   ///Builds a parse source from a scraper source
   ///
-  ///[strict] Should contentType be specified as a supported type. If it isn't, an exception will be thrown
+  ///[strict] Should contentType be specified as a supported type. If it isn't, an exception will be thrown.
   ///This is to account for scraper sources being made that are not in a supported format. It currently is not an issue, but in the future, there can be times where checking the contentType will be needed for flexability.
   ParseSource(this.scraper, {bool strict = true})
       : programType = scraper.info['programType'],
