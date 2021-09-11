@@ -197,7 +197,11 @@ dynamic eval(File file,
       if (response['data'] is List) {
         //calling multiple async functions to resolve
         for (var data in response['data']) {
-          nextData.add(await data);
+          if (data is Future) {
+            nextData.add(await data);
+          } else {
+            nextData.add(data);
+          }
         }
       } else {
         //Calling one async function to resolve

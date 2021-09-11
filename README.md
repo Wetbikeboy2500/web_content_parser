@@ -6,6 +6,10 @@
 
 One goal: unify web content parsing between dart projects.
 
+This project has a scraping system that is seperate from the parsing system. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package adds external functions that make scraping easier and is something that is completely independant from the parsing side of the project. If you need a dynamic system to parse websites, this is it.
+
+**Note:** This package uses an exact version of hetu which can be found in the pubspec file. Make sure you write your scripts with that version in mind.
+
 This will not support downloading of any content. This simply acts as the interface.
 
 This project is still in development but does have complete functionality. I am working towards refining function names and the structure of the project. There is also always room to explore what scripts can do and how to define new functionality for them. I would recommend to add this project through git with a hash specified. Once things are to my standard, I will switch to semantic versioning.
@@ -28,7 +32,7 @@ This project can be thought of in three different code bases based on directory 
 
 * [Parser](#parser)
 
-    The parser is what takes the raw data from the scraper and converts it into dart classes to be used. This also reinforces data cleaning and validation. One important thing it defines is [IDs](#ids) which are very important for making sure sources don't collide. Everything else is a subset for dealing with the data. There is currently only one defined structure for data which is designed for series that have chapters of images. More formats or source types are welcome to be implemented. This is the part of the project with the most room for exploration of what should be done. If you have any suggestions, create an issue for discussion. I would like this to also include implementations for various APIs so data can be standardized.
+    The parser is what takes the raw data from the scraper and converts it into dart classes to be used. This also reinforces data cleaning and validation. This will not be useful for most using this project since much more can be done with the scraper. One important thing it defines is [IDs](#ids) which are very important for making sure sources don't collide. Everything else is a subset for dealing with the data. There is currently only one defined structure for data which is designed for series that have chapters of images. More formats or source types are welcome to be implemented. This is the part of the project with the most room for exploration of what should be done. If you have any suggestions, create an issue for discussion. I would like this to also include implementations for various APIs so data can be standardized.
 
 ## Util
 
@@ -86,9 +90,82 @@ If the result is passing, then the data can be trusted and will be the expected 
 
 ## Scraper
 
-WIP
+The scraper handles the interation with [hetu-script](https://github.com/hetu-script/hetu-script) and making sure to provide the needed functions and abilities to any scraping system. It implements its own system for async tasks that a script needs to excute.
+
+### Sections
+
+* [Async hetu code](#async-hetu-code)
+* [Loading in scraping sources](#loading-in-scraping-sources)
+    * [Load Functions](#load-functions)
+
+### Async hetu code
+
+For async code, I have a defined return structure that is a map with a target function(callback) and the data(function to be executed asynchronously). The following is an example of making an http get request in hetu:
+
+```
+external fun getStatusCode(a) -> num
+external fun fetchHtml(a) //this returns a future
+
+fun main() {
+    return {
+        "data": [fetchHtml('google.com'), 'special id'],
+        "target": 'parse',
+    }
+}
+
+fun parse(doc, id) {
+    let statusCode = getStatusCode(doc)
+
+    if (statusCode != 200) {
+        return {}
+    }
+
+    //do something with the given docuemnt and id for scraping
+}
+```
+
+By returing a map with data and target as keys, it will interpret the return as having async code needing to be run. 'data' can be a list of arguments needing to be passed, which can be futures mixed with regular data. 'target' refers to the callback function where all the finalized future data will be sent after completing. This is all handled through reinvoking a hetu function.
+
+**Note:** Data can also simply be a future without being inside a list. I am showing the more complex example to display a very handy use case.
+
+### Loading in scraping sources
+
+Scraping sources are defined through yaml. The reason you need to use a scraping source is to make sure things stay properly formated and complient with other sources. Since this package enforces an exact hetu version, things will need to be complient with the scraper.
+
+**Note:** There is a valid version of a scraper source yaml file. It is test/samples/scraper/source.yaml
+
+Scraping sources have the following requirmented attributes:
+
+* **source** source is the unqiue name for identifying a source
+
+* **baseUrl** baseUrl is the websites hostname. It should not include a subdomain
+
+* **subdomain** subdomain is optional and can be null. This is for if a specific subdomain must be present for a source to work
+
+* **version** version is an int used for tracking what the current source version is. This will help determine if one source is newer than another
+
+* **programType** programType is the current scripting enviroment you are targeting. The only valid value is currently hetu. This acts to add a way to make sure incompatible sources can't run when new requirments are needed.
+
+* **requests** requests is a list of all possible scripting calls that can be made. They have a 'type' which is the name to call the exceute the script. They have a 'file' which is the script file that sits in the current directory of the yaml file or deeper. They have a 'entry' which is the function name which will be called for the specific execution.
+
+All things mentioned can be looked at in the example yaml file at test/samples/scraper/source.yaml
+
+You can also add your own attributes if you want to bundle additional data. It will all be converted to a map that you can access from the ScraperSource object.
+
+If you have any suggestions for how to improve the current format, file an issue.
+
+#### Load Functions
+
+One way and the recommended way to load in scraper sources is to use two of the top level functions. These functions can take a directory and load all .yaml or .yml files it finds. One function will add these sources to a global place you can access by calling 'ScraperSource.scrapper('name')' which will return a scraper source object if it exists. This allows you to not have to bother with tracking where you scraper sources are. The other function simply returns all found sources as there objects. It is up to you as the dev to determine what should then be done with those.
+
+```dart
+void loadExternalScraperSourcesGlobal(Directory dir)
+List<ScraperSource> loadExternalScarperSources(Directory dir)
+```
 
 ## Parser
+
+The parser converts raw data into a format that I have defined. This is more for myself and projects where I need to implement well structured data while staying up to date with naming schemes. I am trying to make sure there isn't a version dependency created by me having to maintain two seperate packages.
 
 ### IDs
 
