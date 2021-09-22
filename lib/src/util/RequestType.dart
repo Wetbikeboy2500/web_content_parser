@@ -49,6 +49,7 @@ const _requestMap = <String, RequestType>{
   'chapters': RequestType.chapters
 };
 
+///Inverse map of request type to string for quick lookup
 const _requestMapInverse = <RequestType, String>{
   RequestType.unknown: 'unknown',
   RequestType.post: 'post',

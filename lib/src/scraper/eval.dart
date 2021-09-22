@@ -8,6 +8,9 @@ import 'package:path/path.dart' as path;
 import 'package:hetu_script/hetu_script.dart';
 import 'package:web_content_parser/src/scraper/scrapeFunctions.dart';
 
+///Functions that can be imported and used inside of hetu scripts
+///
+///This also allows for overridding of functions using the insert function feature
 Map<String, Function> _externalFunction = {
   'querySelector': ({
     List<dynamic> positionalArgs = const [],
@@ -170,6 +173,7 @@ void insertFunction(String name, Function func) => _externalFunction[name] = fun
 ///Evaluates hetu script files
 ///
 ///This includes already made external functions to be used and a system for calling async functions
+///This also accounts for async code through recursive calls when futures are returned in a specific format
 dynamic eval(File file,
     {String functionName = 'main', String workingDirectory = '/script', List args = const []}) async {
   Hetu hetu = Hetu(sourceProvider: DefaultSourceProvider(workingDirectory: workingDirectory));

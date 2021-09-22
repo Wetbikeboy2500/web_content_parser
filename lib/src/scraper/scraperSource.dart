@@ -11,12 +11,13 @@ import 'package:path/path.dart' as p;
 import '../util/RequestType.dart';
 
 class ScraperSource {
+  ///Stores references to the global sources by name
   static final Map<String, ScraperSource> _globalSources = {};
-
+  ///Supported programs that can be run
   static final Set<String> supportedProgramTypes = {'hetu'};
-
+  ///Scraping requests that this object can run
   final Map<String, Request> requests = {};
-
+  ///Yaml file info convert and stored
   late final Map<String, dynamic> info;
 
   ///Returns a global scrapper by name
@@ -101,7 +102,7 @@ class ScraperSource {
     return Result<T>.fail();
   }
 
-  //TODO: have a cache system for loaded hetu files
+  //TODO: have a cache system for loaded hetu files (remove readsync which occurs in the eval)
 }
 
 class Request {

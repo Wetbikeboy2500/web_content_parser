@@ -6,7 +6,9 @@
 
 One goal: unify web content parsing between dart projects.
 
-This project has a scraping system that is seperate from the parsing system. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package adds external functions that make scraping easier and is something that is completely independant from the parsing side of the project. If you need a dynamic system to parse websites, this is it.
+Parsing, in the context of this project, means scraping and transforming data into an expected output. This package allows for raw scraping returns (Scraping system) or it can try and convert scraping systems to a hard-coded dart format (Parsing system).
+
+The scraping system is seperate from the parsing system and can be used independently. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package also adds external functions that make scraping easier. If you need a dynamic system to parse websites, this is it.
 
 **Note:** This package uses an exact version of hetu which can be found in the pubspec file. Make sure you write your scripts with that version in mind.
 
@@ -20,19 +22,39 @@ Building a versitile system for many different types of content. This includes p
 
 ## Design
 
+Import everything:
+```dart
+import 'package:web_content_parser/web_content_parser.dart';
+```
+
 This project can be thought of in three different code bases based on directory inside src.
 
 * [Util](#util)
 
     This has most of the utilty classes and important enums that work for moving data around. It is the core for making sure calls can be made and wrapping responses with easy to integrate classes instead of throwing exceptions. Most things are shared between the scraper and parser sections.
 
+    Individual import:
+    ```dart
+    import 'package:web_content_parser/util.dart';
+    ```
+
 * [Scraper](#scraper)
 
     This handles custom sources which are written in [hetu-script](https://github.com/hetu-script/hetu-script). It is used to return raw data to the parser to be formatted in a known format. This is flexible and can be used without the parser part of the project to do web scraping while staying away from predefined data structures. It is desinged this way to allow developers to completely ignore the opinionated nature of how this project process and builds data. It is also my focus to create a more fluent API for scraping and to address things like dynamic data through webviews and/or sites that require javascript to function.
 
+    Individual import:
+    ```dart
+    import 'package:web_content_parser/scraper.dart';
+    ```
+
 * [Parser](#parser)
 
     The parser is what takes the raw data from the scraper and converts it into dart classes to be used. This also reinforces data cleaning and validation. This will not be useful for most using this project since much more can be done with the scraper. One important thing it defines is [IDs](#ids) which are very important for making sure sources don't collide. Everything else is a subset for dealing with the data. There is currently only one defined structure for data which is designed for series that have chapters of images. More formats or source types are welcome to be implemented. This is the part of the project with the most room for exploration of what should be done. If you have any suggestions, create an issue for discussion. I would like this to also include implementations for various APIs so data can be standardized.
+
+    Individual import:
+    ```dart
+    import 'package:web_content_parser/parser.dart';
+    ```
 
 ## Util
 
@@ -44,7 +66,7 @@ The most important part of the project is how data is moved between methods and 
 
 The data type annotation for the result can be set like so:
 
-```
+```dart
 void Result<String> someFunction() { return Result.error() };
 ```
 
@@ -58,7 +80,7 @@ The result class has two attributes:
 
     T is the type annotation set by the dev. With the `?`, data will always be nullable while the type annotation can be non-nullable, but checking status is how to avoid any unintentional nulls.
 
-```
+```dart
 Result<String>.pass('valid'); //valid
 Result<String>.pass(null); //invalid
 Result<String?>.pass('valid'); //valid
@@ -70,14 +92,14 @@ Note that the `pass` constructor type will always reflect the type annotation wh
 
 The following is the best way to check for if a result has passed or failed. This avoids the need to keep checking if `status` equals a specific `ResultStatus` enum.
 
-```
+```dart
 Result<String>.pass('valid').pass; //returns true
 Result<String>.pass('valid').fail; //returns false
 Result<String>.fail().pass; //returns false
 Result<String>.fail().fail; //retuns true
 ```
 
-```
+```dart
 Result<String> result = Result<String>.pass('valid');
 if (result.pass) {
     result.data!; //use ! so dart knows that this is null-safe
@@ -171,13 +193,13 @@ The parser converts raw data into a format that I have defined. This is more for
 
 The core of any content is how they are identified. This project uses an id/source system to create unique ids. The id and source are both strings. An ID can be created through the folloing:
 
-```
+```dart
 ID(id: '', source: '');
 ```
 
 IDs should contain all the information a source needs to retrieve any relevant information. Extra data can be embedded into the id string to allow finding the item again. IDs compare and use a unqiue string called `uid`. `uid` is built from combining `source` and `id` with a colon inbetween. Example:
 
-```
+```dart
 ID id1 = ID(id: 'uniqueid', source: 'test');
 ID id2 = ID(id: 'uniqueid', source: 'test');
 assert(id1.uid == 'test:uniqueid');
@@ -192,7 +214,7 @@ IDs are tied to all information returned.
 
 The next step to content is the subset of information that can exist. ChapterIDs core idea for identification can be applied to other content. It directly holds an ID object but with an added index and url for the content it points to. It currently uses its index for uniqness.
 
-```
+```dart
 ChapterID(id: ID(id: '', source: ''), index: 0, url: '')
 ```
 
