@@ -35,7 +35,10 @@ void _cleanGetCache(List<String> uriStrings) {
   }
 }
 
+Map<String, Completer> _trailing = {};
+
 //TODO: make a lite version that just returns body and status which would be better for caching
+//TODO: this is currently missing the cache since cache is set after the request it made. It would be better to make the results check for if there is a completer and listen or, if no completer is present, just return the results
 Future<Response> getRequest({
   List<dynamic> positionalArgs = const [],
   Map<String, dynamic> namedArgs = const {},

@@ -151,9 +151,9 @@ class ParseSource extends SourceTemplate {
       return super.fetchPost(id);
     }
 
-    Result post = await scraper.makeRequest(RequestType.postUrl.string, [id.toJson()]);
+    Result post = await scraper.makeRequest(RequestType.post.string, [id.toJson()]);
 
-    if (post.fail) {
+    if (post.fail && post.data == null) {
       return Result.fail();
     }
 

@@ -87,19 +87,21 @@ class ScraperSource {
     if (requests.containsKey(name)) {
       final Request r = requests[name]!;
       try {
-        return Result<T>.pass(await eval(
+        dynamic evalResult = await eval(
           r.file,
           functionName: r.entry,
           args: arguments,
           workingDirectory: r.file.parent.path,
-        ));
+        );
+
+        return Result<T>.pass(evalResult);
       } catch (e, stack) {
         log('Error running eval: $e');
         log(stack);
       }
     }
 
-    return Result<T>.fail();
+    return const Result.fail();
   }
 
   //TODO: have a cache system for loaded hetu files (remove readsync which occurs in the eval)
