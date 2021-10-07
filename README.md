@@ -8,17 +8,17 @@ One goal: unify web content parsing between dart projects.
 
 Parsing, in the context of this project, means scraping and transforming data into an expected output. This package allows for raw scraping returns (Scraping system) or it can try and convert scraping systems to a hard-coded dart format (Parsing system).
 
-The scraping system is seperate from the parsing system and can be used independently. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package also adds external functions that make scraping easier. If you need a dynamic system to parse websites, this is it.
+The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package also adds external functions that make scraping easier. If you need a dynamic system to parse websites, this is it.
 
 **Note:** This package uses an exact version of hetu which can be found in the pubspec file. Make sure you write your scripts with that version in mind.
 
-This will not support downloading of any content. This simply acts as the interface.
+This will not support downloading of any content. This simply acts as an interface and a system for standardization.
 
 This project is still in development but does have complete functionality. I am working towards refining function names and the structure of the project. There is also always room to explore what scripts can do and how to define new functionality for them. I would recommend to add this project through git with a hash specified. Once things are to my standard, I will switch to semantic versioning.
 
 ## Focus
 
-Building a versitile system for many different types of content. This includes providing easy integration into other systems and architectures. I also want to explore using headless browsers for more dynamic content that requires scripts and other things to run first.
+Building a versatile system for many different types of content. This includes providing easy integration into other systems and architectures. I also want to explore using headless browsers for more dynamic content that requires scripts and other things to run first.
 
 ## Design
 
@@ -31,7 +31,7 @@ This project can be thought of in three different code bases based on directory 
 
 * [Util](#util)
 
-    This has most of the utilty classes and important enums that work for moving data around. It is the core for making sure calls can be made and wrapping responses with easy to integrate classes instead of throwing exceptions. Most things are shared between the scraper and parser sections.
+    This has most of the utility classes and important enums that work for moving data around. It is the core for making sure calls can be made and wrapping responses with easy to integrate classes instead of throwing exceptions. Most things are shared between the scraper and parser sections.
 
     Individual import:
     ```dart
@@ -40,7 +40,7 @@ This project can be thought of in three different code bases based on directory 
 
 * [Scraper](#scraper)
 
-    This handles custom sources which are written in [hetu-script](https://github.com/hetu-script/hetu-script). It is used to return raw data to the parser to be formatted in a known format. This is flexible and can be used without the parser part of the project to do web scraping while staying away from predefined data structures. It is desinged this way to allow developers to completely ignore the opinionated nature of how this project process and builds data. It is also my focus to create a more fluent API for scraping and to address things like dynamic data through webviews and/or sites that require javascript to function.
+    This handles custom sources which are written in [hetu-script](https://github.com/hetu-script/hetu-script). It is used to return raw data to the parser to be formatted in a known format. This is flexible and can be used without the parser part of the project to do web scraping while staying away from predefined data structures. It is designed this way to allow developers to completely ignore the opinionated nature of how this project process and builds data. It is also my focus to create a more fluent API for scraping and to address things like dynamic data through webviews and/or sites that require javascript to function.
 
     Individual import:
     ```dart
@@ -96,7 +96,7 @@ The following is the best way to check for if a result has passed or failed. Thi
 Result<String>.pass('valid').pass; //returns true
 Result<String>.pass('valid').fail; //returns false
 Result<String>.fail().pass; //returns false
-Result<String>.fail().fail; //retuns true
+Result<String>.fail().fail; //returns true
 ```
 
 ```dart
@@ -106,13 +106,13 @@ if (result.pass) {
 }
 ```
 
-If the result is passing, then the data can be trusted and will be the expected type. No need to worry about it being null unless it has been specificed in the intial type annotation.
+If the result is passing, then the data can be trusted and will be the expected type. No need to worry about it being null unless it has been specified in the initial type annotation.
 
 
 
 ## Scraper
 
-The scraper handles the interation with [hetu-script](https://github.com/hetu-script/hetu-script) and making sure to provide the needed functions and abilities to any scraping system. It implements its own system for async tasks that a script needs to excute.
+The scraper handles the interaction with [hetu-script](https://github.com/hetu-script/hetu-script) and making sure to provide the needed functions and abilities to any scraping system. It implements its own system for async tasks that a script needs to execute.
 
 ### Sections
 
@@ -142,23 +142,26 @@ fun parse(doc, id) {
         return {}
     }
 
-    //do something with the given docuemnt and id for scraping
+    //do something with the given document and id for scraping
 }
 ```
 
-By returing a map with data and target as keys, it will interpret the return as having async code needing to be run. 'data' can be a list of arguments needing to be passed, which can be futures mixed with regular data. 'target' refers to the callback function where all the finalized future data will be sent after completing. This is all handled through reinvoking a hetu function.
+By returning a map with data and target as keys, it will interpret the return as having async code needing to be run. 'data' can be a list of arguments needing to be passed, which can be futures mixed with regular data. 'target' refers to the callback function where all the finalized future data will be sent after completing. This is all handled through reinvoking a hetu function.
 
 **Note:** Data can also simply be a future without being inside a list. I am showing the more complex example to display a very handy use case.
 
+
+**Note 2:** I have looked into using callbacks for resolving async code. This works if there is a direct path for the async functions. The issue occurs when there is an async call that calls a hetu function then calls another async function. There is no way to await the internal async call done by the hetu function which causes everything to break.
+
 ### Loading in scraping sources
 
-Scraping sources are defined through yaml. The reason you need to use a scraping source is to make sure things stay properly formated and complient with other sources. Since this package enforces an exact hetu version, things will need to be complient with the scraper.
+Scraping sources are defined through yaml. The reason you need to use a scraping source is to make sure things stay properly formatted and compliant with other sources. Since this package enforces an exact hetu version, things will need to be compliant with the scraper.
 
 **Note:** There is a valid version of a scraper source yaml file. It is test/samples/scraper/source.yaml
 
-Scraping sources have the following requirmented attributes:
+Scraping sources have the following required attributes:
 
-* **source** source is the unqiue name for identifying a source
+* **source** source is the unique name for identifying a source
 
 * **baseUrl** baseUrl is the websites hostname. It should not include a subdomain
 
@@ -166,9 +169,9 @@ Scraping sources have the following requirmented attributes:
 
 * **version** version is an int used for tracking what the current source version is. This will help determine if one source is newer than another
 
-* **programType** programType is the current scripting enviroment you are targeting. The only valid value is currently hetu. This acts to add a way to make sure incompatible sources can't run when new requirments are needed.
+* **programType** programType is the current scripting environment you are targeting. The only valid value is currently hetu. This acts to add a way to make sure incompatible sources can't run when new requirements are needed.
 
-* **requests** requests is a list of all possible scripting calls that can be made. They have a 'type' which is the name to call the exceute the script. They have a 'file' which is the script file that sits in the current directory of the yaml file or deeper. They have a 'entry' which is the function name which will be called for the specific execution.
+* **requests** requests is a list of all possible scripting calls that can be made. They have a 'type' which is the name to call the execute the script. They have a 'file' which is the script file that sits in the current directory of the yaml file or deeper. They have a 'entry' which is the function name which will be called for the specific execution.
 
 All things mentioned can be looked at in the example yaml file at test/samples/scraper/source.yaml
 
@@ -187,17 +190,17 @@ List<ScraperSource> loadExternalScarperSources(Directory dir)
 
 ## Parser
 
-The parser converts raw data into a format that I have defined. This is more for myself and projects where I need to implement well structured data while staying up to date with naming schemes. I am trying to make sure there isn't a version dependency created by me having to maintain two seperate packages.
+The parser converts raw data into a format that I have defined. This is more for myself and projects where I need to implement well structured data while staying up to date with naming schemes. I am trying to make sure there isn't a version dependency created by me having to maintain two separate packages.
 
 ### IDs
 
-The core of any content is how they are identified. This project uses an id/source system to create unique ids. The id and source are both strings. An ID can be created through the folloing:
+The core of any content is how they are identified. This project uses an id/source system to create unique ids. The id and source are both strings. An ID can be created through the following:
 
 ```dart
 ID(id: '', source: '');
 ```
 
-IDs should contain all the information a source needs to retrieve any relevant information. Extra data can be embedded into the id string to allow finding the item again. IDs compare and use a unqiue string called `uid`. `uid` is built from combining `source` and `id` with a colon inbetween. Example:
+IDs should contain all the information a source needs to retrieve any relevant information. Extra data can be embedded into the id string to allow finding the item again. IDs compare and use a unique string called `uid`. `uid` is built from combining `source` and `id` with a colon in-between. Example:
 
 ```dart
 ID id1 = ID(id: 'uniqueid', source: 'test');
@@ -212,12 +215,12 @@ IDs are tied to all information returned.
 
 ### ChapterIDs
 
-The next step to content is the subset of information that can exist. ChapterIDs core idea for identification can be applied to other content. It directly holds an ID object but with an added index and url for the content it points to. It currently uses its index for uniqness.
+The next step to content is the subset of information that can exist. ChapterIDs core idea for identification can be applied to other content. It directly holds an ID object but with an added index and url for the content it points to. It currently uses its index for uniqueness.
 
 ```dart
 ChapterID(id: ID(id: '', source: ''), index: 0, url: '')
 ```
 
-This also uses a uid like IDs but with an added value added to the end. It adds the index to the end of the uid with a colon so it follows the format of 'source:id:index'. This means all info can also be extracted from the uid since it can go off the first and last occurance of the colon with the id being any value.
+This also uses a uid like IDs but with an added value added to the end. It adds the index to the end of the uid with a colon so it follows the format of 'source:id:index'. This means all info can also be extracted from the uid since it can go off the first and last occurrence of the colon with the id being any value.
 
 When using the fromJson() constructor, the ID can be passed as a map or an object.
