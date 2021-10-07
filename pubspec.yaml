@@ -13,7 +13,6 @@ dependencies:
     git:
       url: git@github.com:Wetbikeboy2500/computer.git
       ref: 8451a696b2710f5a39b9d0da585defb5e3b4bb42
-  tuple: ^2.0.0
   yaml: ^3.1.0
   path: ^1.8.0
   html: ^0.15.0
@@ -25,7 +24,6 @@ dependencies:
 
 dev_dependencies:
   puppeteer: ^2.0.0
-  pedantic: ^1.11.0
   build_runner: ^2.0.1
   json_serializable: ^5.0.0
   lints: ^1.0.1

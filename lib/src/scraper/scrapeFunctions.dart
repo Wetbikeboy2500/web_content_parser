@@ -6,7 +6,6 @@ import 'dart:async';
 
 import 'package:hetu_script/type/type.dart';
 import 'package:http/http.dart';
-import 'package:tuple/tuple.dart';
 import '../util/log.dart';
 
 //TODO: postRequest() {}
@@ -20,50 +19,39 @@ Timer? _removeCache;
  */
 const _cacheTimeMilliseconds = 1000;
 
-final Map<String, Tuple2<int, Response>> _getCache = {};
-
-void _cleanGetCache(List<String> uriStrings) {
-  log(uriStrings);
-  //Remove outdated
-  for (final key in uriStrings) {
-    _getCache.remove(key);
-  }
-
-  //Queue all that still exist to be removed
-  if (_getCache.isNotEmpty && (_removeCache == null || !_removeCache!.isActive)) {
-    _removeCache = Timer(Duration(milliseconds: _cacheTimeMilliseconds), () => _cleanGetCache(<String>[..._getCache.keys]));
-  }
-}
-
-Map<String, Completer> _trailing = {};
+final Map<String, Completer<Response>> _getCache = {};
 
 //TODO: make a lite version that just returns body and status which would be better for caching
-//TODO: this is currently missing the cache since cache is set after the request it made. It would be better to make the results check for if there is a completer and listen or, if no completer is present, just return the results
-Future<Response> getRequest({
+Future<Response?> getRequest({
   List<dynamic> positionalArgs = const [],
   Map<String, dynamic> namedArgs = const {},
   List<HTType> typeArgs = const <HTType>[],
 }) async {
+  //get the request url to a standard format
   final Uri uri = Uri.parse(positionalArgs[0]);
   final String uriString = uri.toString();
 
+  //return a cached element if it exists
   if (_getCache.containsKey(uriString)) {
-    if (DateTime.now().millisecondsSinceEpoch - _getCache[uriString]!.item1  >= _cacheTimeMilliseconds) {
-      _getCache.remove(uriString);
-    } else {
-      return _getCache[uriString]!.item2;
-    }
+    return _getCache[uriString]!.future;
   }
 
-  late final Map<String, String>? headers = (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
+  //make sure we make a completer for the request asap
+  Completer<Response> request = Completer<Response>();
+  _getCache[uriString] = request;
 
+  //set any custom headers if provided
+  final Map<String, String>? headers =
+      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
+
+  //make the request
   final Response r = await get(uri, headers: headers);
 
-  _getCache[uriString] = Tuple2(DateTime.now().millisecondsSinceEpoch, r);
+  request.complete(r);
 
-  if (_removeCache == null || !_removeCache!.isActive) {
-    _removeCache = Timer(Duration(milliseconds: _cacheTimeMilliseconds), () => _cleanGetCache([uriString]));
-  }
+  //schedule a cache clear
+  Timer(Duration(milliseconds: _cacheTimeMilliseconds), () => _getCache.remove(uriString));
 
+  //return result
   return r;
 }
