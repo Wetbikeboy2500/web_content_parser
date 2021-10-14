@@ -42,5 +42,5 @@ class ChapterID extends Equatable {
   }
 
   @override
-  List<Object> get props => [uid];
+  List<Object> get props => <Object>[uid];
 }

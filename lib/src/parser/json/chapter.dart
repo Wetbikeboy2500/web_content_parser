@@ -58,7 +58,7 @@ class Chapter {
     return computer.compute<List<Map<String, dynamic>>, List<Chapter>>(chaptersFromJson, param: chapters);
   }
 
-  static chaptersFromJson(List<Map<String, dynamic>> chapters) {
+  static List<Chapter> chaptersFromJson(List<Map<String, dynamic>> chapters) {
     return chapters.map((e) => _$ChapterFromJson(e)).toList();
   }
 

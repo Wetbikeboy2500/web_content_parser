@@ -18,5 +18,5 @@ class ID extends Equatable {
   Map<String, dynamic> toJson() => _$IDToJson(this);
 
   @override
-  List<Object> get props => [uid];
+  List<Object> get props => <Object>[uid];
 }

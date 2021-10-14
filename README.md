@@ -108,6 +108,9 @@ if (result.pass) {
 
 If the result is passing, then the data can be trusted and will be the expected type. No need to worry about it being null unless it has been specified in the initial type annotation.
 
+### ResultExtended
+
+ResultExtended is an extension on result. ResultExtended has static methods that can make creating result objects easier while handling logging inside the project. These are not in the Result class since these methods cannot be considered agnostic.
 
 
 ## Scraper

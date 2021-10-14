@@ -4,13 +4,17 @@
 
 import 'dart:async';
 
+import 'package:web_content_parser/parser.dart';
+
+import '../scraper/headless.dart';
+
+import '../util/Result.dart';
+import '../util/firstWhereResult.dart';
+
 import 'package:hetu_script/type/type.dart';
 import 'package:http/http.dart';
-import '../util/log.dart';
 
 //TODO: postRequest() {}
-
-Timer? _removeCache;
 
 /*TODO:
  * I am going to keep this as a const for now as the idea is more for reducing same requests that are close to each other.
@@ -37,7 +41,7 @@ Future<Response?> getRequest({
   }
 
   //make sure we make a completer for the request asap
-  Completer<Response> request = Completer<Response>();
+  final Completer<Response> request = Completer<Response>();
   _getCache[uriString] = request;
 
   //set any custom headers if provided
@@ -50,8 +54,19 @@ Future<Response?> getRequest({
   request.complete(r);
 
   //schedule a cache clear
-  Timer(Duration(milliseconds: _cacheTimeMilliseconds), () => _getCache.remove(uriString));
+  Timer(const Duration(milliseconds: _cacheTimeMilliseconds), () => _getCache.remove(uriString));
 
   //return result
   return r;
 }
+
+Future<Result> getDynamicPage(String url) async {
+  final Result<Headless> headless = WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
+  if (headless.pass) {
+    return await headless.data!.getHtml();
+  }
+  //generic fail
+  return headless;
+}
+
+

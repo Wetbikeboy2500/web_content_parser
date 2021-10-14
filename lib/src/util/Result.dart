@@ -7,6 +7,7 @@ import './ResultStatus.dart';
 class Result<T> {
   ///Status of whatever fetch was made. [FetchStatus.pass] or [FetchStatus.fail]
   final ResultStatus status;
+
   ///Data this class wraps around
   final T? data;
 
@@ -19,10 +20,13 @@ class Result<T> {
   ///
   ///[status] is set to [FetchStatus.fail]
   ///[data] is set to null
-  const Result.fail() : status = ResultStatus.fail, data = null;
+  const Result.fail()
+      : status = ResultStatus.fail,
+        data = null;
 
   ///Is [status] [FetchStatus.pass]
   bool get pass => ResultStatus.pass == status;
+
   ///Is [status] [FetchStatus.fail]
   bool get fail => ResultStatus.fail == status;
 }

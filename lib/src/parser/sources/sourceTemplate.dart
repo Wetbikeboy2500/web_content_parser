@@ -1,5 +1,5 @@
-import 'package:web_content_parser/src/util/Result.dart';
-import 'package:web_content_parser/src/util/log.dart';
+import '../../util/Result.dart';
+import '../../util/log.dart';
 
 import '../json/catalogEntry.dart';
 import '../json/chapter.dart';
@@ -31,43 +31,37 @@ abstract class SourceTemplate {
 
   Future<Result<Post>> fetchPost(ID id) async {
     log('Empty request for fetch post');
-    return Result.fail();
+    return const Result.fail();
   }
 
   Future<Result<Post>> fetchPostUrl(String url) async {
     log('Empty request for fetch post url');
-    return Result.fail();
+    return const Result.fail();
   }
 
   Future<Result<List<Chapter>>> fetchChapters(ID id) async {
     log('Empty request for fetch chapters');
-    return Result.fail();
+    return const Result.fail();
   }
 
   Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterId) async {
     log('Empty request for fetch chapter images');
-    return Result.fail();
+    return const Result.fail();
   }
 
   Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
     log('Empty request for chapter images url');
-    return Result.fail();
+    return const Result.fail();
   }
 
   Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0}) async {
     log('Empty request for fetch catalog');
-    return Result.fail();
+    return const Result.fail();
   }
 
   bool supports(RequestType type) {
     return requestTypes.contains(type);
   }
 
-  String host() {
-    if (subdomain != null) {
-      return subdomain! + '.' + baseurl;
-    } else {
-      return baseurl;
-    }
-  }
+  String get host => subdomain != null ? subdomain! + '.' + baseurl : baseurl;
 }

@@ -1,4 +1,6 @@
-import 'package:web_content_parser/src/scraper/scraper.dart';
+import '../../util/ResultExtended.dart';
+import '../../scraper/scraper.dart';
+import '../../util/firstWhereResult.dart';
 import '../../scraper/scraperSource.dart';
 import '../../util/log.dart';
 import '../../webContentParser.dart';
@@ -21,68 +23,77 @@ import '../../util/RequestType.dart';
 ///
 ///This interfaces with all loaded sources and searchs for data return
 Future<Result<Post>> fetchPost(ID id) async {
-  if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.post)) {
+  final SourceTemplate? source = sources[id.source];
+  if (source != null && source.supports(RequestType.post)) {
+    //try catch since can't trust source methods
     try {
-      return await sources[id.source]!.fetchPost(id);
+      return await source.fetchPost(id);
     } catch (e, stack) {
-      log('Error getting post data: $e');
+      log('High level error getting post data: $e');
       log(stack);
     }
-  } else if (WebContentParser.verbose) {
+  } else {
     log('Unable to find source ${id.source}');
   }
-  return Result.fail();
+  return const Result.fail();
 }
 
 ///Returns post data if it can match the url
 ///
 ///[url] this is the url to search to determine the post being searched for
 Future<Result<Post>> fetchPostUrl(String url) async {
-  try {
-    final Uri u = Uri.parse(url);
+  final Uri? u = Uri.tryParse(url);
 
-    //compile list of all allowed sources for chapter image downloading
-    List<SourceTemplate> allowedPostByURL = [];
-    for (SourceTemplate a in sources.values) {
-      if (a.supports(RequestType.postUrl)) {
-        allowedPostByURL.add(a);
-      }
+  if (u == null) {
+    log('Error parsing url: $url');
+    return const Result.fail();
+  }
+
+  //compile list of all allowed sources for chapter image downloading
+  //TODO: could cache this until a new source is added
+  final List<SourceTemplate> allowedPostByURL = [];
+  for (SourceTemplate a in sources.values) {
+    if (a.supports(RequestType.postUrl)) {
+      allowedPostByURL.add(a);
     }
+  }
 
-    //find the source that support the url for the image downaloding
-    if (allowedPostByURL.isNotEmpty) {
+  //find the source that support the url for the image downaloding
+  if (allowedPostByURL.isNotEmpty) {
+    final Result<SourceTemplate> s = allowedPostByURL.firstWhereResult((a) => u.host.contains(a.host));
+
+    if (s.pass) {
       try {
-        SourceTemplate s = allowedPostByURL.firstWhere((a) => u.host.contains(a.host()));
-        return await s.fetchPostUrl(url);
-      } on StateError {
-        log('No series match url: $url');
+        return await s.data!.fetchPostUrl(url);
       } catch (e, stack) {
-        log('Error getting post data by url: $e');
+        log('High level error fetching post url: $e');
         log(stack);
       }
     } else {
-      log('Found no allowed sources');
+      log('No series match url: $url');
     }
-  } catch (e, stack) {
-    log('Error in getting post by url: $e');
-    log(stack);
+  } else {
+    log('Found no allowed sources');
   }
-  return Result.fail();
+
+  return const Result.fail();
 }
 
 ///Returns chapter list info for given id
 ///
 ///[id] unique id for source to get chapters from
 Future<Result<List<Chapter>>> fetchChapters(ID id) async {
-  if (sources.containsKey(id.source) && sources[id.source]!.supports(RequestType.chapters)) {
+  final SourceTemplate? source = sources[id.source];
+  if (source != null && source.supports(RequestType.chapters)) {
     try {
-      Result<List<Chapter>> result = await sources[id.source]!.fetchChapters(id);
+      final Result<List<Chapter>> result = await source.fetchChapters(id);
 
       if (result.fail) {
-        return Result.fail();
+        log('Failed fetching chapters');
+        return const Result.fail();
       }
 
-      List<Chapter> chapters = result.data!;
+      final List<Chapter> chapters = result.data!;
 
       //sort the list by chapterindex
       chapters.sort((a, b) => a.chapterID.index - b.chapterID.index);
@@ -94,7 +105,7 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
   } else {
     log('Unable to find source ${id.source}');
   }
-  return Result.fail();
+  return const Result.fail();
 }
 
 ///Requests chapter images based only on url
@@ -102,34 +113,42 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
 ///This looks for mapping the given host part of url to the source to be matched
 ///It is possible to encode custom urls that you can modify later
 Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
+  final Uri? u = Uri.tryParse(url);
+
+  if (u == null) {
+    log('Error parsing url: $url');
+    return const Result.fail();
+  }
+
+  //compile list of all allowed sources for chapter image downloading
+  final List<SourceTemplate> allowedImageDownload = [];
+  for (SourceTemplate a in sources.values) {
+    if (a.supports(RequestType.imagesUrl)) {
+      allowedImageDownload.add(a);
+    }
+  }
+
+  if (allowedImageDownload.isEmpty) {
+    log('Found no allowed sources');
+    return const Result.fail();
+  }
+
+  //find the source that support the url for the image downaloding
+  final Result<SourceTemplate> s = allowedImageDownload.firstWhereResult((a) => u.host.contains(a.host));
+
+  if (s.fail) {
+    log('No sources match chapter image download');
+    return const Result.fail();
+  }
+
   try {
-    final Uri u = Uri.parse(url);
-
-    //compile list of all allowed sources for chapter image downloading
-    List<SourceTemplate> allowedImageDownload = [];
-    for (SourceTemplate a in sources.values) {
-      if (a.supports(RequestType.imagesUrl)) {
-        allowedImageDownload.add(a);
-      }
-    }
-
-    //find the source that support the url for the image downaloding
-    if (allowedImageDownload.isNotEmpty) {
-      try {
-        SourceTemplate s = allowedImageDownload.firstWhere((a) => u.host.contains(a.host()));
-        log('Fetching chapter images');
-        return await s.fetchChapterImagesUrl(url);
-      } on StateError {
-        log('No sources match chapter image download');
-      }
-    } else {
-      log('Found no allowed sources');
-    }
+    log('Fetching chapter images');
+    return await s.data!.fetchChapterImagesUrl(url);
   } catch (e, stack) {
     log('Error in getting chapter images url: $e');
     log(stack);
   }
-  return Result.fail();
+  return const Result.fail();
 }
 
 ///Requests chapter images based on ChapterID
@@ -137,8 +156,8 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
 ///Chapter id info should have already been defined by the source
 Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
   try {
-    if (sources.containsKey(chapterID.id.source) && sources[chapterID.id.source]!.supports(RequestType.images)) {
-      SourceTemplate s = sources[chapterID.id.source]!;
+    final SourceTemplate? s = sources[chapterID.id.source];
+    if (s != null && s.supports(RequestType.images)) {
       log('Fetching chapter images');
       return await s.fetchChapterImages(chapterID);
     } else {
@@ -148,7 +167,7 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
     log('Error in getting chapter images: $e');
     log(stack);
   }
-  return Result.fail();
+  return const Result.fail();
 }
 
 ///Request catalog for the source
@@ -158,11 +177,11 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
 ///To determine if a source supports catalog call [sourceSupportsCatalog]
 ///To determine if a source supports multicatalog call [sourceSupportsMultiCatalog]
 Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0}) async {
-  if (sources.containsKey(source)) {
-    SourceTemplate s = sources[source]!;
+  final SourceTemplate? s = sources[source];
+  if (s != null) {
     if (s.supports(RequestType.catalog) || s.supports(RequestType.catalogMulti)) {
       try {
-        return await sources[source]!.fetchCatalog(page: page);
+        return await s.fetchCatalog(page: page);
       } catch (e, stack) {
         log('Error in getting catalog: $e');
         log(stack);
@@ -174,7 +193,7 @@ Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0}) a
     log('Invalid source: $source');
   }
 
-  return Result.fail();
+  return const Result.fail();
 }
 
 ///Determines if the source supports a specific type of request
@@ -182,7 +201,8 @@ Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0}) a
 ///[source] The source to search and test for
 ///[type] The RequestType to test
 bool sourceSupports(String source, RequestType type) {
-  return sources.containsKey(source) && sources[source]!.supports(type);
+  final SourceTemplate? template = sources[source];
+  return template != null && template.supports(type);
 }
 
 ///Load scraper sources from all yaml(.yaml or .yml) files in a directory.
@@ -195,7 +215,7 @@ void loadExternalParseSources(Directory dir) {
   for (final scraper in scrapers) {
     try {
       //pass scraper to the parse interface
-      ParseSource source = ParseSource(scraper);
+      final ParseSource source = ParseSource(scraper);
       //add the new source
       addSource(source.source, source);
     } catch (e, stack) {
@@ -212,9 +232,10 @@ void loadExternalParseSources(Directory dir) {
 ///
 ///Source will only by overriden if version number is higher than the currently used source.
 void addSource(String name, SourceTemplate source) {
-  if (sources.containsKey(name)) {
+  final SourceTemplate? currentSource = sources[name];
+  if (currentSource != null) {
     //overwrite previous version only if added source is newer
-    if (sources[name]!.version < source.version) {
+    if (currentSource.version < source.version) {
       sources[name] = source;
     }
   } else {
@@ -227,11 +248,11 @@ void addSource(String name, SourceTemplate source) {
 ///[name] unique name to identify the source.
 ///Includes {'parse': true/false} to let you know if this is a parsed source or not which has different information.
 ///Throws ['Unknown source'] if name does not exist.
-Map<String, dynamic> getSourceInfo(String name) {
-  if (sources.containsKey(name)) {
-    dynamic source = sources[name];
+Result<Map<String, dynamic>> getSourceInfo(String name) {
+  final dynamic source = sources[name];
+  if (source != null) {
     if (source is ParseSource) {
-      return {
+      return Result.pass({
         'parse': true,
         'source': source.source,
         'version': source.version,
@@ -239,19 +260,19 @@ Map<String, dynamic> getSourceInfo(String name) {
         'subdomain': source.subdomain,
         'baseurl': source.baseurl,
         'programType': source.programType,
-      };
+      });
     } else if (source is SourceTemplate) {
-      return {
+      return Result.pass({
         'parse': false,
         'source': source.source,
         'version': source.version,
         'baseurl': source.baseurl,
         'subdomain': source.subdomain,
-      };
+      });
     }
   }
 
-  throw Exception('Unknown source');
+  return const Result.fail();
 }
 
 ///Stores all source object

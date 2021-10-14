@@ -1,5 +1,5 @@
 //Make sure to keep this as the first import
-// ignore_for_file: unused_import
+// ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
 import 'package:web_content_parser/web_content_parser.dart';
 
@@ -182,15 +182,15 @@ void main() {
       );
     });
     test('Invalid global load', () {
-      Result<ScraperSource> result = ScraperSource.scrapper('invalid');
-      expect(result.fail, isTrue);
+      ScraperSource? result = ScraperSource.scrapper('invalid');
+      expect(result, isNull);
     });
     test('Load global scraper source', () {
       loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
-      Result<ScraperSource> result = ScraperSource.scrapper('testSource');
+      ScraperSource? result = ScraperSource.scrapper('testSource');
 
-      expect(result.pass, isTrue);
+      expect(result, isNotNull);
     });
   });
 

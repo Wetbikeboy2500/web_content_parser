@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import '../util/log.dart';
 
+import 'headless.dart';
 import 'scraperSource.dart';
 
 ///Loads an external sources

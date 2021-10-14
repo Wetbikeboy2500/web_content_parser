@@ -46,7 +46,7 @@ class ParseSource extends SourceTemplate {
   static void _shutDown() {
     _running--;
     if (_computer.isRunning && _running == 0 && (_finalTimer == null || !_finalTimer!.isActive)) {
-      _finalTimer = Timer(Duration(seconds: 5), () {
+      _finalTimer = Timer(const Duration(seconds: 5), () {
         if (_running == 0) {
           _computer.turnOff();
         }
@@ -68,7 +68,7 @@ class ParseSource extends SourceTemplate {
           subdomain: scraper.info['subdomain'],
         ) {
     if (strict && !['seriesImage'].contains(scraper.info['contentType'])) {
-      throw FormatException('Doesn\'t have valid contentType');
+      throw const FormatException('Doesn\'t have valid contentType');
     }
   }
 
@@ -96,10 +96,10 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapters(id);
     }
 
-    Result<List> chapters = await scraper.makeRequest<List>(RequestType.chapters.string, [id.toJson()]);
+    final Result<List> chapters = await scraper.makeRequest<List>(RequestType.chapters.string, [id.toJson()]);
 
     if (chapters.fail) {
-      return Result.fail();
+      return const Result.fail();
     }
 
     try {
@@ -120,7 +120,7 @@ class ParseSource extends SourceTemplate {
       }
       log('Error parsing chapter list: $e');
       log(stack);
-      return Result.fail();
+      return const Result.fail();
     }
   }
 

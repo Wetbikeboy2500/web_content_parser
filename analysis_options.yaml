@@ -9,6 +9,9 @@ linter:
   rules:
      - camel_case_types
      - avoid_print
+     - prefer_const_constructors
+     - prefer_final_locals
+     - always_declare_return_types
 
 analyzer:
   errors:

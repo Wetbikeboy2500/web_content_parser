@@ -17,7 +17,7 @@ class TestSource extends SourceTemplate {
 
   @override
   Future<Result<Post>> fetchPost(ID id) async {
-    return await fetchPostUrl('https://${host()}/manga/get/${id.id}');
+    return await fetchPostUrl('https://$host/manga/get/${id.id}');
   }
 
   @override
@@ -30,13 +30,13 @@ class TestSource extends SourceTemplate {
       return Result.pass(Post.fromJson(j));
     } else {
       Logger.root.warning('Status Error: ${response.statusCode.toString()}, $url');
-      return Result.fail();
+      return const Result.fail();
     }
   }
 
   @override
   Future<Result<List<Chapter>>> fetchChapters(ID id) async {
-    final url = Uri.parse('https://${host()}/manga/chapters/${id.id}');
+    final url = Uri.parse('https://$host/manga/chapters/${id.id}');
 
     final response = await http.get(url);
 
@@ -52,7 +52,7 @@ class TestSource extends SourceTemplate {
       return Result.pass(chapters);
     } else {
       Logger.root.warning('Failed to load ${id.uid}');
-      return Result.fail();
+      return const Result.fail();
     }
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:web_content_parser/src/util/ResultExtended.dart';
+
 import '../util/Result.dart';
 
 import '../util/log.dart';
@@ -13,29 +15,26 @@ import '../util/RequestType.dart';
 class ScraperSource {
   ///Stores references to the global sources by name
   static final Map<String, ScraperSource> _globalSources = {};
+
   ///Supported programs that can be run
   static final Set<String> supportedProgramTypes = {'hetu'};
+
   ///Scraping requests that this object can run
   final Map<String, Request> requests = {};
+
   ///Yaml file info convert and stored
   late final Map<String, dynamic> info;
 
   ///Returns a global scrapper by name
   ///
-  ///Throws an [Exception] if [name] doesn't for a global scrapper
-  static Result<ScraperSource> scrapper(String name) {
-    if (_globalSources.containsKey(name)) {
-      return Result.pass(_globalSources[name]!);
-    }
-
-    return Result.fail();
-  }
+  ///Returns null if [name] doesn't exist for a global scrapper
+  static ScraperSource? scrapper(String name) => _globalSources[name];
 
   ///Creates a scrapper that is added to global and can be referenced without having the object
   ///
   ///This is good for defining your scripts on start-up to later be used
   factory ScraperSource.global(String input, Directory directory) {
-    ScraperSource source = ScraperSource(input, directory);
+    final ScraperSource source = ScraperSource(input, directory);
 
     //add to global scraper source by name
     _globalSources[source.info['source']] = source;
@@ -47,17 +46,17 @@ class ScraperSource {
   ScraperSource(String input, Directory directory) {
     try {
       //decode yaml
-      Map<String, dynamic> yaml = Map<String, dynamic>.from(loadYaml(input));
+      final Map<String, dynamic> yaml = Map<String, dynamic>.from(loadYaml(input));
       log(yaml);
       //make sure it meets requirements (source, baseurl, subdomain, version, programTarget, functions)
       const requiredAttributes = ['source', 'baseUrl', 'subdomain', 'version', 'programType', 'requests'];
       if (!requiredAttributes.every((element) => yaml.containsKey(element))) {
         log('Missing fields');
-        throw FormatException('Missing fields');
+        throw const FormatException('Missing fields');
       }
 
       if (!supportedProgramTypes.contains(yaml['programType'])) {
-        throw FormatException('Unknown program type');
+        throw const FormatException('Unknown program type');
       }
 
       //save all yaml into info
@@ -79,26 +78,22 @@ class ScraperSource {
     } catch (e, stack) {
       log('Parsing error for global source $e');
       log(stack);
-      throw FormatException('Failed to parse source');
+      throw const FormatException('Failed to parse source');
     }
   }
 
   Future<Result<T>> makeRequest<T>(String name, List arguments) async {
-    if (requests.containsKey(name)) {
-      final Request r = requests[name]!;
-      try {
-        dynamic evalResult = await eval(
+    final Request? r = requests[name];
+    if (r != null) {
+      return await ResultExtended.unsafeAsync<T>(
+        () async => await eval(
           r.file,
           functionName: r.entry,
           args: arguments,
           workingDirectory: r.file.parent.path,
-        );
-
-        return Result<T>.pass(evalResult);
-      } catch (e, stack) {
-        log('Error running eval: $e');
-        log(stack);
-      }
+        ),
+        errorMessage: 'Error running eval',
+      );
     }
 
     return const Result.fail();
