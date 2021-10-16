@@ -1,9 +1,7 @@
-import '../../util/ResultExtended.dart';
 import '../../scraper/scraper.dart';
 import '../../util/firstWhereResult.dart';
 import '../../scraper/scraperSource.dart';
 import '../../util/log.dart';
-import '../../webContentParser.dart';
 import 'dart:io';
 
 //source interfaces

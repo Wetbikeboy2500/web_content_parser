@@ -262,9 +262,10 @@ void main() {
         expect(images.fail, isTrue);
       });
       test('Get correct info', () {
-        Map<String, dynamic> info = getSourceInfo('blank');
+        Result<Map<String, dynamic>> info = getSourceInfo('blank');
+        expect(info.pass, isTrue);
         expect(
-          info,
+          info.data,
           equals(<String, dynamic>{
             'parse': false,
             'source': 'blank',

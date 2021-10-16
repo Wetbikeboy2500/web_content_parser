@@ -32,9 +32,11 @@ class ParseSource extends SourceTemplate {
   static int workers = 2;
 
   static void _startUp() {
-    _running++;
-    if (!_computer.isRunning) {
-      _computer.turnOn();
+    if (computeEnabled) {
+      _running++;
+      if (!_computer.isRunning) {
+        _computer.turnOn();
+      }
     }
   }
 
@@ -44,8 +46,11 @@ class ParseSource extends SourceTemplate {
   static int computeCooldownMilliseconds = 5000;
 
   static void _shutDown() {
-    _running--;
+    if (_running > 0) {
+      _running--;
+    }
     if (_computer.isRunning && _running == 0 && (_finalTimer == null || !_finalTimer!.isActive)) {
+      //5 second grace period before the computer is killed
       _finalTimer = Timer(const Duration(seconds: 5), () {
         if (_running == 0) {
           _computer.turnOff();
@@ -96,28 +101,35 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapters(id);
     }
 
+    //do this before the request is made to have a bit of time to start
+    _startUp();
+
     final Result<List> chapters = await scraper.makeRequest<List>(RequestType.chapters.string, [id.toJson()]);
 
     if (chapters.fail) {
+      _shutDown();
       return const Result.fail();
     }
 
-    try {
-      if (computeEnabled) {
-        _startUp();
+    if (computeEnabled) {
+      try {
         //I currently am only using computer here since lists of chapters can have a lot of data to be processed
         final List<Chapter> response =
             await Chapter.computeChaptersFromJson(_computer, chapters.data!.cast<Map<String, dynamic>>());
         _shutDown();
         return Result.pass(response);
-      } else {
-        return Result.pass(List<Chapter>.from(chapters.data!.map((value) => Chapter.fromJson(value))));
-      }
-    } catch (e, stack) {
-      if (computeEnabled) {
-        //going to assume there was a parse error which means there is an open compute
+      } catch (e, stack) {
         _shutDown();
+        log('Error parsing chapter list computer: $e');
+        log(stack);
+        //if compute fails, we cancel the return
+        return const Result.fail();
       }
+    }
+
+    try {
+      return Result.pass(List<Chapter>.from(chapters.data!.map((value) => Chapter.fromJson(value))));
+    } catch (e, stack) {
       log('Error parsing chapter list: $e');
       log(stack);
       return const Result.fail();
@@ -130,10 +142,10 @@ class ParseSource extends SourceTemplate {
       return super.fetchPostUrl(url);
     }
 
-    Result post = await scraper.makeRequest(RequestType.postUrl.string, [url]);
+    final Result post = await scraper.makeRequest(RequestType.postUrl.string, [url]);
 
     if (post.fail) {
-      return Result.fail();
+      return const Result.fail();
     }
 
     try {
@@ -141,7 +153,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log('Error parsing post data: $e');
       log(stack);
-      return Result.fail();
+      return const Result.fail();
     }
   }
 
@@ -151,10 +163,10 @@ class ParseSource extends SourceTemplate {
       return super.fetchPost(id);
     }
 
-    Result post = await scraper.makeRequest(RequestType.post.string, [id.toJson()]);
+    final Result post = await scraper.makeRequest(RequestType.post.string, [id.toJson()]);
 
     if (post.fail && post.data == null) {
-      return Result.fail();
+      return const Result.fail();
     }
 
     try {
@@ -162,7 +174,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log('Error parsing post data: $e');
       log(stack);
-      return Result.fail();
+      return const Result.fail();
     }
   }
 
@@ -179,10 +191,10 @@ class ParseSource extends SourceTemplate {
       return super.fetchCatalog();
     }
 
-    Result<List> entries = await scraper.makeRequest<List>(requestType.string, [page]);
+    final Result<List> entries = await scraper.makeRequest<List>(requestType.string, [page]);
 
     if (entries.fail) {
-      return Result.fail();
+      return const Result.fail();
     }
 
     try {
@@ -190,7 +202,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log('Error fetching catalog: $e');
       log(stack);
-      return Result.fail();
+      return const Result.fail();
     }
   }
 }

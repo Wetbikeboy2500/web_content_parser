@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:hetu_script/hetu_script.dart';
 import 'scrapeFunctions.dart';
-import '../util/Result.dart';
 
 ///Functions that can be imported and used inside of hetu scripts
 ///
@@ -93,7 +92,7 @@ Map<String, Function> _externalFunction = {
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
-    var time = positionalArgs[0];
+    final time = positionalArgs[0];
     Duration ago;
     if (time.contains('mins ago') || time.contains('min ago')) {
       ago = Duration(minutes: int.parse(time.substring(0, time.indexOf('min'))));
@@ -188,7 +187,7 @@ dynamic eval(File file,
   //Define the eval script for recursion
   _eval = (name, _args) async {
     //invokes specific functions by name to be run
-    var response = hetu.invoke(
+    final response = hetu.invoke(
       name,
       positionalArgs: _args,
     );

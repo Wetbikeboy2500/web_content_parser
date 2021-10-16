@@ -13,12 +13,12 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
       completed: json['completed'] as bool? ?? false,
       altnames: json['altnames'] as String? ?? '',
       authors: json['authors'] == null
-          ? const []
+          ? const <Author>[]
           : Post._authors(json['authors'] as List?),
       categories: (json['categories'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const [],
+          const <String>[],
       description: json['description'] as String? ?? '',
       type: json['type'] as String? ?? 'unknown',
       chapterNumber: json['chapterNumber'] as int? ?? 0,
