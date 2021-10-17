@@ -38,6 +38,7 @@ Map<String, Function> _externalFunction = {
   },
   'fetchHtml': getRequest,
   'getRequest': getRequest,
+  'getDynamicPage': getDynamicPage,
   'postRequest': ({
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
@@ -51,6 +52,13 @@ Map<String, Function> _externalFunction = {
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return parser.parse(positionalArgs[0].body);
+  },
+  'parseHtml': ({
+    List<dynamic> positionalArgs = const [],
+    Map<String, dynamic> namedArgs = const {},
+    List<HTType> typeArgs = const <HTType>[],
+  }) {
+    return parser.parse(positionalArgs[0]);
   },
   'joinUrl': ({
     List<dynamic> positionalArgs = const [],

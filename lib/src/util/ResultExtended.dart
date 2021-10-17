@@ -9,7 +9,8 @@ extension ResultExtended<T> on Result<T> {
 
   ///Determines if a result fails when an error is throw
   ///
-  ///[unsafeFunction] function ran when
+  ///[unsafeFunction] is executed
+  ///[errorMessage] leading text for the error message sent to the log
   static Result<T> unsafe<T>(T Function() unsafeFunction, {String errorMessage = ''}) {
     try {
       return Result.pass(unsafeFunction());
@@ -20,6 +21,10 @@ extension ResultExtended<T> on Result<T> {
     }
   }
 
+  ///Determines if a result fails when an error is throw
+  ///
+  ///[unsafeFunction] is executed and awaited for
+  ///[errorMessage] leading text for the error message sent to the log
   static Future<Result<T>> unsafeAsync<T>(Future<T> Function() unsafeFunction, {String errorMessage = ''}) async {
     try {
       return Result.pass(await unsafeFunction());
@@ -28,5 +33,13 @@ extension ResultExtended<T> on Result<T> {
       log(stack);
       return const Result.fail();
     }
+  }
+
+  static Map<String, dynamic> toJson(Result result) {
+    return {
+      'data': result.data,
+      'pass': result.pass,
+      'fail': result.fail,
+    };
   }
 }

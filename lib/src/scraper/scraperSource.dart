@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:web_content_parser/src/util/ResultExtended.dart';
+import '../util/ResultExtended.dart';
 
 import '../util/Result.dart';
 
 import '../util/log.dart';
 
-import './eval.dart';
+import 'eval.dart';
 import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as p;
 

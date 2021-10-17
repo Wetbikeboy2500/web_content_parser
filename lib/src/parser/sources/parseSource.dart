@@ -2,8 +2,8 @@ import 'dart:async';
 
 //source
 import 'package:computer/computer.dart';
-import 'package:web_content_parser/src/scraper/scraperSource.dart';
-import 'package:web_content_parser/src/util/Result.dart';
+import '../../scraper/scraperSource.dart';
+import '../../util/Result.dart';
 import '../../util/log.dart';
 
 import './sourceTemplate.dart';

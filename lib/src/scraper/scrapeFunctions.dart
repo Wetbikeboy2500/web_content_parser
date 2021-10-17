@@ -5,6 +5,7 @@
 import 'dart:async';
 
 import 'package:web_content_parser/parser.dart';
+import '../util/ResultExtended.dart';
 
 import '../scraper/headless.dart';
 
@@ -60,13 +61,19 @@ Future<Response?> getRequest({
   return r;
 }
 
-Future<Result> getDynamicPage(String url) async {
+Future<Map<String, dynamic>> getDynamicPage({
+  List<dynamic> positionalArgs = const [],
+  Map<String, dynamic> namedArgs = const {},
+  List<HTType> typeArgs = const <HTType>[],
+}) async {
+  final String url = positionalArgs[0];
+
   final Result<Headless> headless = WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
   if (headless.pass) {
-    return await headless.data!.getHtml();
+    return ResultExtended.toJson(await headless.data!.getHtml(url));
   }
   //generic fail
-  return headless;
+  return ResultExtended.toJson(const Result.fail());
 }
 
 
