@@ -1,9 +1,12 @@
 import 'dart:async';
 
-import 'package:path/path.dart';
+import 'package:puppeteer/protocol/network.dart';
 import 'package:puppeteer/puppeteer.dart';
+import '../util/log.dart';
 import '../scraper/headless.dart';
+import '../util/firstWhereResult.dart';
 import '../util/ResultExtended.dart';
+import '../util/parseUriResult.dart';
 
 import 'dart:io' show Platform;
 
@@ -25,10 +28,31 @@ class DesktopHeadless extends Headless {
   }
 
   //TODO: add delay on this like computer system
+  //TODO: this will also have issues for concurrent requests
   void shutdown() async {
     await browser?.close();
     browser = null;
     context = null;
+  }
+
+  final Map<Uri, List<Cookie>> cookies = {};
+
+  Result<List<Cookie>> getCookies(String url) {
+    final Uri? uri = Uri.tryParse(url);
+
+    if (uri == null) {
+      log('Failed get cookies url parse: $url');
+      return const Result.fail();
+    }
+
+    final Result<MapEntry<Uri, List<Cookie>>> r = cookies.entries.firstWhereResult((element) => element.key.host == uri.host);
+
+    if (r.fail) {
+      log('Failed to find cookies for url given: $url');
+      return const Result.fail();
+    }
+
+    return Result.pass(r.data!.value);
   }
 
   @override
@@ -49,6 +73,14 @@ class DesktopHeadless extends Headless {
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.0 Safari/537.36');
         await page.setJavaScriptEnabled(true);
         await page.goto(url, wait: Until.networkIdle);
+
+        //get cookies
+        final uri = UriResult.parse(url);
+        if (uri.pass) {
+          print(await page.cookies());
+          cookies[uri.data!] = await page.cookies();
+        }
+
         final Result r = Result.pass(await page.content);
         shutdown();
         completer.complete(r);
