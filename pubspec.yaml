@@ -17,7 +17,7 @@ dependencies:
   path: ^1.8.0
   html: ^0.15.0
   http: ^0.13.1
-  json_annotation: ^4.0.1
+  json_annotation: ^4.3.0
   equatable: ^2.0.0
   convert: ^3.0.0
   intl: ^0.17.0
@@ -25,11 +25,11 @@ dependencies:
   flutter_inappwebview:
     git:
       url: git@github.com:Wetbikeboy2500/flutter_inappwebview.git
-      ref: 5f96c33eb78275c3251ae8fc100a63768c53aff4
+      ref: 0a3e995c73f7f4da7bf777f850fa7d274989d630
 
 dev_dependencies:
   build_runner: ^2.0.1
-  json_serializable: ^5.0.0
+  json_serializable: ^6.0.1
   lints: ^1.0.1
   test: ^1.17.10
   coverage: ^1.0.3

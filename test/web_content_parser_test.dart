@@ -202,7 +202,8 @@ void main() {
       });
 
       test('Get source info', () {
-        expect(() => getSourceInfo(''), throwsException);
+        Result r = getSourceInfo('');
+        expect(r.fail, isTrue);
       });
 
       test('Get post', () async {
