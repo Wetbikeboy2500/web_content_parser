@@ -61,19 +61,23 @@ Future<Response?> getRequest({
   return r;
 }
 
-Future<Map<String, dynamic>> getDynamicPage({
+Future<Map<String, dynamic>> getDynamicPageHetu({
   List<dynamic> positionalArgs = const [],
   Map<String, dynamic> namedArgs = const {},
   List<HTType> typeArgs = const <HTType>[],
 }) async {
   final String url = positionalArgs[0];
 
+  return ResultExtended.toJson(await getDynamicPage(url));
+}
+
+Future<Result<String>> getDynamicPage(String url) async {
   final Result<Headless> headless = WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
   if (headless.pass) {
-    return ResultExtended.toJson(await headless.data!.getHtml(url));
+    return await headless.data!.getHtml(url);
   }
   //generic fail
-  return ResultExtended.toJson(const Result.fail());
+  return const Result.fail();
 }
 
 

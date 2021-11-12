@@ -38,7 +38,7 @@ Map<String, Function> _externalFunction = {
   },
   'fetchHtml': getRequest,
   'getRequest': getRequest,
-  'getDynamicPage': getDynamicPage,
+  'getDynamicPage': getDynamicPageHetu,
   'postRequest': ({
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},

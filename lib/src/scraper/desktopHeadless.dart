@@ -45,7 +45,8 @@ class DesktopHeadless extends Headless {
       return const Result.fail();
     }
 
-    final Result<MapEntry<Uri, List<Cookie>>> r = cookies.entries.firstWhereResult((element) => element.key.host == uri.host);
+    final Result<MapEntry<Uri, List<Cookie>>> r =
+        cookies.entries.firstWhereResult((element) => element.key.host == uri.host);
 
     if (r.fail) {
       log('Failed to find cookies for url given: $url');
@@ -56,8 +57,8 @@ class DesktopHeadless extends Headless {
   }
 
   @override
-  Future<Result> getHtml(String url) {
-    final Completer<Result> completer = Completer();
+  Future<Result<String>> getHtml(String url) {
+    final Completer<Result<String>> completer = Completer();
 
     ResultExtended.unsafeAsync(startup).then((value) {
       if (value.fail || value.data == null) {
@@ -81,7 +82,16 @@ class DesktopHeadless extends Headless {
           cookies[uri.data!] = await page.cookies();
         }
 
-        final Result r = Result.pass(await page.content);
+        final String? html = await page.content;
+
+        final Result<String> r;
+
+        if (html == null) {
+          r = const Result.fail();
+        } else {
+          r = Result.pass(html);
+        }
+
         shutdown();
         completer.complete(r);
       });

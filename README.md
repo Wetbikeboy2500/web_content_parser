@@ -8,7 +8,7 @@ One goal: unify web content parsing between dart projects.
 
 Parsing, in the context of this project, means scraping and transforming data into an expected output. This package allows for raw scraping returns (Scraping system) or it can try and convert scraping systems to a hard-coded dart format (Parsing system).
 
-The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package also adds external functions that make scraping easier. If you need a dynamic system to parse websites, this is it.
+The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package also adds external functions that make scraping easier. There are also methods to get webpages through headless browsers. If you need a dynamic system to parse websites, this is it.
 
 **Note:** This package uses an exact version of hetu which can be found in the pubspec file. Make sure you write your scripts with that version in mind.
 
@@ -119,11 +119,36 @@ The scraper handles the interaction with [hetu-script](https://github.com/hetu-s
 
 ### Sections
 
-* [Async hetu code](#async-hetu-code)
-* [Loading in scraping sources](#loading-in-scraping-sources)
+* [Headless Browser Web Scraping](#headless-browser-web-scraping)
+* [Async Hetu Code](#async-hetu-code)
+* [Loading in Scraping Sources](#loading-in-scraping-sources)
     * [Load Functions](#load-functions)
 
-### Async hetu code
+### Headless Browser Web Scrapers
+
+Headless browsers provide a lot of power to scrape dynamic pages. This project currently uses puppeteer and a forked repo of flutter_inappwebview. These two packages provide the power to scrape on any platform.
+
+**Note:** These packages have only been tested on android and windows machines. flutter_inappwebview has not been maintained in a long time with a long list of reported issues on its repo. The stability of using headless browsers can not be guaranteed.
+
+The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browser with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
+
+#### Mobile:
+
+```dart
+WebContentParser.addHeadless(MobileHeadless());
+```
+
+#### Desktop:
+
+```dart
+WebContentParser.addHeadless(DesktopHeadless());
+```
+
+Once the headless browsers are added, they can be used through an interface define for them. The standard interface is implemented through `Future<Result<String>> getDynamicPage(String url) async` function. `getDynamicPage` returns all the HTML of a page as a single string wrapped with a `Result` class to indicate if the operation passed or failed. You can pass the function a `url`, and the supported headless browser will be chosen and used to get the requested information. How multiple requests are handled is up to the headless browser implementation. Current implementations have a basic queue system to only allow one request at a time. The `getDynamicPage` function is exposed through `import 'package:web_content_parser/scraper.dart';`
+
+There is also a support function in hetu. It can be imported with `external fun getDynamicPage(a) -> Map<str, any>`. The map represents the Result class that wraps the functions data. The map has two booleans `pass` and `fail` with `data` storing whatever return it has. As the hetu function is async, please refer to [Async Hetu Code](#async-hetu-code) for how to deal with the function.
+
+### Async Hetu Code
 
 For async code, I have a defined return structure that is a map with a target function(callback) and the data(function to be executed asynchronously). The following is an example of making an http get request in hetu:
 
@@ -149,7 +174,7 @@ fun parse(doc, id) {
 }
 ```
 
-By returning a map with data and target as keys, it will interpret the return as having async code needing to be run. 'data' can be a list of arguments needing to be passed, which can be futures mixed with regular data. 'target' refers to the callback function where all the finalized future data will be sent after completing. This is all handled through reinvoking a hetu function.
+By returning a map with data and target as keys, it will interpret the return as having async code needing to be run. `data` can be a list of arguments needing to be passed, which can be futures mixed with regular data. `target` refers to the callback function where all the finalized future data will be sent after completing. This is all handled through reinvoking a hetu function.
 
 **Note:** Data can also simply be a future without being inside a list. I am showing the more complex example to display a very handy use case.
 
@@ -174,7 +199,7 @@ Scraping sources have the following required attributes:
 
 * **programType** programType is the current scripting environment you are targeting. The only valid value is currently hetu. This acts to add a way to make sure incompatible sources can't run when new requirements are needed.
 
-* **requests** requests is a list of all possible scripting calls that can be made. They have a 'type' which is the name to call the execute the script. They have a 'file' which is the script file that sits in the current directory of the yaml file or deeper. They have a 'entry' which is the function name which will be called for the specific execution.
+* **requests** requests is a list of all possible scripting calls that can be made. They have a `type` which is the name to call the execute the script. They have a `file` which is the script file that sits in the current directory of the yaml file or deeper. They have a `entry` which is the function name which will be called for the specific execution.
 
 All things mentioned can be looked at in the example yaml file at test/samples/scraper/source.yaml
 
@@ -184,7 +209,7 @@ If you have any suggestions for how to improve the current format, file an issue
 
 #### Load Functions
 
-One way and the recommended way to load in scraper sources is to use two of the top level functions. These functions can take a directory and load all .yaml or .yml files it finds. One function will add these sources to a global place you can access by calling 'ScraperSource.scrapper('name')' which will return a scraper source object if it exists. This allows you to not have to bother with tracking where you scraper sources are. The other function simply returns all found sources as there objects. It is up to you as the dev to determine what should then be done with those.
+One way and the recommended way to load in scraper sources is to use two of the top level functions. These functions can take a directory and load all .yaml or .yml files it finds. One function will add these sources to a global place you can access by calling `ScraperSource.scrapper('name')` which will return a scraper source object if it exists. This allows you to not have to bother with tracking where you scraper sources are. The other function simply returns all found sources as there objects. It is up to you as the dev to determine what should then be done with those.
 
 ```dart
 void loadExternalScraperSourcesGlobal(Directory dir)
@@ -224,6 +249,6 @@ The next step to content is the subset of information that can exist. ChapterIDs
 ChapterID(id: ID(id: '', source: ''), index: 0, url: '')
 ```
 
-This also uses a uid like IDs but with an added value added to the end. It adds the index to the end of the uid with a colon so it follows the format of 'source:id:index'. This means all info can also be extracted from the uid since it can go off the first and last occurrence of the colon with the id being any value.
+This also uses a uid like IDs but with an added value added to the end. It adds the index to the end of the uid with a colon so it follows the format of `source:id:index`. This means all info can also be extracted from the uid since it can go off the first and last occurrence of the colon with the id being any value.
 
 When using the fromJson() constructor, the ID can be passed as a map or an object.

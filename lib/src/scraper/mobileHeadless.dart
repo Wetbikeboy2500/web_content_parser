@@ -29,7 +29,7 @@ class MobileHeadless extends Headless {
     }
   }
 
-  void runQueue(Completer completer, Uri uri) {
+  void runQueue(Completer<Result<String>> completer, Uri uri) {
     if (running) {
       requests.add(() => runQueue(completer, uri));
       return;
@@ -48,7 +48,11 @@ class MobileHeadless extends Headless {
           if (!completer.isCompleted) {
             controller.getHtml().then((value) {
               if (!completer.isCompleted) {
-                completer.complete(Result.pass(value));
+                if (value == null) {
+                  completer.complete(const Result.fail());
+                } else {
+                  completer.complete(Result.pass(value));
+                }
                 running = false;
                 if (requests.isNotEmpty) {
                   requests.removeFirst().call();
@@ -96,14 +100,14 @@ class MobileHeadless extends Headless {
   }
 
   @override
-  Future<Result> getHtml(String url) {
+  Future<Result<String>> getHtml(String url) {
     final Uri? uri = Uri.tryParse(url);
 
     if (uri == null) {
       return Future.value(const Result.fail());
     }
 
-    final Completer<Result> completer = Completer();
+    final Completer<Result<String>> completer = Completer();
 
     runQueue(completer, uri);
 
