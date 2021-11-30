@@ -1,6 +1,5 @@
 //Make sure to keep this as the first import
-// ignore_for_file: unused_import
-
+// ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
 import 'package:web_content_parser/web_content_parser.dart';
 
@@ -13,6 +12,70 @@ import 'heroku.dart';
 import 'package:dotenv/dotenv.dart' show load, env;
 
 void main() {
+  group('Utility', () {
+    test('Enable log', () {
+      WebContentParser.verbose = true;
+      expect(WebContentParser.verbose, isTrue);
+    });
+    test('Passing Result', () {
+      Result<String> f = Result<String>.pass('Test');
+      expect(f.pass, isTrue);
+      expect(f.fail, isFalse);
+      expect(f.data, equals('Test'));
+    });
+    test('Passing Result Nullable With Null', () {
+      Result<String?> f = Result<String?>.pass(null);
+      expect(f.pass, isTrue);
+      expect(f.data, null);
+    });
+    test('Passing Result Nullable With String', () {
+      Result<String?> f = Result<String?>.pass('Test');
+      expect(f.pass, isTrue);
+      expect(f.data, equals('Test'));
+    });
+    test('Failing Result', () {
+      Result<String> f = Result<String>.fail();
+      expect(f.pass, isFalse);
+      expect(f.fail, isTrue);
+      expect(f.data, equals(null));
+    });
+    test('RequestType extension comparisons', () {
+      expect(RequestType.catalog.catalog, isTrue);
+      expect(RequestType.post.post, isTrue);
+      expect(RequestType.postUrl.postUrl, isTrue);
+      expect(RequestType.images.images, isTrue);
+      expect(RequestType.imagesUrl.imagesUrl, isTrue);
+      expect(RequestType.catalog.catalog, isTrue);
+      expect(RequestType.catalogMulti.catalogMulti, isTrue);
+      expect(RequestType.chapters.chapters, isTrue);
+      expect(RequestType.unknown.unknown, isTrue);
+    });
+
+    test('RequestType string conversions', () {
+      expect(requestMap('post').post, isTrue);
+      expect(requestMap('postUrl').postUrl, isTrue);
+      expect(requestMap('images').images, isTrue);
+      expect(requestMap('imagesUrl').imagesUrl, isTrue);
+      expect(requestMap('catalog').catalog, isTrue);
+      expect(requestMap('catalogMulti').catalogMulti, isTrue);
+      expect(requestMap('chapters').chapters, isTrue);
+      expect(requestMap('unknown').unknown, isTrue);
+      expect(requestMap('').unknown, isTrue);
+    });
+
+    test('RequestType extension string', () {
+      expect(requestMap(RequestType.catalog.string).catalog, isTrue);
+      expect(requestMap(RequestType.post.string).post, isTrue);
+      expect(requestMap(RequestType.postUrl.string).postUrl, isTrue);
+      expect(requestMap(RequestType.images.string).images, isTrue);
+      expect(requestMap(RequestType.imagesUrl.string).imagesUrl, isTrue);
+      expect(requestMap(RequestType.catalog.string).catalog, isTrue);
+      expect(requestMap(RequestType.catalogMulti.string).catalogMulti, isTrue);
+      expect(requestMap(RequestType.chapters.string).chapters, isTrue);
+      expect(requestMap(RequestType.unknown.string).unknown, isTrue);
+    });
+  });
+
   group('Generic data', () {
     test('Create ID', () {
       ID id = ID(id: 'test', source: 'testing');
@@ -43,11 +106,11 @@ void main() {
       expect(id, isNot(equals(id1)));
     });
     test('Create ChapterID', () {
-      var id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+      ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
       expect(id.uid, equals('testing:test:0'));
     });
     test('Create ChapterID from json', () {
-      var id = ChapterID.fromJson({
+      ChapterID id = ChapterID.fromJson({
         'url': '',
         'index': '0',
         'id': ID(id: 'test', source: 'testing'),
@@ -55,170 +118,241 @@ void main() {
       expect(id.uid, equals('testing:test:0'));
     });
     test('ChapterID equals', () {
-      var id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
-      var id1 = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+      ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+      ChapterID id1 = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
       expect(id, equals(id1));
     });
     test('ChapterID not equals', () {
-      var id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
-      var id1 = ChapterID(url: '', index: 1, id: ID(id: 'test', source: 'testing'));
+      ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+      ChapterID id1 = ChapterID(url: '', index: 1, id: ID(id: 'test', source: 'testing'));
       expect(id, isNot(equals(id1)));
     });
   });
 
-  group('Undefined source', () {
-    test('Source supports', () {
-      bool supports = sourceSupports('', RequestType.CATALOG);
-      expect(supports, isFalse);
+  group('Scraper', () {
+    test('Load yaml file', () {
+      List<ScraperSource> scrapers = loadExternalScarperSources(Directory('test/samples/scraper'));
+      //have one scraper
+      expect(scrapers.length, equals(1));
+      //scraper has 6 requests
+      expect(scrapers[0].requests.length, equals(6));
+      //info is correct
+      expect(
+        scrapers[0].info,
+        equals(<String, dynamic>{
+          'source': 'testSource',
+          'baseUrl': 'testSource.com',
+          'subdomain': null,
+          'version': 1,
+          'contentType': 'seriesImage',
+          'programType': 'hetu',
+          'requests': [
+            {
+              'type': 'post',
+              'file': 'fetch.ht',
+              'entry': 'main',
+            },
+            {
+              'type': 'postUrl',
+              'file': 'fetch.ht',
+              'entry': 'url',
+            },
+            {
+              'type': 'chapters',
+              'file': 'chapterlist.ht',
+              'entry': 'main',
+            },
+            {
+              'type': 'images',
+              'file': 'fetchImages.ht',
+              'entry': 'main',
+            },
+            {
+              'type': 'imagesUrl',
+              'file': 'fetchImages.ht',
+              'entry': 'url',
+            },
+            {
+              'type': 'catalogMulti',
+              'file': 'catalog.ht',
+              'entry': 'main',
+            },
+          ],
+        }),
+      );
     });
+    test('Invalid global load', () {
+      ScraperSource? result = ScraperSource.scrapper('invalid');
+      expect(result, isNull);
+    });
+    test('Load global scraper source', () {
+      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
-    test('Get source info', () {
-      expect(() => getSourceInfo(''), throwsException);
-    });
+      ScraperSource? result = ScraperSource.scrapper('testSource');
 
-    test('Get post', () async {
-      var post = await getPostData(ID(source: '', id: ''));
-      expect(post.fail, isTrue);
-    });
-    test('Get post url', () async {
-      var post = await getPostDataURL('');
-      expect(post.fail, isTrue);
-    });
-    test('Get chapter', () async {
-      var chapter = await getChapterListData(ID(source: '', id: ''));
-      expect(chapter.fail, isTrue);
-    });
-    test('Get chapter images', () async {
-      var chapter = await getChapterImages(ChapterID(url: '', index: 0, id: ID(source: '', id: '')));
-      expect(chapter.fail, isTrue);
-    });
-    test('Get chapter images url', () async {
-      var chapter = await getChapterImagesURL('');
-      expect(chapter.fail, isTrue);
+      expect(result, isNotNull);
     });
   });
 
-  group('Blank source with request types enabled', () {
-    addSource('blank', BlankSource());
+  group('Parser', () {
+    group('Undefined source', () {
+      test('Source supports', () {
+        bool supports = sourceSupports('', RequestType.catalog);
+        expect(supports, isFalse);
+      });
 
-    ID id = ID(id: '', source: 'blank');
+      test('Get source info', () {
+        Result r = getSourceInfo('');
+        expect(r.fail, isTrue);
+      });
 
-    test('Fail get catalog', () async {
-      var catalog = await getCatalog('blank');
-      expect(catalog.fail, isTrue);
+      test('Get post', () async {
+        Result<Post> post = await fetchPost(ID(source: '', id: ''));
+        expect(post.fail, isTrue);
+      });
+      test('Get post url', () async {
+        Result<Post> post = await fetchPostUrl('');
+        expect(post.fail, isTrue);
+      });
+      test('Get chapters', () async {
+        Result<List<Chapter>> chapter = await fetchChapters(ID(source: '', id: ''));
+        expect(chapter.fail, isTrue);
+      });
+      test('Get chapter images', () async {
+        Result<Map<int, String>> chapter =
+            await fetchChapterImages(ChapterID(url: '', index: 0, id: ID(source: '', id: '')));
+        expect(chapter.fail, isTrue);
+      });
+      test('Get chapter images url', () async {
+        Result<Map<int, String>> chapter = await fetchChapterImagesUrl('');
+        expect(chapter.fail, isTrue);
+      });
     });
-    test('Fail get post', () async {
-      var post = await getPostData(id);
-      expect(post.fail, isTrue);
-    });
-    test('Fail get post url with valid url', () async {
-      var post = await getPostDataURL('test.test');
-      expect(post.fail, isTrue);
-    });
-    test('Fail get post url with invalid url', () async {
-      var post = await getPostDataURL('test.com');
-      expect(post.fail, isTrue);
-    });
-    test('Fail get chapter', () async {
-      var chapter = await getChapterListData(id);
-      expect(chapter.fail, isTrue);
-    });
-    test('Fail get chapter images', () async {
-      var chapter = await getChapterImages(ChapterID(url: '', index: 0, id: id));
-      expect(chapter.fail, isTrue);
-    });
-    test('Fail get chapter images url', () async {
-      var chapter = await getChapterImagesURL('test.test');
-      expect(chapter.fail, isTrue);
-    });
-    test('Get correct info', () {
-      var info = getSourceInfo('blank');
-      expect(
-          info,
+
+    group('Blank source with request types enabled', () {
+      addSource('blank', BlankSource());
+
+      ID id = ID(id: '', source: 'blank');
+
+      test('Fail get catalog', () async {
+        Result<List<CatalogEntry>> catalog = await fetchCatalog('blank');
+        expect(catalog.fail, isTrue);
+      });
+      test('Fail get post', () async {
+        Result<Post> post = await fetchPost(id);
+        expect(post.fail, isTrue);
+      });
+      test('Fail get post url with valid url', () async {
+        Result<Post> post = await fetchPostUrl('test.test');
+        expect(post.fail, isTrue);
+      });
+      test('Fail get post url with invalid url', () async {
+        Result<Post> post = await fetchPostUrl('test.com');
+        expect(post.fail, isTrue);
+      });
+      test('Fail get chapter', () async {
+        Result<List<Chapter>> chapter = await fetchChapters(id);
+        expect(chapter.fail, isTrue);
+      });
+      test('Fail get chapter images', () async {
+        Result<Map<int, String>> images = await fetchChapterImages(ChapterID(url: '', index: 0, id: id));
+        expect(images.fail, isTrue);
+      });
+      test('Fail get chapter images url', () async {
+        Result<Map<int, String>> images = await fetchChapterImagesUrl('test.test');
+        expect(images.fail, isTrue);
+      });
+      test('Get correct info', () {
+        Result<Map<String, dynamic>> info = getSourceInfo('blank');
+        expect(info.pass, isTrue);
+        expect(
+          info.data,
           equals(<String, dynamic>{
             'parse': false,
             'source': 'blank',
             'version': 0,
             'baseurl': 'test.test',
             'subdomain': null,
-          }));
-    });
-  });
-
-  //TODO: revise testing for external sources and parsed sources
-  /*group('External sources', () {
-    test('Load external sources', () {
-      loadExternalSource(Directory('bin'));
-      expect(sources.length, greaterThan(1));
-    });
-  });*/
-
-  group('Basic source info', () {
-    //load env
-    load();
-
-    if (env['BASE'] == null && env['SUB'] == null) {
-      throw 'Source needs to be defined in .env';
-    }
-
-    addSource('test', TestSource(env['BASE']!, env['SUB']!));
-
-    test('Source exists', () {
-      expect(sources, contains('test'));
+          }),
+        );
+      });
     });
 
-    test('Source doesn\'t support catalog', () {
-      var supports = sourceSupports('test', RequestType.CATALOG);
-      expect(supports, equals(false));
-    });
+    //TODO: revise testing for external sources and parsed sources
+    /*group('External sources', () {
+      test('Load external sources', () {
+        loadExternalSource(Directory('bin'));
+        expect(sources.length, greaterThan(1));
+      });
+    });*/
 
-    test('Source doesn\'t support multi catalog', () {
-      var supports = sourceSupports('test', RequestType.CATALOGMULTI);
-      expect(supports, equals(false));
-    });
+    group('Basic source info', () {
+      //load env
+      load();
 
-    test('Source supports post', () {
-      var supports = sourceSupports('test', RequestType.POST);
-      expect(supports, isTrue);
-    });
+      if (env['BASE'] == null && env['SUB'] == null) {
+        throw 'Source needs to be defined in .env';
+      }
 
-    test('Source supports post url', () {
-      var supports = sourceSupports('test', RequestType.POSTURL);
-      expect(supports, isTrue);
-    });
+      addSource('test', TestSource(env['BASE']!, env['SUB']!));
 
-    test('Source supports chapter list', () {
-      var supports = sourceSupports('test', RequestType.CHAPTERS);
-      expect(supports, isTrue);
-    });
+      test('Source exists', () {
+        expect(sources, contains('test'));
+      });
 
-    test('Get post', () async {
-      FetchReturn<Post> p = await getPostData(ID(id: '1', source: 'test'));
-      expect(p.pass, isTrue);
-    });
+      test('Source doesn\'t support catalog', () {
+        bool supports = sourceSupports('test', RequestType.catalog);
+        expect(supports, equals(false));
+      });
 
-    test('Get post url', () async {
-      FetchReturn<Post> p = await getPostDataURL('${env["SOURCE"]}/manga/get/1');
-      expect(p.pass, isTrue);
-    });
+      test('Source doesn\'t support multi catalog', () {
+        bool supports = sourceSupports('test', RequestType.catalogMulti);
+        expect(supports, equals(false));
+      });
 
-    test('Post to json', () async {
-      FetchReturn<Post> p = await getPostData(ID(id: '1', source: 'test'));
-      expect(p.data?.toJson(), isMap);
-    });
+      test('Source supports post', () {
+        bool supports = sourceSupports('test', RequestType.post);
+        expect(supports, isTrue);
+      });
 
-    test('Fail post', () async {
-      FetchReturn<Post> p = await getPostData(ID(id: '0', source: 'test'));
-      expect(p.fail, isTrue);
-    });
+      test('Source supports post url', () {
+        bool supports = sourceSupports('test', RequestType.postUrl);
+        expect(supports, isTrue);
+      });
 
-    test('Get chapter list', () async {
-      var chapters = await getChapterListData(ID(id: '1', source: 'test'));
-      expect(chapters.pass, isTrue);
-    });
-    test('Get chapter list not empty', () async {
-      var chapters = await getChapterListData(ID(id: '1', source: 'test'));
-      expect(chapters.data, isNotEmpty);
+      test('Source supports chapter list', () {
+        bool supports = sourceSupports('test', RequestType.chapters);
+        expect(supports, isTrue);
+      });
+
+      test('Get post', () async {
+        Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
+        expect(p.pass, isTrue);
+      });
+
+      test('Get post url', () async {
+        Result<Post> p = await fetchPostUrl('${env["SOURCE"]}/manga/get/1');
+        expect(p.pass, isTrue);
+      });
+
+      test('Post to json', () async {
+        Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
+        expect(p.data?.toJson(), isMap);
+      });
+
+      test('Fail post', () async {
+        Result<Post> p = await fetchPost(ID(id: '0', source: 'test'));
+        expect(p.fail, isTrue);
+      });
+
+      test('Get chapter list', () async {
+        Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
+        expect(chapters.pass, isTrue);
+      });
+      test('Get chapter list not empty', () async {
+        Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
+        expect(chapters.data, isNotEmpty);
+      });
     });
   });
 }

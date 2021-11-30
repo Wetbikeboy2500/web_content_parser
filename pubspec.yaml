@@ -1,5 +1,5 @@
 name: web_content_parser
-description: A parser for online content. This package defines a base design for the realtion of data and parsing of it.
+description: A parser for online content. This package defines a base design for the relation of data and parsing of it.
 version: 1.0.0
 
 publish_to: none
@@ -9,19 +9,27 @@ environment:
 
 dependencies:
   hetu_script: 0.1.2+5
+  computer:
+    git:
+      url: git@github.com:Wetbikeboy2500/computer.git
+      ref: 8451a696b2710f5a39b9d0da585defb5e3b4bb42
+  yaml: ^3.1.0
   path: ^1.8.0
   html: ^0.15.0
   http: ^0.13.1
-  json_annotation: ^4.0.1
+  json_annotation: ^4.3.0
   equatable: ^2.0.0
   convert: ^3.0.0
   intl: ^0.17.0
+  puppeteer: ^2.0.0
+  flutter_inappwebview:
+    git:
+      url: git@github.com:Wetbikeboy2500/flutter_inappwebview.git
+      ref: f29997155707f91fb6a24086d5ff28a2d91861a3
 
 dev_dependencies:
-  puppeteer: ^2.0.0
-  pedantic: ^1.11.0
   build_runner: ^2.0.1
-  json_serializable: ^5.0.0
+  json_serializable: ^6.0.1
   lints: ^1.0.1
   test: ^1.17.10
   coverage: ^1.0.3

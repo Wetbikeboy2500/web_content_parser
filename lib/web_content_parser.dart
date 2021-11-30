@@ -1,12 +1,22 @@
-export 'package:web_content_parser/src/json/id.dart';
-export 'package:web_content_parser/src/json/author.dart';
-export 'package:web_content_parser/src/json/chapter.dart';
-export 'package:web_content_parser/src/json/post.dart';
-export 'package:web_content_parser/src/json/catalogEntry.dart';
-export 'package:web_content_parser/src/sources/source.dart';
-export 'package:web_content_parser/src/sources/sourceTemplate.dart';
-export 'package:web_content_parser/src/json/chapterID.dart';
-export 'package:web_content_parser/src/util/EmptyRequest.dart';
-export 'package:web_content_parser/src/util/FetchReturn.dart';
-export 'package:web_content_parser/src/util/FetchStatus.dart';
-export 'package:web_content_parser/src/util/RequestType.dart';
+library web_content_parser;
+
+export './src/webContentParser.dart';
+
+//Parse sources
+export 'src/parser/sources/sourceTemplate.dart';
+export 'src/parser/sources/source.dart';
+export 'src/parser/json/id.dart';
+export 'src/parser/json/chapterID.dart';
+export 'src/parser/json/post.dart';
+export 'src/parser/json/author.dart';
+export 'src/parser/json/chapter.dart';
+export 'src/parser/json/catalogEntry.dart';
+
+//Scraper
+export 'src/scraper/scraperSource.dart';
+export 'src/scraper/scraper.dart';
+
+//Utils
+export 'src/util/Result.dart';
+export 'src/util/ResultStatus.dart';
+export 'src/util/RequestType.dart';

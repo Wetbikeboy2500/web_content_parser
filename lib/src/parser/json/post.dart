@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:web_content_parser/src/json/author.dart';
-import 'package:web_content_parser/src/json/id.dart';
+import './author.dart';
+import './id.dart';
 
 part 'post.g.dart';
 
@@ -27,8 +27,8 @@ class Post {
     this.coverurl = '',
     this.completed = false,
     this.altnames = '',
-    this.authors = const [],
-    this.categories = const [],
+    this.authors = const <Author>[],
+    this.categories = const <String>[],
     this.description = '',
     this.type = 'unknown',
     this.chapterNumber = 0,
@@ -42,12 +42,12 @@ class Post {
   static List<Author> _authors(List<dynamic>? authorList) {
     if (authorList != null) {
       if (authorList.isNotEmpty) {
-        return authorList.map((auth) => (auth is Author) ? auth : Author.fromJson(auth)).toList();
+        return authorList.map((dynamic auth) => (auth is Author) ? auth : Author.fromJson(auth)).toList();
       } else {
-        return const [];
+        return const <Author>[];
       }
     } else {
-      return const [];
+      return const <Author>[];
     }
   }
 

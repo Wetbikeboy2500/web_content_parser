@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:web_content_parser/src/json/id.dart';
+import './id.dart';
 
 part 'catalogEntry.g.dart';
 

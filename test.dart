@@ -1,22 +1,24 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
-main(List<String> args) {
+void main(List<String> args) {
   if (args.contains('clean')) {
     clean();
     return;
   }
 
-  List<FileSystemEntity> files = Directory('lib').listSync(recursive: true);
+  final List<FileSystemEntity> files = Directory('lib').listSync(recursive: true);
   files.removeWhere((element) =>
       element.path.endsWith('web_content_parser.dart') ||
       element.path.endsWith('g.dart') ||
       !element.path.endsWith('.dart'));
-  List<String> paths = files
+  final List<String> paths = files
       .map((e) => "import 'package:web_content_parser/${e.path.replaceAll('\\', '/').replaceFirst('lib/', '')}';")
       .toList();
-  File testFile = File('test/web_content_parser_test.dart');
-  List<String> lines = testFile.readAsLinesSync();
-  int index = lines.indexWhere((element) => element.startsWith('import \'package:web_content_parser'));
+  final File testFile = File('test/web_content_parser_test.dart');
+  final List<String> lines = testFile.readAsLinesSync();
+  final int index = lines.indexWhere((element) => element.startsWith('import \'package:web_content_parser'));
   if (index == -1) {
     print('No import to replace');
     return;
@@ -46,7 +48,7 @@ main(List<String> args) {
 
 
 void clean() {
-  List<File> files = [
+  final List<File> files = [
     File('test/tmp.dart'),
     File('test/tmp.dart.vm.json'),
   ];
