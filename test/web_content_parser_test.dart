@@ -74,6 +74,60 @@ void main() {
       expect(requestMap(RequestType.chapters.string).chapters, isTrue);
       expect(requestMap(RequestType.unknown.string).unknown, isTrue);
     });
+
+    test('ResultExtended toJson', () {
+      Result r = const Result.fail();
+      Map<String, dynamic> values = ResultExtended.toJson(r);
+      expect(
+        {
+          'data': null,
+          'pass': false,
+          'fail': true,
+        },
+        equals(values),
+      );
+    });
+
+    test('ResultExtended unsafe fail', () {
+      // ignore: always_declare_return_types
+      unsafe() {
+        throw 'error';
+      }
+
+      Result r = ResultExtended.unsafe(unsafe);
+      expect(r.fail, isTrue);
+    });
+    test('ResultExtended unsafe pass', () {
+      // ignore: always_declare_return_types
+      unsafe() {
+        return 'test';
+      }
+
+      Result r = ResultExtended.unsafe(unsafe);
+      expect(r.pass, isTrue);
+      expect(r.data, equals('test'));
+    });
+    test('ResultExtended unsafe async fail', () async {
+      Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
+        throw 'error';
+      }));
+      expect(r.fail, isTrue);
+    });
+    test('ResultExtended unsafe async pass', () async {
+      Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
+        return 'test';
+      }));
+      expect(r.pass, isTrue);
+      expect(r.data, equals('test'));
+    });
+    test('ParseUriResult fail', () {
+      Result<dynamic> r = UriResult.parse('http ://');
+      expect(r.fail, isTrue);
+    });
+    test('ParseUriResult pass', () {
+      Result<dynamic> r = UriResult.parse('http://');
+      expect(r.pass, isTrue);
+    });
   });
 
   group('Generic data', () {
