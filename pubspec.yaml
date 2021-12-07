@@ -11,7 +11,7 @@ dependencies:
   hetu_script: 0.1.2+5
   computer:
     git:
-      url: git@github.com:Wetbikeboy2500/computer.git
+      url: https://github.com/Wetbikeboy2500/computer.git
       ref: 8451a696b2710f5a39b9d0da585defb5e3b4bb42
   yaml: ^3.1.0
   path: ^1.8.0
@@ -24,7 +24,7 @@ dependencies:
   puppeteer: ^2.0.0
   flutter_inappwebview:
     git:
-      url: git@github.com:Wetbikeboy2500/flutter_inappwebview.git
+      url: https://github.com/Wetbikeboy2500/flutter_inappwebview.git
       ref: f29997155707f91fb6a24086d5ff28a2d91861a3
 
 dev_dependencies:
