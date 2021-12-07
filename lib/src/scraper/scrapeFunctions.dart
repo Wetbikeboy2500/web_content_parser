@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:hetu_script/hetu_script.dart';
 import 'package:web_content_parser/parser.dart';
 import '../util/ResultExtended.dart';
 
@@ -27,7 +28,8 @@ const _cacheTimeMilliseconds = 1000;
 final Map<String, Completer<Response>> _getCache = {};
 
 //TODO: make a lite version that just returns body and status which would be better for caching
-Future<Response?> getRequest({
+Future<Response?> getRequest(
+  HTEntity entity, {
   List<dynamic> positionalArgs = const [],
   Map<String, dynamic> namedArgs = const {},
   List<HTType> typeArgs = const <HTType>[],
@@ -61,7 +63,8 @@ Future<Response?> getRequest({
   return r;
 }
 
-Future<Map<String, dynamic>> getDynamicPageHetu({
+Future<Map<String, dynamic>> getDynamicPageHetu(
+  HTEntity entity, {
   List<dynamic> positionalArgs = const [],
   Map<String, dynamic> namedArgs = const {},
   List<HTType> typeArgs = const <HTType>[],
@@ -72,12 +75,11 @@ Future<Map<String, dynamic>> getDynamicPageHetu({
 }
 
 Future<Result<String>> getDynamicPage(String url) async {
-  final Result<Headless> headless = WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
+  final Result<Headless> headless =
+      WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
   if (headless.pass) {
     return await headless.data!.getHtml(url);
   }
   //generic fail
   return const Result.fail();
 }
-
-

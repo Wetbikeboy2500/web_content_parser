@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:hetu_script/binding.dart';
+import 'package:hetu_script/value/struct/struct.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser show parse;
@@ -11,8 +13,9 @@ import 'scrapeFunctions.dart';
 ///Functions that can be imported and used inside of hetu scripts
 ///
 ///This also allows for overridding of functions using the insert function feature
-Map<String, Function> _externalFunction = {
-  'querySelector': ({
+Map<String, HTExternalFunction> _externalFunction = {
+  'querySelector': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
@@ -20,7 +23,8 @@ Map<String, Function> _externalFunction = {
     positionalArgs[0] as Node;
     return positionalArgs[0].querySelector(positionalArgs[1] as String);
   },
-  'querySelectorAll': ({
+  'querySelectorAll': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
@@ -28,7 +32,8 @@ Map<String, Function> _externalFunction = {
     positionalArgs[0] as Node;
     return positionalArgs[0].querySelectorAll(positionalArgs[1] as String);
   },
-  'getText': ({
+  'getText': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
@@ -39,63 +44,72 @@ Map<String, Function> _externalFunction = {
   'fetchHtml': getRequest,
   'getRequest': getRequest,
   'getDynamicPage': getDynamicPageHetu,
-  'postRequest': ({
+  'postRequest': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return http.post(Uri.parse(positionalArgs[0]), body: positionalArgs[1]);
   },
-  'parseBody': ({
+  'parseBody': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return parser.parse(positionalArgs[0].body);
   },
-  'parseHtml': ({
+  'parseHtml': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return parser.parse(positionalArgs[0]);
   },
-  'joinUrl': ({
+  'joinUrl': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return path.url.joinAll(List<String>.from(positionalArgs[0]));
   },
-  'getStatusCode': ({
+  'getStatusCode': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return positionalArgs[0].statusCode;
   },
-  'getAttribute': ({
+  'getAttribute': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return positionalArgs[0].attributes[positionalArgs[1] as String];
   },
-  'toLowerCase': ({
+  'toLowerCase': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return positionalArgs[0].toLowerCase();
   },
-  'dateTimeYear': ({
+  'dateTimeYear': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return DateTime(int.parse(positionalArgs[0]));
   },
-  'dateTimeAgo': ({
+  'dateTimeAgo': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
@@ -114,56 +128,72 @@ Map<String, Function> _externalFunction = {
 
     return DateTime.now().subtract(ago);
   },
-  'dateTimeNow': ({
+  'dateTimeNow': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return DateTime.now();
   },
-  'toMapStringDynamic': ({
+  'toMapStringDynamic': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
-    return Map<String, dynamic>.from(positionalArgs[0]);
+    final value = positionalArgs[0];
+    if (value is HTStruct) {
+      return Map<String, dynamic>.from(value.fields);
+    }
+    return value;
   },
-  'toMapIntString': ({
+  'toMapIntString': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
-    return Map<int, String>.from(positionalArgs[0]);
+    final value = positionalArgs[0];
+    if (value is HTStruct) {
+      return Map<int, String>.from(value.fields);
+    }
+    return value;
   },
-  'trimList': ({
+  'trimList': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return positionalArgs[0].map((e) => e.trim()).toList();
   },
-  'reversed': ({
+  'reversed': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return positionalArgs[0].reversed.toList();
   },
-  'getPathSegments': ({
+  'getPathSegments': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return Uri.parse(positionalArgs[0]).pathSegments;
   },
-  'convertToString': ({
+  'convertToString': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
     return positionalArgs[0].toString();
   },
-  'contains': ({
+  'contains': (
+    HTEntity entity, {
     List<dynamic> positionalArgs = const [],
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
@@ -176,17 +206,18 @@ Map<String, Function> _externalFunction = {
 ///
 ///[name] Function name
 ///[func] Function to be run. This shold follow the format of other functions that have been defined for external functions
-void insertFunction(String name, Function func) => _externalFunction[name] = func;
+void insertFunction(String name, HTExternalFunction func) => _externalFunction[name] = func;
 
 ///Evaluates hetu script files
 ///
 ///This includes already made external functions to be used and a system for calling async functions
 ///This also accounts for async code through recursive calls when futures are returned in a specific format
+//TODO: allow eval to execute compiled hetu scripts. This can be set through an extra parameter supplied through the yaml file
 dynamic eval(File file,
     {String functionName = 'main', String workingDirectory = '/script', List args = const []}) async {
-  final Hetu hetu = Hetu(sourceProvider: DefaultSourceProvider(workingDirectory: workingDirectory));
+  final Hetu hetu = Hetu(sourceContext: HTOverlayContext(root: workingDirectory));
 
-  await hetu.init(externalFunctions: _externalFunction);
+  hetu.init(externalFunctions: _externalFunction);
 
   await hetu.eval(await file.readAsString());
 
@@ -195,10 +226,15 @@ dynamic eval(File file,
   //Define the eval script for recursion
   _eval = (name, _args) async {
     //invokes specific functions by name to be run
-    final response = hetu.invoke(
+    var response = hetu.invoke(
       name,
       positionalArgs: _args,
     );
+
+    //Need the map and less of the Hetu
+    if (response is HTStruct) {
+      response = response.fields;
+    }
 
     //If the return is a map, it could be for an async function to be called
     //Returned maps for async functions must have a target and data key
