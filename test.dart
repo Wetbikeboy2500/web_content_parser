@@ -8,14 +8,22 @@ void main(List<String> args) {
     return;
   }
 
-  final List<FileSystemEntity> files = Directory('lib').listSync(recursive: true);
-  files.removeWhere((element) =>
-      element.path.endsWith('web_content_parser.dart') ||
-      element.path.endsWith('g.dart') ||
-      !element.path.endsWith('.dart'));
-  final List<String> paths = files
-      .map((e) => "import 'package:web_content_parser/${e.path.replaceAll('\\', '/').replaceFirst('lib/', '')}';")
-      .toList();
+  final Iterable<String> paths =
+      Directory('lib').listSync(recursive: true).map((e) => e.path.replaceAll('\\', '/')).where((element) {
+    if (!element.endsWith('.dart') ||
+        element.endsWith('g.dart') ||
+        element.endsWith('lib/web_content_parser.dart') ||
+        element.endsWith('lib/util.dart') ||
+        element.endsWith('lib/scraper.dart') ||
+        element.endsWith('lib/parser.dart') ||
+        element.endsWith('lib/headless.dart') ||
+        element.endsWith('scraper/mobileHeadless.dart') ||
+        element.endsWith('scraper/desktopHeadless.dart')) {
+      return false;
+    }
+
+    return true;
+  }).map((e) => "import 'package:web_content_parser/${e.replaceFirst('lib/', '')}';");
   final File testFile = File('test/web_content_parser_test.dart');
   final List<String> lines = testFile.readAsLinesSync();
   final int index = lines.indexWhere((element) => element.startsWith('import \'package:web_content_parser'));
@@ -45,7 +53,6 @@ void main(List<String> args) {
 
   clean();
 }
-
 
 void clean() {
   final List<File> files = [
