@@ -17,7 +17,7 @@ class ScraperSource {
   static final Map<String, ScraperSource> _globalSources = {};
 
   ///Supported programs that can be run
-  static final Set<String> supportedProgramTypes = {'hetu'};
+  static final Set<String> supportedProgramTypes = {'hetu0.3'};
 
   ///Scraping requests that this object can run
   final Map<String, Request> requests = {};

@@ -25,7 +25,7 @@ class ParseSource extends SourceTemplate {
   ///This provides better performance for multiple async calls
   static bool computeEnabled = true;
 
-  static final _computer = Computer();
+  static final _computer = Computer.create();
   static int _running = 0;
 
   ///Number of workers to be made for compute calls
@@ -35,7 +35,7 @@ class ParseSource extends SourceTemplate {
     if (computeEnabled) {
       _running++;
       if (!_computer.isRunning) {
-        _computer.turnOn();
+        _computer.turnOn(workersCount: workers);
       }
     }
   }

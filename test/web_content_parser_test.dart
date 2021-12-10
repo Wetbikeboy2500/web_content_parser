@@ -199,7 +199,7 @@ void main() {
           'subdomain': null,
           'version': 1,
           'contentType': 'seriesImage',
-          'programType': 'hetu',
+          'programType': 'hetu0.3',
           'requests': [
             {
               'type': 'post',

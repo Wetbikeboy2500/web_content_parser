@@ -2,7 +2,7 @@ source: testSource
 baseUrl: testSource.com
 subdomain: null
 version: 1
-programType: hetu
+programType: hetu0.3
 requests:
   - type: post
     file: fetch.ht

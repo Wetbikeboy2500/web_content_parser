@@ -8,11 +8,8 @@ environment:
   sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
-  hetu_script: 0.3.2
-  computer:
-    git:
-      url: https://github.com/Wetbikeboy2500/computer.git
-      ref: 8451a696b2710f5a39b9d0da585defb5e3b4bb42
+  hetu_script: 0.3.3+1
+  computer: ^3.1.0
   yaml: ^3.1.0
   path: ^1.8.0
   html: ^0.15.0
@@ -25,7 +22,7 @@ dependencies:
   flutter_inappwebview:
     git:
       url: https://github.com/Wetbikeboy2500/flutter_inappwebview.git
-      ref: f29997155707f91fb6a24086d5ff28a2d91861a3
+      ref: d1163eb51375dfe137d03bcf8de949f43ea018be
 
 dev_dependencies:
   build_runner: ^2.0.1
