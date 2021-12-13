@@ -2,6 +2,8 @@ import 'dart:async';
 
 //source
 import 'package:computer/computer.dart';
+import 'package:web_content_parser/src/parser/sources/computer.dart';
+import './computeDecorator.dart';
 import '../../scraper/scraperSource.dart';
 import '../../util/Result.dart';
 import '../../util/log.dart';
@@ -21,43 +23,11 @@ class ParseSource extends SourceTemplate {
   final ScraperSource scraper;
   final String programType;
 
+  static ComputeDecorator computeDecorator = ComputerDecorator();
+
   ///Enable computes for data conversion
   ///This provides better performance for multiple async calls
   static bool computeEnabled = true;
-
-  static final _computer = Computer.create();
-  static int _running = 0;
-
-  ///Number of workers to be made for compute calls
-  static int workers = 2;
-
-  static void _startUp() {
-    if (computeEnabled) {
-      _running++;
-      if (!_computer.isRunning) {
-        _computer.turnOn(workersCount: workers);
-      }
-    }
-  }
-
-  static Timer? _finalTimer;
-
-  ///Time after a data conversion finishes to close all isolates. They are kept open for performance.
-  static int computeCooldownMilliseconds = 5000;
-
-  static void _shutDown() {
-    if (_running > 0) {
-      _running--;
-    }
-    if (_computer.isRunning && _running == 0 && (_finalTimer == null || !_finalTimer!.isActive)) {
-      //5 second grace period before the computer is killed
-      _finalTimer = Timer(const Duration(seconds: 5), () {
-        if (_running == 0) {
-          _computer.turnOff();
-        }
-      });
-    }
-  }
 
   ///Builds a parse source from a scraper source
   ///
@@ -102,24 +72,23 @@ class ParseSource extends SourceTemplate {
     }
 
     //do this before the request is made to have a bit of time to start
-    _startUp();
+    computeDecorator.start();
 
     final Result<List> chapters = await scraper.makeRequest<List>(RequestType.chapters.string, [id.toJson()]);
 
     if (chapters.fail) {
-      _shutDown();
+      computeDecorator.end();
       return const Result.fail();
     }
 
     if (computeEnabled) {
       try {
         //I currently am only using computer here since lists of chapters can have a lot of data to be processed
-        final List<Chapter> response =
-            await Chapter.computeChaptersFromJson(_computer, chapters.data!.cast<Map<String, dynamic>>());
-        _shutDown();
+        final List<Chapter> response = await computeDecorator.compute<List<Chapter>, List<Map<String, dynamic>>>(Chapter.chaptersFromJson, chapters.data!.cast<Map<String, dynamic>>());
+        computeDecorator.end();
         return Result.pass(response);
       } catch (e, stack) {
-        _shutDown();
+        computeDecorator.end();
         log('Error parsing chapter list computer: $e');
         log(stack);
         //if compute fails, we cancel the return

@@ -213,13 +213,22 @@ void insertFunction(String name, HTExternalFunction func) => _externalFunction[n
 ///This includes already made external functions to be used and a system for calling async functions
 ///This also accounts for async code through recursive calls when futures are returned in a specific format
 //TODO: allow eval to execute compiled hetu scripts. This can be set through an extra parameter supplied through the yaml file
-dynamic eval(File file,
-    {String functionName = 'main', String workingDirectory = '/script', List args = const []}) async {
+dynamic eval(
+  File file, {
+  String functionName = 'main',
+  String workingDirectory = '/script',
+  List args = const [],
+  bool compiled = false,
+}) async {
   final Hetu hetu = Hetu(sourceContext: HTOverlayContext(root: workingDirectory));
 
   hetu.init(externalFunctions: _externalFunction);
 
-  await hetu.eval(await file.readAsString());
+  if (compiled) {
+    await hetu.loadBytecode(file.readAsBytesSync(), path.basenameWithoutExtension(file.path));
+  } else {
+    await hetu.eval(await file.readAsString());
+  }
 
   late Future Function(String, List<dynamic>) _eval;
 

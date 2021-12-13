@@ -205,6 +205,7 @@ void main() {
               'type': 'post',
               'file': 'fetch.ht',
               'entry': 'main',
+              'compiled': true,
             },
             {
               'type': 'postUrl',

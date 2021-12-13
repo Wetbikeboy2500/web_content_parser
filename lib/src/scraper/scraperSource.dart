@@ -71,9 +71,11 @@ class ScraperSource {
       //add functions (type, file, entry)
       for (final request in requests) {
         this.requests[request['type']] = Request(
-            type: requestMap(request['type']),
-            file: File(p.join(directory.path, request['file'])),
-            entry: request['entry']);
+          type: requestMap(request['type']),
+          file: File(p.join(directory.path, request['file'])),
+          entry: request['entry'],
+          compiled: request['compiled'] ?? false,
+        );
       }
     } catch (e, stack) {
       log('Parsing error for global source $e');
@@ -106,5 +108,6 @@ class Request {
   final RequestType type;
   final File file;
   final String entry;
-  const Request({required this.type, required this.file, required this.entry});
+  final bool compiled;
+  const Request({required this.type, required this.file, required this.entry, this.compiled = false});
 }

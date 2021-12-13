@@ -8,6 +8,7 @@ requests:
   - type: post
     file: fetch.ht
     entry: main
+    compiled: true
   - type: postUrl
     file: fetch.ht
     entry: url
