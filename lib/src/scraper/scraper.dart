@@ -19,7 +19,7 @@ void loadExternalScraperSourcesGlobal(Directory dir) {
       //load scraper
       ScraperSource.global(file.readAsStringSync(), file.parent);
     } catch (e, stack) {
-      log('Error loading external global source: $e');
+      log2('Error loading external global source:', e);
       log(stack);
     }
   }
@@ -42,7 +42,7 @@ List<ScraperSource> loadExternalScarperSources(Directory dir) {
       //add for return
       scrapers.add(scraper);
     } catch (e, stack) {
-      log('Error loading external source: $e');
+      log2('Error loading external source:', e);
       log(stack);
     }
   }

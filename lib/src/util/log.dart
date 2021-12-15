@@ -8,3 +8,15 @@ void log(Object? object) {
     print(object);
   }
 }
+
+void log2(Object? object, Object? object2) {
+  if (WebContentParser.verbose) {
+    print('$object$object2');
+  }
+}
+
+void log3(Object? object, Object? object2, Object? object3) {
+  if (WebContentParser.verbose) {
+    print('$object$object2$object3');
+  }
+}

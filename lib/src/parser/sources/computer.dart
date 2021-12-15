@@ -25,7 +25,7 @@ class ComputerDecorator implements ComputeDecorator {
     if (_running > 0) {
       _running--;
     }
-    if (_computer.isRunning && _running == 0 && (_finalTimer == null || !_finalTimer!.isActive)) {
+    if (_running == 0 && (_finalTimer == null || !_finalTimer!.isActive)) {
       //5 second grace period before the computer is killed
       _finalTimer = Timer(const Duration(seconds: 5), () {
         if (_running == 0) {

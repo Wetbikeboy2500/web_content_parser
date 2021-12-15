@@ -41,7 +41,7 @@ class DesktopHeadless extends Headless {
     final Uri? uri = Uri.tryParse(url);
 
     if (uri == null) {
-      log('Failed get cookies url parse: $url');
+      log2('Failed get cookies url parse:', url);
       return const Result.fail();
     }
 
@@ -49,7 +49,7 @@ class DesktopHeadless extends Headless {
         cookies.entries.firstWhereResult((element) => element.key.host == uri.host);
 
     if (r.fail) {
-      log('Failed to find cookies for url given: $url');
+      log2('Failed to find cookies for url given:', url);
       return const Result.fail();
     }
 

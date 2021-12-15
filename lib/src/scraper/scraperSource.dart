@@ -78,7 +78,7 @@ class ScraperSource {
         );
       }
     } catch (e, stack) {
-      log('Parsing error for global source $e');
+      log2('Parsing error for global source', e);
       log(stack);
       throw const FormatException('Failed to parse source');
     }

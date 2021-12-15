@@ -27,11 +27,11 @@ Future<Result<Post>> fetchPost(ID id) async {
     try {
       return await source.fetchPost(id);
     } catch (e, stack) {
-      log('High level error getting post data: $e');
+      log2('High level error getting post data:', e);
       log(stack);
     }
   } else {
-    log('Unable to find source ${id.source}');
+    log2('Unable to find source', id.source);
   }
   return const Result.fail();
 }
@@ -43,7 +43,7 @@ Future<Result<Post>> fetchPostUrl(String url) async {
   final Uri? u = Uri.tryParse(url);
 
   if (u == null) {
-    log('Error parsing url: $url');
+    log2('Error parsing url:', url);
     return const Result.fail();
   }
 
@@ -64,11 +64,11 @@ Future<Result<Post>> fetchPostUrl(String url) async {
       try {
         return await s.data!.fetchPostUrl(url);
       } catch (e, stack) {
-        log('High level error fetching post url: $e');
+        log2('High level error fetching post url', e);
         log(stack);
       }
     } else {
-      log('No series match url: $url');
+      log2('No series match url:', url);
     }
   } else {
     log('Found no allowed sources');
@@ -97,11 +97,11 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
       chapters.sort((a, b) => a.chapterID.index - b.chapterID.index);
       return Result.pass(chapters);
     } catch (e, stack) {
-      log('Error getting chapter list info: $e');
+      log2('Error getting chapter list info:', e);
       log(stack);
     }
   } else {
-    log('Unable to find source ${id.source}');
+    log2('Unable to find source', id.source);
   }
   return const Result.fail();
 }
@@ -114,7 +114,7 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
   final Uri? u = Uri.tryParse(url);
 
   if (u == null) {
-    log('Error parsing url: $url');
+    log2('Error parsing url:', url);
     return const Result.fail();
   }
 
@@ -143,7 +143,7 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
     log('Fetching chapter images');
     return await s.data!.fetchChapterImagesUrl(url);
   } catch (e, stack) {
-    log('Error in getting chapter images url: $e');
+    log2('Error in getting chapter images url:', e);
     log(stack);
   }
   return const Result.fail();
@@ -159,10 +159,10 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
       log('Fetching chapter images');
       return await s.fetchChapterImages(chapterID);
     } else {
-      log('Found no source for chapter images: ${chapterID.id.source}');
+      log2('Found no source for chapter images:', chapterID.id.source);
     }
   } catch (e, stack) {
-    log('Error in getting chapter images: $e');
+    log2('Error in getting chapter images:', e);
     log(stack);
   }
   return const Result.fail();
@@ -181,14 +181,14 @@ Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0}) a
       try {
         return await s.fetchCatalog(page: page);
       } catch (e, stack) {
-        log('Error in getting catalog: $e');
+        log2('Error in getting catalog:', e);
         log(stack);
       }
     } else {
-      log('Does not support catalog: $source');
+      log2('Does not support catalog:', source);
     }
   } else {
-    log('Invalid source: $source');
+    log2('Invalid source:', source);
   }
 
   return const Result.fail();
@@ -217,7 +217,7 @@ void loadExternalParseSources(Directory dir) {
       //add the new source
       addSource(source.source, source);
     } catch (e, stack) {
-      log('Error loading external source: $e');
+      log2('Error loading external source:', e);
       log(stack);
     }
   }

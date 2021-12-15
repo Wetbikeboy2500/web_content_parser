@@ -156,7 +156,7 @@ Map<String, HTExternalFunction> _externalFunction = {
   }) {
     final value = positionalArgs[0];
     if (value is HTStruct) {
-      return Map<int, String>.from(value.fields);
+      return value.fields.map((key, value) => MapEntry<int, String>(int.parse(key), value.toString()));
     }
     return value;
   },

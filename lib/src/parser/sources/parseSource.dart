@@ -71,25 +71,24 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapters(id);
     }
 
-    //do this before the request is made to have a bit of time to start
-    computeDecorator.start();
-
     final Result<List> chapters = await scraper.makeRequest<List>(RequestType.chapters.string, [id.toJson()]);
 
     if (chapters.fail) {
-      computeDecorator.end();
       return const Result.fail();
     }
 
     if (computeEnabled) {
+      computeDecorator.start();
+
       try {
         //I currently am only using computer here since lists of chapters can have a lot of data to be processed
-        final List<Chapter> response = await computeDecorator.compute<List<Chapter>, List<Map<String, dynamic>>>(Chapter.chaptersFromJson, chapters.data!.cast<Map<String, dynamic>>());
+        final List<Chapter> response = await computeDecorator.compute<List<Chapter>, List<Map<String, dynamic>>>(
+            Chapter.chaptersFromJson, chapters.data!.cast<Map<String, dynamic>>());
         computeDecorator.end();
         return Result.pass(response);
       } catch (e, stack) {
         computeDecorator.end();
-        log('Error parsing chapter list computer: $e');
+        log2('Error parsing chapter list computer:', e);
         log(stack);
         //if compute fails, we cancel the return
         return const Result.fail();
@@ -99,7 +98,7 @@ class ParseSource extends SourceTemplate {
     try {
       return Result.pass(List<Chapter>.from(chapters.data!.map((value) => Chapter.fromJson(value))));
     } catch (e, stack) {
-      log('Error parsing chapter list: $e');
+      log2('Error parsing chapter list:', e);
       log(stack);
       return const Result.fail();
     }
@@ -120,7 +119,7 @@ class ParseSource extends SourceTemplate {
     try {
       return Result.pass(Post.fromJson(Map<String, dynamic>.from(post.data)));
     } catch (e, stack) {
-      log('Error parsing post data: $e');
+      log2('Error parsing post data:', e);
       log(stack);
       return const Result.fail();
     }
@@ -141,7 +140,7 @@ class ParseSource extends SourceTemplate {
     try {
       return Result.pass(Post.fromJson(Map<String, dynamic>.from(post.data)));
     } catch (e, stack) {
-      log('Error parsing post data: $e');
+      log2('Error parsing post data:', e);
       log(stack);
       return const Result.fail();
     }
@@ -169,7 +168,7 @@ class ParseSource extends SourceTemplate {
     try {
       return Result.pass(List<CatalogEntry>.from(entries.data!.map((entry) => CatalogEntry.fromJson(entry))));
     } catch (e, stack) {
-      log('Error fetching catalog: $e');
+      log2('Error fetching catalog:', e);
       log(stack);
       return const Result.fail();
     }

@@ -164,7 +164,7 @@ fun main() {
 }
 
 fun parse(doc, id) {
-    let statusCode = getStatusCode(doc)
+    var statusCode = getStatusCode(doc)
 
     if (statusCode != 200) {
         return {}
