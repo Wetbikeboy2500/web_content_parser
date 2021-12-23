@@ -39,8 +39,9 @@ Future<Response?> getRequest(
   final String uriString = uri.toString();
 
   //return a cached element if it exists
-  if (_getCache.containsKey(uriString)) {
-    return _getCache[uriString]!.future;
+  final Completer<Response>? cachedRequest = _getCache[uriString];
+  if (cachedRequest != null) {
+    return cachedRequest.future;
   }
 
   //make sure we make a completer for the request asap
@@ -74,11 +75,34 @@ Future<Map<String, dynamic>> getDynamicPageHetu(
   return ResultExtended.toJson(await getDynamicPage(url));
 }
 
+final Map<String, Completer<Result<String>>> _getDynamicCache = {};
+
+///Provides a standard interface for dynamic requests along with request caching
 Future<Result<String>> getDynamicPage(String url) async {
   final Result<Headless> headless =
       WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
+  //means headless exists for the current platform
   if (headless.pass) {
-    return await headless.data!.getHtml(url);
+    //allow to use requsts that are or have been made
+    final Completer<Result<String>>? cachedRequest = _getDynamicCache[url];
+    if (cachedRequest != null) {
+      return cachedRequest.future;
+    }
+
+    //Create this for other requests to listen to a future
+    final Completer<Result<String>> task = Completer<Result<String>>();
+    _getDynamicCache[url] = task;
+
+    final result = await headless.data!.getHtml(url);
+
+    //completes the futures
+    task.complete(result);
+
+    //schedule a cache clear
+    Timer(const Duration(milliseconds: _cacheTimeMilliseconds), () => _getDynamicCache.remove(url));
+
+    //still need to return the actual result since task.future is not returned for the orginal request
+    return result;
   }
   //generic fail
   return const Result.fail();
