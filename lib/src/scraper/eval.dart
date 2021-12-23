@@ -8,6 +8,7 @@ import 'package:html/parser.dart' as parser show parse;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:hetu_script/hetu_script.dart';
+import '../../util.dart';
 import 'scrapeFunctions.dart';
 
 ///Functions that can be imported and used inside of hetu scripts
@@ -90,7 +91,14 @@ Map<String, HTExternalFunction> _externalFunction = {
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
-    return positionalArgs[0].attributes[positionalArgs[1] as String];
+    if (positionalArgs.length == 2 &&
+        positionalArgs[0] != null &&
+        positionalArgs[0] is Node &&
+        positionalArgs[1] is String) {
+      return ResultExtended.toJson(Result.pass(positionalArgs[0].attributes[positionalArgs[1] as String]));
+    } else {
+      return ResultExtended.toJson(const Result.fail());
+    }
   },
   'toLowerCase': (
     HTEntity entity, {
