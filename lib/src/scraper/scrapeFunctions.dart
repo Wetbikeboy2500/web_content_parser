@@ -23,7 +23,7 @@ import 'package:http/http.dart';
  * There is still more that can be done for self-defined cache times.
  * Cache will always be limited by applications total runtime since it will never save to anywhere
  */
-const _cacheTimeMilliseconds = 1000;
+//const _cacheTimeMilliseconds = 1000;
 
 final Map<String, Completer<Response>> _getCache = {};
 
@@ -58,7 +58,7 @@ Future<Response?> getRequest(
   request.complete(r);
 
   //schedule a cache clear
-  Timer(const Duration(milliseconds: _cacheTimeMilliseconds), () => _getCache.remove(uriString));
+  Timer(WebContentParser.cacheTime, () => _getCache.remove(uriString));
 
   //return result
   return r;
@@ -99,7 +99,7 @@ Future<Result<String>> getDynamicPage(String url) async {
     task.complete(result);
 
     //schedule a cache clear
-    Timer(const Duration(milliseconds: _cacheTimeMilliseconds), () => _getDynamicCache.remove(url));
+    Timer(WebContentParser.cacheTime, () => _getDynamicCache.remove(url));
 
     //still need to return the actual result since task.future is not returned for the orginal request
     return result;
