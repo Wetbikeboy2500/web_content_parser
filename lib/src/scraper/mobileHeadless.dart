@@ -4,7 +4,8 @@ import 'dart:collection';
 import 'dart:io' show Platform;
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:web_content_parser/src/util/ResultExtended.dart';
+import 'package:web_content_parser/src/util/log.dart';
+import 'package:web_content_parser/src/util/parseUriResult.dart';
 import 'headless.dart';
 import '../util/Result.dart';
 
@@ -17,6 +18,8 @@ class MobileHeadless extends Headless {
   HeadlessInAppWebView? headless;
 
   final Queue<Function> requests = Queue();
+
+  final Map<String, Map<String, String>> _cookies = {};
 
   void startShutdown() {
     if (headless != null && running == false) {
@@ -46,11 +49,29 @@ class MobileHeadless extends Headless {
       onProgressChanged: (controller, number) {
         if (number == 100) {
           if (!completer.isCompleted) {
-            controller.getHtml().then((value) {
+            controller.getHtml().then((value) async {
               if (!completer.isCompleted) {
                 if (value == null) {
                   completer.complete(const Result.fail());
                 } else {
+                  try {
+                    //save good request cookies
+                    final String cookies = await controller.evaluateJavascript(source: 'document.cookie') as String;
+
+                    final Iterable<List<String>> splitCookies =
+                        cookies.split(';').map<List<String>>((cookie) => cookie.trim().split('='));
+
+                    final Map<String, String> tmpCookies = {};
+                    for (final l in splitCookies) {
+                      if (l.length == 2) {
+                        tmpCookies[l[0]] = l[1];
+                      }
+                    }
+                    _cookies[uri.host] = tmpCookies;
+                  } catch (e) {
+                    log2('Failed to save cookies', e);
+                  }
+
                   completer.complete(Result.pass(value));
                 }
                 running = false;
@@ -114,13 +135,19 @@ class MobileHeadless extends Headless {
     return completer.future;
   }
 
-  Future<Result<List<Cookie>>> getCookies(String url) async {
-    final Uri? uri = Uri.tryParse(url);
+  Future<Result<Map<String, String>>> getCookies(String url) async {
+    final uri = UriResult.parse(url);
 
-    if (uri == null) {
-      return Future.value(const Result.fail());
+    if (uri.fail) {
+      return const Result.fail();
     }
 
-    return ResultExtended.unsafeAsync(() async => CookieManager().getCookies(url: uri));
+    final Map<String, String>? cookies = _cookies[uri.data!.host];
+
+    if (cookies != null) {
+      return Result.pass(cookies);
+    }
+
+    return const Result.fail();
   }
 }
