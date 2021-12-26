@@ -25,6 +25,9 @@ class ScraperSource {
   ///Yaml file info convert and stored
   late final Map<String, dynamic> info;
 
+  ///Main directory this extension is stored in
+  final Directory directory;
+
   ///Returns a global scrapper by name
   ///
   ///Returns null if [name] doesn't exist for a global scrapper
@@ -43,7 +46,7 @@ class ScraperSource {
   }
 
   ///Creates a scrapper
-  ScraperSource(String input, Directory directory) {
+  ScraperSource(String input, this.directory) {
     try {
       //decode yaml
       final Map<String, dynamic> yaml = Map<String, dynamic>.from(loadYaml(input));

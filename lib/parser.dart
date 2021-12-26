@@ -1,6 +1,7 @@
 export 'src/webContentParser.dart';
 export 'src/parser/sources/sourceTemplate.dart';
 export 'src/parser/sources/source.dart';
+export 'src/parser/sources/parseSource.dart';
 export 'src/parser/json/id.dart';
 export 'src/parser/json/chapterID.dart';
 export 'src/parser/json/post.dart';
