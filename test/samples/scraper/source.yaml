@@ -24,3 +24,6 @@ requests:
   - type: catalogMulti
     file: catalog.ht
     entry: main
+  - type: test
+    file: test.ht
+    entry: main

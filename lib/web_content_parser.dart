@@ -16,6 +16,7 @@ export 'src/parser/json/catalogEntry.dart';
 //Scraper
 export 'src/scraper/scraperSource.dart';
 export 'src/scraper/scraper.dart';
+export 'src/scraper/eval.dart';
 
 //Utils
 export 'src/util/Result.dart';

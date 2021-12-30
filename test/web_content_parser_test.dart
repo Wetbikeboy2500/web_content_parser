@@ -1,6 +1,7 @@
 //Make sure to keep this as the first import
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
+import 'package:hetu_script/hetu_script.dart';
 import 'package:web_content_parser/web_content_parser.dart';
 
 import 'dart:io';
@@ -109,14 +110,14 @@ void main() {
     });
     test('ResultExtended unsafe async fail', () async {
       Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
-        throw 'error';
-      }));
+            throw 'error';
+          }));
       expect(r.fail, isTrue);
     });
     test('ResultExtended unsafe async pass', () async {
       Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
-        return 'test';
-      }));
+            return 'test';
+          }));
       expect(r.pass, isTrue);
       expect(r.data, equals('test'));
     });
@@ -189,7 +190,7 @@ void main() {
       //have one scraper
       expect(scrapers.length, equals(1));
       //scraper has 6 requests
-      expect(scrapers[0].requests.length, equals(6));
+      expect(scrapers[0].requests.length, equals(7));
       //info is correct
       expect(
         scrapers[0].info,
@@ -232,6 +233,11 @@ void main() {
               'file': 'catalog.ht',
               'entry': 'main',
             },
+            {
+              'type': 'test',
+              'file': 'test.ht',
+              'entry': 'main',
+            }
           ],
         }),
       );
@@ -240,12 +246,30 @@ void main() {
       ScraperSource? result = ScraperSource.scrapper('invalid');
       expect(result, isNull);
     });
-    test('Load global scraper source', () {
+    test('Load global scraper source and run entry', () async {
+      WebContentParser.verbose = true;
+
       loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
       ScraperSource? result = ScraperSource.scrapper('testSource');
 
       expect(result, isNotNull);
+
+      //override current fetchhtml so it can work with local files
+      insertFunction('fetchHtml', (
+        HTEntity entity, {
+        List<dynamic> positionalArgs = const [],
+        Map<String, dynamic> namedArgs = const {},
+        List<HTType> typeArgs = const <HTType>[],
+      }) async {
+        return await File(positionalArgs[0]).readAsString();
+      });
+
+      Result<List> response = await result!.makeRequest<List>('test', ['test/samples/scraper/test.html']);
+
+      expect(response.pass, isTrue);
+
+      expect(response.data, equals(['Some testing text', 'Some testing text']));
     });
   });
 

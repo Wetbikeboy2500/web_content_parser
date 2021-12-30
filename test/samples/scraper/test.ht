@@ -1,0 +1,32 @@
+external fun parseBody(a)
+external fun parseHtml(a)
+external fun querySelector(a, b)
+external fun querySelectorAll(a, b) -> List<any>
+external fun dateTimeYear(a)
+external fun dateTimeAgo(a)
+external fun dateTimeNow()
+external fun getStatusCode(a) -> num
+external fun getText(a) -> str
+external fun joinUrl(a) -> str
+external fun getAttribute(a, b) -> Map<str, any>
+external fun fetchHtml(a)
+external fun toMapStringDynamic(a) -> Map<str, any>
+external fun toMapIntString(a) -> Map<num, str>
+external fun trimList(a) -> List<any>
+external fun postRequest(a, b)
+external fun reversed(a) -> List<any>
+external fun getPathSegments(a) -> List<any>
+external fun convertToString(a) -> str
+external fun getDynamicPage(a) -> Map<str, any>
+
+fun main(path) {
+    return {
+        'data': [fetchHtml(path)],
+        'target': 'parse',
+    };
+}
+
+fun parse(html) {
+    var dom = parseHtml(html)
+    return [getText(querySelector(dom, '#main-tag')).trim(), getText(querySelector(dom, 'body p')).trim()]
+}
