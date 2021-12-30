@@ -54,7 +54,7 @@ abstract class SourceTemplate {
     return const Result.fail();
   }
 
-  Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0}) async {
+  Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0, Map<String, dynamic> options = const {}}) async {
     log('Empty request for fetch catalog');
     return const Result.fail();
   }

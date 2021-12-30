@@ -172,14 +172,15 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
 ///
 ///Sources suport a single call catalog or a multicatalog
 ///[page] starts at 0
+///[options] catalog options which should be defined source-by-source with variable implementations
 ///To determine if a source supports catalog call [sourceSupportsCatalog]
 ///To determine if a source supports multicatalog call [sourceSupportsMultiCatalog]
-Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0}) async {
+Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0, Map<String, dynamic> options = const {}}) async {
   final SourceTemplate? s = sources[source];
   if (s != null) {
     if (s.supports(RequestType.catalog) || s.supports(RequestType.catalogMulti)) {
       try {
-        return await s.fetchCatalog(page: page);
+        return await s.fetchCatalog(page: page, options: options);
       } catch (e, stack) {
         log2('Error in getting catalog:', e);
         log(stack);
