@@ -8,6 +8,7 @@ import 'package:html/parser.dart' as parser show parse;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:hetu_script/hetu_script.dart';
+import '../util/log.dart';
 import '../../util.dart';
 import 'scrapeFunctions.dart';
 
@@ -114,7 +115,12 @@ Map<String, HTExternalFunction> _externalFunction = {
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
-    return DateTime(int.parse(positionalArgs[0]));
+    try {
+      return DateTime(int.parse(positionalArgs[0]));
+    } catch (e) {
+      log2('Error dateTimeYear', e);
+      return DateTime.now();
+    }
   },
   'dateTimeAgo': (
     HTEntity entity, {
@@ -122,19 +128,25 @@ Map<String, HTExternalFunction> _externalFunction = {
     Map<String, dynamic> namedArgs = const {},
     List<HTType> typeArgs = const <HTType>[],
   }) {
-    final time = positionalArgs[0];
-    Duration ago;
-    if (time.contains('mins ago') || time.contains('min ago')) {
-      ago = Duration(minutes: int.parse(time.substring(0, time.indexOf('min'))));
-    } else if (time.contains('hour ago') || time.contains('hours ago')) {
-      ago = Duration(hours: int.parse(time.substring(0, time.indexOf('hour'))));
-    } else if (time.contains('day ago') || time.contains('days ago')) {
-      ago = Duration(days: int.parse(time.substring(0, time.indexOf('day'))));
-    } else {
-      return DateFormat('MMMM dd, yyyy', 'en_US').parse(time);
-    }
+    try {
+      final time = positionalArgs[0];
+      Duration ago;
+      if (time.contains('mins ago') || time.contains('min ago')) {
+        ago = Duration(minutes: int.parse(time.substring(0, time.indexOf('min'))));
+      } else if (time.contains('hour ago') || time.contains('hours ago')) {
+        ago = Duration(hours: int.parse(time.substring(0, time.indexOf('hour'))));
+      } else if (time.contains('day ago') || time.contains('days ago')) {
+        ago = Duration(days: int.parse(time.substring(0, time.indexOf('day'))));
+      } else {
+        return DateFormat('MMMM dd, yyyy', 'en_US').parse(time);
+      }
 
-    return DateTime.now().subtract(ago);
+      return DateTime.now().subtract(ago);
+    } catch (e) {
+      log2('Error occured parsing time ago:', e);
+      //TODO: revise this to use a safe call and not default to datetime now
+      return DateTime.now();
+    }
   },
   'dateTimeNow': (
     HTEntity entity, {

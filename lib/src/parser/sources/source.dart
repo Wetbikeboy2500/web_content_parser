@@ -188,7 +188,7 @@ Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0}) a
       log2('Does not support catalog:', source);
     }
   } else {
-    log2('Invalid source:', source);
+    log2('Invalid source: ', source);
   }
 
   return const Result.fail();

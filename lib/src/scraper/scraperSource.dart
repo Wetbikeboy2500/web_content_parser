@@ -88,6 +88,7 @@ class ScraperSource {
   }
 
   Future<Result<T>> makeRequest<T>(String name, List arguments) async {
+    log2('Make request: ', name);
     final Request? r = requests[name];
     if (r != null) {
       return await ResultExtended.unsafeAsync<T>(
