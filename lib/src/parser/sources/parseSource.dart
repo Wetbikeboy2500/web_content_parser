@@ -147,7 +147,7 @@ class ParseSource extends SourceTemplate {
   }
 
   @override
-  Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0}) async {
+  Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0, Map<String, dynamic> options = const {}}) async {
     late final RequestType requestType;
 
     //Always will try and use multicatalog first
@@ -159,7 +159,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchCatalog();
     }
 
-    final Result<List> entries = await scraper.makeRequest<List>(requestType.string, [page]);
+    final Result<List> entries = await scraper.makeRequest<List>(requestType.string, [page, options]);
 
     if (entries.fail) {
       return const Result.fail();

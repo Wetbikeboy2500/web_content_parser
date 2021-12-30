@@ -45,15 +45,8 @@ Map<String, HTExternalFunction> _externalFunction = {
   },
   'fetchHtml': getRequest,
   'getRequest': getRequest,
+  'postRequest': postRequest,
   'getDynamicPage': getDynamicPageHetu,
-  'postRequest': (
-    HTEntity entity, {
-    List<dynamic> positionalArgs = const [],
-    Map<String, dynamic> namedArgs = const {},
-    List<HTType> typeArgs = const <HTType>[],
-  }) {
-    return http.post(Uri.parse(positionalArgs[0]), body: positionalArgs[1]);
-  },
   'parseBody': (
     HTEntity entity, {
     List<dynamic> positionalArgs = const [],
@@ -177,6 +170,18 @@ Map<String, HTExternalFunction> _externalFunction = {
     final value = positionalArgs[0];
     if (value is HTStruct) {
       return value.fields.map((key, value) => MapEntry<int, String>(int.parse(key), value.toString()));
+    }
+    return value;
+  },
+  'toMapStringString': (
+    HTEntity entity, {
+    List<dynamic> positionalArgs = const [],
+    Map<String, dynamic> namedArgs = const {},
+    List<HTType> typeArgs = const <HTType>[],
+  }) {
+    final value = positionalArgs[0];
+    if (value is HTStruct) {
+      return value.fields.map((key, value) => MapEntry<String, String>(key, value.toString()));
     }
     return value;
   },

@@ -6,6 +6,8 @@ import 'dart:async';
 
 import 'package:hetu_script/hetu_script.dart';
 import 'package:web_content_parser/parser.dart';
+import 'package:web_content_parser/src/util/log.dart';
+import 'package:web_content_parser/src/util/parseUriResult.dart';
 import '../util/ResultExtended.dart';
 
 import '../scraper/headless.dart';
@@ -13,17 +15,39 @@ import '../scraper/headless.dart';
 import '../util/Result.dart';
 import '../util/firstWhereResult.dart';
 
-import 'package:hetu_script/type/type.dart';
 import 'package:http/http.dart';
 
-//TODO: postRequest() {}
+///Hetu post request
+///
+///Returns a response object wrapped with a result as a map
+Future<Map<String, dynamic>> postRequest(
+  HTEntity entity, {
+  List<dynamic> positionalArgs = const [],
+  Map<String, dynamic> namedArgs = const {},
+  List<HTType> typeArgs = const <HTType>[],
+}) async {
+  final Result<Uri> uri = UriResult.parse(positionalArgs[0]);
 
-/*TODO:
- * I am going to keep this as a const for now as the idea is more for reducing same requests that are close to each other.
- * There is still more that can be done for self-defined cache times.
- * Cache will always be limited by applications total runtime since it will never save to anywhere
- */
-//const _cacheTimeMilliseconds = 1000;
+  if (uri.fail) {
+    return ResultExtended.toJson(const Result.fail());
+  }
+
+  final Map<String, String>? headers =
+      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
+
+  try {
+    final result = await post(
+      uri.data!,
+      headers: headers,
+      body: positionalArgs[1],
+    );
+
+    return ResultExtended.toJson(Result.pass(result));
+  } catch (e) {
+    log2('Post failed: ', e);
+    return ResultExtended.toJson(const Result.fail());
+  }
+}
 
 final Map<String, Completer<Response>> _getCache = {};
 
