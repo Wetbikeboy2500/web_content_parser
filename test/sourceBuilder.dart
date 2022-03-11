@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 
+//This file is for testing purposes only. The goal is to try and develop a rebust system for selecting elements from a website correctly.
+
 void main() {
   sourceBuilder(File('test/samples/scraper/test2.html').readAsStringSync());
 }
@@ -10,17 +12,77 @@ void main() {
 void sourceBuilder(String html) {
   //decode string as html
   Document document = parse(html);
-  iterate(document.documentElement?.children, 0);
+  final List<Element> items = iterate(document.documentElement?.children, 0, 0);
+
+  bool exit = false;
+
+  final Set<Element> selected = {};
+
+  while (!exit) {
+    stdout.writeln('Enter the number of the item you want to see');
+    final int? lineNumber = int.tryParse(stdin.readLineSync() ?? '');
+    if (lineNumber != null) {
+      if (lineNumber < 0 || lineNumber >= items.length) {
+        stdout.writeln('Line number out of range. Exiting');
+        exit = true;
+      } else {
+        final Element item = items[lineNumber];
+        stdout.writeln(item.localName);
+        stdout.writeln('0: cancel 1: select 2: inspect');
+        final int? choice = int.tryParse(stdin.readLineSync() ?? '');
+        if (choice != null) {
+          switch (choice) {
+            case 0:
+              //do nothing
+              break;
+            case 1:
+              //select
+              selected.add(item);
+              break;
+            case 2:
+              //inspect
+              //output all attributes
+              item.attributes.forEach((key, value) {
+                stdout.writeln('$key: $value');
+              });
+              //output id
+              stdout.writeln('id: ${item.id}');
+              //output classes
+              stdout.writeln('classes: ${item.classes}');
+              //output text
+              stdout.writeln('text: ${item.text}');
+              //output parents
+              final List<Element> parents = [];
+              Element? parent = item.parent;
+              while (parent != null) {
+                parents.add(parent);
+                parent = parent.parent;
+              }
+              parents.reversed.forEach((element) {
+                stdout.write(element.localName ?? '' + ' > ');
+              });
+              stdout.write('\n');
+              break;
+            default:
+              stdout.writeln('Invalid choice');
+              exit = true;
+          }
+        }
+      }
+    }
+  }
+
+  //TODO: determine what selection to use on each item and data relation
 }
 
-int index = 0;
-
-List<Element> items = [];
-
-void iterate(List<Element>? elements, int level) {
+List<Element> iterate(List<Element>? elements, int level, int globalIndex) {
   if (elements == null) {
-    return;
+    return <Element>[];
   }
+
+  int index = globalIndex;
+
+  final List<Element> items = [];
 
   for (Element element in elements) {
     //get the element's id
@@ -39,12 +101,26 @@ void iterate(List<Element>? elements, int level) {
     //remove leading whitespace
     text = text.replaceAll(RegExp(r'^\s+'), '');
 
-    print(index.toString() + ': ' + (List.generate(level, (index) => '| ').join('') + (tagName ?? '') + '-' + text));
+    stdout.writeln(index.toString() +
+        '-' +
+        level.toString() +
+        ':\t' +
+        (List.generate(level, (index) => '| ').join('') +
+            (tagName ?? '') +
+            '\t\t<' +
+            id +
+            '>' +
+            '[' +
+            className +
+            '] ' +
+            text));
 
     items.add(element);
 
     index++;
 
-    iterate(element.children, level + 1);
+    items.addAll(iterate(element.children, level + 1, index));
   }
+
+  return items;
 }

@@ -157,7 +157,7 @@ Map<String, HTExternalFunction> _externalFunction = {
   }) {
     final value = positionalArgs[0];
     if (value is HTStruct) {
-      return Map<String, dynamic>.from(value.fields);
+      return value.toJson();
     }
     return value;
   },
@@ -169,7 +169,7 @@ Map<String, HTExternalFunction> _externalFunction = {
   }) {
     final value = positionalArgs[0];
     if (value is HTStruct) {
-      return value.fields.map((key, value) => MapEntry<int, String>(int.parse(key), value.toString()));
+      return value.toJson().map((key, value) => MapEntry<int, String>(int.parse(key), value.toString()));
     }
     return value;
   },
@@ -181,7 +181,7 @@ Map<String, HTExternalFunction> _externalFunction = {
   }) {
     final value = positionalArgs[0];
     if (value is HTStruct) {
-      return value.fields.map((key, value) => MapEntry<String, String>(key, value.toString()));
+      return value.toJson().map((key, value) => MapEntry<String, String>(key, value.toString()));
     }
     return value;
   },
@@ -250,7 +250,7 @@ dynamic eval(
   hetu.init(externalFunctions: _externalFunction);
 
   if (compiled) {
-    await hetu.loadBytecode(file.readAsBytesSync(), path.basenameWithoutExtension(file.path));
+    await hetu.loadBytecode(bytes: file.readAsBytesSync(), moduleName: path.basenameWithoutExtension(file.path));
   } else {
     await hetu.eval(await file.readAsString());
   }
@@ -260,19 +260,14 @@ dynamic eval(
   //Define the eval script for recursion
   _eval = (name, _args) async {
     //invokes specific functions by name to be run
-    var response = hetu.invoke(
+    final response = hetu.invoke(
       name,
       positionalArgs: _args,
     );
 
-    //Need the map and less of the Hetu
-    if (response is HTStruct) {
-      response = response.fields;
-    }
-
     //If the return is a map, it could be for an async function to be called
     //Returned maps for async functions must have a target and data key
-    if (response is Map && response.containsKey('target') && response.containsKey('data')) {
+    if ((response is Map || response is HTStruct) && response.containsKey('target') && response.containsKey('data')) {
       //List of arguments to be passed to next function
       final List nextData = [];
 
