@@ -97,6 +97,7 @@ class ScraperSource {
           functionName: r.entry,
           args: arguments,
           workingDirectory: r.file.parent.path,
+          compiled: r.compiled,
         ),
         errorMessage: 'Error running eval',
       );

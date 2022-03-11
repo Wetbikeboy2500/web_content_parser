@@ -1,7 +1,6 @@
 import 'dart:async';
 
 //source
-import 'package:computer/computer.dart';
 import 'package:web_content_parser/src/parser/sources/computer.dart';
 import './computeDecorator.dart';
 import '../../scraper/scraperSource.dart';

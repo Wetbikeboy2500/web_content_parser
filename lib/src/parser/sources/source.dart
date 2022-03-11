@@ -1,3 +1,5 @@
+import 'package:web_content_parser/src/util/parseUriResult.dart';
+
 import '../../scraper/scraper.dart';
 import '../../util/firstWhereResult.dart';
 import '../../scraper/scraperSource.dart';
@@ -40,40 +42,45 @@ Future<Result<Post>> fetchPost(ID id) async {
 ///
 ///[url] this is the url to search to determine the post being searched for
 Future<Result<Post>> fetchPostUrl(String url) async {
-  final Uri? u = Uri.tryParse(url);
+  final u = UriResult.parse(url);
 
-  if (u == null) {
+  if (u.fail) {
     log2('Error parsing url:', url);
     return const Result.fail();
   }
 
-  //compile list of all allowed sources for chapter image downloading
-  //TODO: could cache this until a new source is added
-  final List<SourceTemplate> allowedPostByURL = [];
+  SourceTemplate? source;
+  //this is for logging
+  bool allowedSourcesFound = false;
+
+  //tries to find a matching and supported source
   for (SourceTemplate a in sources.values) {
     if (a.supports(RequestType.postUrl)) {
-      allowedPostByURL.add(a);
+      allowedSourcesFound = true;
+      if (u.data!.host.contains(a.host)) {
+        source = a;
+        break;
+      }
     }
+  }
+
+  if (!allowedSourcesFound) {
+    log('Found no allowed sources');
+    return const Result.fail();
   }
 
   //find the source that support the url for the image downaloding
-  if (allowedPostByURL.isNotEmpty) {
-    final Result<SourceTemplate> s = allowedPostByURL.firstWhereResult((a) => u.host.contains(a.host));
-
-    if (s.pass) {
-      try {
-        return await s.data!.fetchPostUrl(url);
-      } catch (e, stack) {
-        log2('High level error fetching post url', e);
-        log(stack);
-      }
-    } else {
-      log2('No series match url:', url);
-    }
-  } else {
-    log('Found no allowed sources');
+  if (source == null) {
+    log2('No series match url:', url);
+    return const Result.fail();
   }
 
+  try {
+    return await source.fetchPostUrl(url);
+  } catch (e, stack) {
+    log2('High level error fetching post url', e);
+    log(stack);
+  }
   return const Result.fail();
 }
 
@@ -119,29 +126,31 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
   }
 
   //compile list of all allowed sources for chapter image downloading
-  final List<SourceTemplate> allowedImageDownload = [];
+  SourceTemplate? source;
+  bool allowedSourcesFound = false;
   for (SourceTemplate a in sources.values) {
     if (a.supports(RequestType.imagesUrl)) {
-      allowedImageDownload.add(a);
+      allowedSourcesFound = true;
+      if (u.host.contains(a.host)) {
+        source = a;
+        break;
+      }
     }
   }
 
-  if (allowedImageDownload.isEmpty) {
+  if (!allowedSourcesFound) {
     log('Found no allowed sources');
     return const Result.fail();
   }
 
-  //find the source that support the url for the image downaloding
-  final Result<SourceTemplate> s = allowedImageDownload.firstWhereResult((a) => u.host.contains(a.host));
-
-  if (s.fail) {
+  if (source == null) {
     log('No sources match chapter image download');
     return const Result.fail();
   }
 
   try {
     log('Fetching chapter images');
-    return await s.data!.fetchChapterImagesUrl(url);
+    return await source.fetchChapterImagesUrl(url);
   } catch (e, stack) {
     log2('Error in getting chapter images url:', e);
     log(stack);
@@ -175,7 +184,8 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
 ///[options] catalog options which should be defined source-by-source with variable implementations
 ///To determine if a source supports catalog call [sourceSupportsCatalog]
 ///To determine if a source supports multicatalog call [sourceSupportsMultiCatalog]
-Future<Result<List<CatalogEntry>>> fetchCatalog(String source, {int page = 0, Map<String, dynamic> options = const {}}) async {
+Future<Result<List<CatalogEntry>>> fetchCatalog(String source,
+    {int page = 0, Map<String, dynamic> options = const {}}) async {
   final SourceTemplate? s = sources[source];
   if (s != null) {
     if (s.supports(RequestType.catalog) || s.supports(RequestType.catalogMulti)) {

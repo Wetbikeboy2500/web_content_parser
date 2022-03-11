@@ -237,7 +237,6 @@ void insertFunction(String name, HTExternalFunction func) => _externalFunction[n
 ///
 ///This includes already made external functions to be used and a system for calling async functions
 ///This also accounts for async code through recursive calls when futures are returned in a specific format
-//TODO: allow eval to execute compiled hetu scripts. This can be set through an extra parameter supplied through the yaml file
 dynamic eval(
   File file, {
   String functionName = 'main',
