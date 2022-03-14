@@ -287,6 +287,10 @@ dynamic eval(
       return await _eval(response['target'], nextData);
     }
 
+    if (response is HTStruct) {
+      return response.toJson();
+    }
+
     //Simply returns the final result if not async
     return response;
   };
