@@ -1,7 +1,4 @@
-import 'package:web_content_parser/src/util/parseUriResult.dart';
-
 import '../../scraper/scraper.dart';
-import '../../util/firstWhereResult.dart';
 import '../../scraper/scraperSource.dart';
 import '../../util/log.dart';
 import 'dart:io';
@@ -18,10 +15,11 @@ import '../json/post.dart';
 //utils
 import '../../util/Result.dart';
 import '../../util/RequestType.dart';
+import '../../util/parseUriResult.dart';
 
 ///Returns only post data for the requested id
 ///
-///This interfaces with all loaded sources and searchs for data return
+///This interfaces with all loaded sources and searches for data return
 Future<Result<Post>> fetchPost(ID id) async {
   final SourceTemplate? source = sources[id.source];
   if (source != null && source.supports(RequestType.post)) {
@@ -69,7 +67,7 @@ Future<Result<Post>> fetchPostUrl(String url) async {
     return const Result.fail();
   }
 
-  //find the source that support the url for the image downaloding
+  //find the source that support the url for the image downloading
   if (source == null) {
     log2('No series match url:', url);
     return const Result.fail();
@@ -100,7 +98,7 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
 
       final List<Chapter> chapters = result.data!;
 
-      //sort the list by chapterindex
+      //sort the list by chapter index
       chapters.sort((a, b) => a.chapterID.index - b.chapterID.index);
       return Result.pass(chapters);
     } catch (e, stack) {
@@ -179,7 +177,7 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
 
 ///Request catalog for the source
 ///
-///Sources suport a single call catalog or a multicatalog
+///Sources support a single call catalog or a multicatalog
 ///[page] starts at 0
 ///[options] catalog options which should be defined source-by-source with variable implementations
 ///To determine if a source supports catalog call [sourceSupportsCatalog]
@@ -239,7 +237,7 @@ void loadExternalParseSources(Directory dir) {
 ///[name] unique name to identify the source
 ///[source] object built off of source template
 ///
-///Source will only by overriden if version number is higher than the currently used source.
+///Source will only by overridden if version number is higher than the currently used source.
 void addSource(String name, SourceTemplate source) {
   final SourceTemplate? currentSource = sources[name];
   if (currentSource != null) {

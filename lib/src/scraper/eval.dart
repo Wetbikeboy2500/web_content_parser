@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:hetu_script/binding.dart';
 import 'package:hetu_script/value/struct/struct.dart';
 import 'package:html/dom.dart';
-import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser show parse;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
@@ -14,7 +13,7 @@ import 'scrapeFunctions.dart';
 
 ///Functions that can be imported and used inside of hetu scripts
 ///
-///This also allows for overridding of functions using the insert function feature
+///This also allows for overriding of functions using the insert function feature
 Map<String, HTExternalFunction> _externalFunction = {
   'querySelector': (
     HTEntity entity, {
@@ -136,7 +135,7 @@ Map<String, HTExternalFunction> _externalFunction = {
 
       return DateTime.now().subtract(ago);
     } catch (e) {
-      log2('Error occured parsing time ago:', e);
+      log2('Error occurred parsing time ago:', e);
       //TODO: revise this to use a safe call and not default to datetime now
       return DateTime.now();
     }
@@ -230,7 +229,7 @@ Map<String, HTExternalFunction> _externalFunction = {
 ///Insert a new external function that can be imported into a script
 ///
 ///[name] Function name
-///[func] Function to be run. This shold follow the format of other functions that have been defined for external functions
+///[func] Function to be run. This should follow the format of other functions that have been defined for external functions
 void insertFunction(String name, HTExternalFunction func) => _externalFunction[name] = func;
 
 ///Evaluates hetu script files
