@@ -81,8 +81,8 @@ class ParseSource extends SourceTemplate {
 
       try {
         //I currently am only using computer here since lists of chapters can have a lot of data to be processed
-        final List<Chapter> response = await computeDecorator.compute<List<Chapter>, List<Map<String, dynamic>>>(
-            Chapter.chaptersFromJson, chapters.data!.cast<Map<String, dynamic>>());
+        final List<Chapter> response =
+            await Chapter.computeChaptersFromJson(computeDecorator, chapters.data!.cast<Map<String, dynamic>>());
         computeDecorator.end();
         return Result.pass(response);
       } catch (e, stack) {

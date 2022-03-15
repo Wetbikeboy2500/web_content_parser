@@ -49,8 +49,17 @@ class ScraperSource {
   ScraperSource(String input, this.directory) {
     try {
       //decode yaml
-      final Map<String, dynamic> yaml = Map<String, dynamic>.from(loadYaml(input));
-      log(yaml);
+      var yaml = loadYaml(input);
+      if (yaml is YamlMap) {
+        yaml = Map.fromEntries(yaml.entries.map((e) {
+          if (e.value is YamlList) {
+            return MapEntry(e.key, e.value.map((e) => e is YamlMap ? Map.fromEntries(e.entries) : e).toList());
+          }
+
+          return e;
+        }));
+      }
+
       //make sure it meets requirements (source, baseurl, subdomain, version, programTarget, functions)
       const requiredAttributes = ['source', 'baseUrl', 'subdomain', 'version', 'programType', 'requests'];
       if (!requiredAttributes.every((element) => yaml.containsKey(element))) {

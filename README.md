@@ -252,3 +252,7 @@ ChapterID(id: ID(id: '', source: ''), index: 0, url: '')
 This also uses a uid like IDs but with an added value added to the end. It adds the index to the end of the uid with a colon so it follows the format of `source:id:index`. This means all info can also be extracted from the uid since it can go off the first and last occurrence of the colon with the id being any value.
 
 When using the fromJson() constructor, the ID can be passed as a map or an object.
+
+### Computing
+
+A ComputeDecorator is a class implementation for allowing different types of computes when converting objects. The decorator currently uses the Computer package which is agnostic to the pplatform it is run on. This decorator can be chnaged by setting `ParseSource.computeDecorator` to a different decorator implementation. This can allow for compute, which is avaliable in Flutter, to be used. The ComputeDecorator can be turned off and not used by setting `ParseSource.computeEnabled`. It is enabled by default. Everything will function the same with the compute off, but it main perform worse when processing large amounts of objects.
