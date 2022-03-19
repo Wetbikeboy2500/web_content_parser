@@ -31,3 +31,4 @@ dev_dependencies:
   test: ^1.17.10
   coverage: ^1.0.3
   dotenv: ^3.0.0
+  petitparser: ^4.1.0
