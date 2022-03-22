@@ -33,7 +33,8 @@ void sourceBuilder(String html) {
   final alias = (stringIgnoreCase('as').trim().token() & letter().plus().flatten().trim()).optional();
 
   final innerHTML = stringIgnoreCase('innerHTML').trim().token();
-
+  final outerHTML = stringIgnoreCase('outerHTML').trim().token();
+  final nameSelect = stringIgnoreCase('name').trim().token();
   final attribute = stringIgnoreCase('attribute').token() & char('.').token() & value;
 
   final from = stringIgnoreCase('from').trim().token();
@@ -53,7 +54,8 @@ void sourceBuilder(String html) {
       stringIgnoreCase('selector is').trim().token() & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
 
   final query = select & //Start of the selct
-      ((char('*').token() | innerHTML | attribute) & alias).separatedBy(char(',').token()) & //alias for naming
+      ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML) & alias)
+          .separatedBy(char(',').token()) & //alias for naming
       into.optional() &
       from & //marks next part
       name & //this represents the variable to extract from (this could be a document, element, etc.)
@@ -62,18 +64,28 @@ void sourceBuilder(String html) {
   final values0 = query.parse("SELECT innerHTML AS name FROM p WHERE SELECTOR IS 'body > p:nth-child(4)'");
   final values1 = query.parse('SELECT innerHTML FROM p WHERE SELECTOR IS p:nth-child(3)');
   final values2 = query.parse("SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'");
-  final values3 = query.parse(
-      "SELECT attribute.data-id AS id, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(4)'");
+  final values3 =
+      query.parse("SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'");
+
+  /*
+      TRANSFORM name IN doc WITH TRIM, LOWERCASE
+      TRANSFORM first, last IN doc WITH TRIM, LOWERCASE, CONCAT AS name
+      This would chnage the name on every map within the doc variable
+      */
 
   print(values0);
   print(values1);
   print(values2);
   print(values3);
 
+  print(document.querySelectorAll("body > p:nth-child(3)"));
+
   Interpreter i = Interpreter();
-  if (values0.isSuccess) {
-    var s = i.process(values0.value);
+  if (values3.isSuccess) {
+    var s = i.process(values3.value);
+    i.setValue('document', document);
     i.run(s);
+    print(i.getValue('doc'));
   }
 }
 
@@ -107,18 +119,18 @@ class Interpreter {
     return _values[name];
   }
 
-  List<Element> querySelector(Element element, String selector) {
-    return element.querySelectorAll(selector);
-  }
-
-  List<dynamic> getProperty(List<Element> elements, TokenType property) {
+  dynamic getProperty(Element element, TokenType property, [String? meta]) {
     switch (property) {
       case TokenType.InnerHTML:
-        return elements.map((element) => element.innerHtml).toList();
+        return element.innerHtml;
       case TokenType.Name:
-        return elements.map((element) => element.localName).toList();
+        return element.localName;
       case TokenType.OuterHTML:
-        return elements.map((element) => element.outerHtml).toList();
+        return element.outerHtml;
+      case TokenType.All:
+        return element;
+      case TokenType.Attribute:
+        return element.attributes[meta];
       default:
         return [];
     }
@@ -126,6 +138,32 @@ class Interpreter {
 
   void run(Statement statement) {
     //TODO: Implement this
+    dynamic data = _values[statement.from];
+    if (data == null) {
+      throw Exception('No data found for ${statement.from}');
+    }
+
+    late final List<Element> elements;
+
+    if (data is Document || data is Element) {
+      elements = data.querySelectorAll(statement.selector);
+    } else {
+      throw Exception('Data is not an Element');
+    }
+
+    final List<Map> results = [];
+
+    for (var element in elements) {
+      final Map<String, dynamic> values = {};
+      for (var select in statement.operators) {
+        values[select.alias ?? select.type.name] = getProperty(element, select.type);
+      }
+      results.add(values);
+    }
+
+    if (statement.into != null) {
+      setValue(statement.into!, results);
+    }
   }
 
   Statement process(List values) {
@@ -134,6 +172,7 @@ class Interpreter {
     final List<Operator> selections = [];
     String? requestFrom;
     String? selector;
+    String? into;
 
     for (var data in values) {
       if (data == null) {
@@ -210,7 +249,7 @@ class Interpreter {
           }
           break;
         case State.Into:
-          //TODO: process the into stuff once the format is figured out
+          into = data[1];
           break;
         case State.From:
           requestFrom = data;
@@ -225,7 +264,7 @@ class Interpreter {
       throw Exception('Invalid from or selector');
     }
 
-    return Statement(selections, requestFrom, selector);
+    return Statement(selections, requestFrom, selector, into);
   }
 }
 
@@ -240,7 +279,8 @@ class Operator {
 class Statement {
   final String from;
   final String selector;
+  final String? into;
   final List<Operator> operators;
 
-  const Statement(this.operators, this.from, this.selector);
+  const Statement(this.operators, this.from, this.selector, this.into);
 }
