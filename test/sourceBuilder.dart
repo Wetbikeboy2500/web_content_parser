@@ -24,85 +24,77 @@ void sourceBuilder(String html) {
 
   final valueMatcher = patternIgnoreCase('~!@\$%&*()_+=,./\';:"?><[]{}|`#a-z0-9') | char('-') | char('^');
 
-  final valueStringMatcher = char("'") & pattern("^'").star().flatten() & char("'");
+  final value = (valueMatcher).plus().flatten().trim();
 
-  final query = stringIgnoreCase('select').trim().token() & //Start of the selct
-      (stringIgnoreCase('innerHTML').trim().token() |
-          stringIgnoreCase('attribute').token() &
-              char('.').token() &
-              (valueMatcher).plus().flatten().trim()) & //property to extract
-      (stringIgnoreCase('as').trim().token() & letter().plus().flatten().trim()).optional() & //alias for naming
-      stringIgnoreCase('from').trim().token() & //marks next part
-      letter()
-          .plus()
-          .flatten()
-          .trim() & //this represents the variable to extract from (this could be a document, element, etc.)
-      stringIgnoreCase('where').trim().token() & //Where clause
-      stringIgnoreCase('selector is').trim().token() &
-      ((valueStringMatcher) | (valueMatcher).plus().flatten().trim());
+  final valueStringMatcher = (char("'") & pattern("^'").star().flatten() & char("'")).pick(1);
+
+  final select = stringIgnoreCase('select').trim().token();
+
+  final alias = (stringIgnoreCase('as').trim().token() & letter().plus().flatten().trim()).optional();
+
+  final innerHTML = stringIgnoreCase('innerHTML').trim().token();
+
+  final attribute = stringIgnoreCase('attribute').token() & char('.').token() & value;
+
+  final from = stringIgnoreCase('from').trim().token();
+
+  final where = stringIgnoreCase('where').trim().token();
+
+  final name = letter().plus().flatten().trim();
+
+  final nameValue = name & char('.').token() & value;
+
+  //TODO: I will need to revise the syntax for the comparisons
+  final into = stringIgnoreCase('into').trim().token() &
+      name.trim() &
+      (where & nameValue & char('=') & nameValue).trim().optional();
+
+  final selectorIs =
+      stringIgnoreCase('selector is').trim().token() & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
+
+  final query = select & //Start of the selct
+      ((char('*').token() | innerHTML | attribute) & alias).separatedBy(char(',').token()) & //alias for naming
+      into.optional() &
+      from & //marks next part
+      name & //this represents the variable to extract from (this could be a document, element, etc.)
+      (where & selectorIs).optional();
 
   final values0 = query.parse("SELECT innerHTML AS name FROM p WHERE SELECTOR IS 'body > p:nth-child(4)'");
   final values1 = query.parse('SELECT innerHTML FROM p WHERE SELECTOR IS p:nth-child(3)');
   final values2 = query.parse("SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'");
+  final values3 = query.parse(
+      "SELECT attribute.data-id AS id, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(4)'");
 
   print(values0);
   print(values1);
   print(values2);
+  print(values3);
 
-  //INTO syntax for creating associated objects
-  //create a list of Map or add a new key/value to list of maps just by index
-  //This would need to have all the lengths of FROM to be the same to work properly
-
-  //validate execution path
+  Interpreter i = Interpreter();
   if (values0.isSuccess) {
-    final Interpreter interpreter = Interpreter();
-
-    interpreter.checkTokens(
-      null,
-      values0.value.map((element) {
-        if (element is List && element.length == 3) {
-          if (element.first == "'" && element.last == "'") {
-            return element.sublist(1, element.length - 1);
-          }
-        }
-
-        return element;
-      }).toList(),
-    );
-
-    print(interpreter.tokens);
-
-    interpreter.parse();
+    var s = i.process(values0.value);
+    i.run(s);
   }
 }
 
-class CompleteToken {
-  final String value;
-  final TokenType type;
-
-  const CompleteToken(this.value, this.type);
-
-  @override
-  String toString() {
-    return 'CompleteToken{value: $value, type: $type}';
-  }
+enum TokenType {
+  Select,
+  InnerHTML,
+  Name,
+  OuterHTML,
+  All,
+  Attribute,
+  Dot,
+  Alias,
+  From,
+  Where,
+  Selector,
+  Value,
+  End,
+  Unknown
 }
 
-enum TokenType { Select, InnerHTML, Name, OuterHTML, Attribute, Dot, Alias, From, Where, Selector, Value, End, Unknown }
-
-const Map<TokenType, List<TokenType>> expected = {
-  TokenType.Select: [TokenType.InnerHTML, TokenType.Name, TokenType.OuterHTML, TokenType.Attribute],
-  TokenType.Attribute: [TokenType.Dot],
-  TokenType.Dot: [TokenType.Value],
-  TokenType.InnerHTML: [TokenType.Alias, TokenType.From],
-  TokenType.Name: [TokenType.Alias, TokenType.From],
-  TokenType.OuterHTML: [TokenType.Alias, TokenType.From],
-  TokenType.Alias: [TokenType.Value],
-  TokenType.Value: [TokenType.InnerHTML, TokenType.From, TokenType.End, TokenType.Where],
-  TokenType.From: [TokenType.Value],
-  TokenType.Selector: [TokenType.Value],
-  TokenType.Where: [TokenType.Selector],
-};
+enum State { Select, Into, From, Where, Unkown }
 
 class Interpreter {
   final Map<String, dynamic> _values = {};
@@ -132,151 +124,123 @@ class Interpreter {
     }
   }
 
-  final List<CompleteToken> tokens = [];
+  void run(Statement statement) {
+    //TODO: Implement this
+  }
 
-  TokenType checkTokens(TokenType? current, List values) {
+  Statement process(List values) {
+    State currentState = State.Unkown;
+
+    final List<Operator> selections = [];
+    String? requestFrom;
+    String? selector;
+
     for (var data in values) {
-      if (data is List) {
-        current = checkTokens(current, data);
+      if (data == null) {
         continue;
       }
 
-      print(data);
-
-      //determine what the token is
-      late TokenType token;
-      if (data is Token) {
-        switch ((data.value as String).toLowerCase()) {
-          case 'select':
-            token = TokenType.Select;
-            break;
-          case 'as':
-            token = TokenType.Alias;
-            break;
-          case 'from':
-            token = TokenType.From;
-            break;
-          case 'where':
-            token = TokenType.Where;
-            break;
-          case 'selector is':
-            token = TokenType.Selector;
-            break;
-          case 'innerhtml':
-            token = TokenType.InnerHTML;
-            break;
-          case 'attribute':
-            token = TokenType.Attribute;
-            break;
-          case '.':
-            token = TokenType.Dot;
-            break;
-          default:
-            stdout.writeln('Unexpected token: ${data.value}');
-            token = TokenType.Unknown;
-        }
-      } else {
-        token = TokenType.Value;
+      if (data is Token && (data.value as String).toLowerCase() == 'select') {
+        currentState = State.Select;
+        continue;
+      } else if (data is Token && (data.value as String).toLowerCase() == 'from') {
+        currentState = State.From;
+        continue;
+      } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'into') {
+        currentState = State.Into;
+      } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'where') {
+        currentState = State.Where;
       }
 
-      //makes a nice list of tokens
-      tokens.add(CompleteToken(TokenType.Value == token ? data : data.value, token));
+      switch (currentState) {
+        case State.Unkown:
+          throw Exception('Invalid starting syntax');
+        case State.Select:
+          for (dynamic operators in data) {
+            if (operators is Token && operators.value == ',') {
+              continue;
+            }
 
-      if (current == null) {
-        //needs to be a starting type
-        if (token == TokenType.Select) {
-          current = token;
-        }
-      } else {
-        //need to check the token matches the expected
-        final List<TokenType>? expectedOptions = expected[current];
+            late TokenType type;
+            String? alias;
+            String? meta;
 
-        if (expectedOptions == null) {
-          stdout.writeln('Unexpected token: $current');
-          return TokenType.Unknown;
-        }
+            List items = operators;
 
-        if (!expectedOptions.contains(token)) {
-          stdout.writeln('Unexpected token in sequence: $current $data');
-          return TokenType.Unknown;
-        }
+            if (operators.first is List) {
+              items = operators.first;
+            }
 
-        current = token;
-      }
-    }
+            if (items[0] is Token) {
+              switch ((items[0].value as String).toLowerCase()) {
+                case 'innerhtml':
+                  type = TokenType.InnerHTML;
+                  break;
+                case 'outerhtml':
+                  type = TokenType.OuterHTML;
+                  break;
+                case 'name':
+                  type = TokenType.Name;
+                  break;
+                case '*':
+                  type = TokenType.All;
+                  break;
+                case 'attribute':
+                  type = TokenType.Attribute;
+                  meta = items[2];
+                  break;
+                default:
+                  throw Exception('Invalid token for operator');
+              }
+            } else {
+              throw Exception('Invalid operator');
+            }
 
-    return current ?? TokenType.Unknown;
-  }
+            if (operators.last is List &&
+                operators.last.first is Token &&
+                operators.last.first.value.toLowerCase() == 'as') {
+              alias = operators.last.last;
+            }
 
-  ///Parses the tokens into a query
-  ///
-  ///This is trying to move through different states for a select statement.
-  ///This has a lot more room to be improved
-  parse() {
-    //what are the values trying to be retieved?
-    //what are their aliases?
-    if (tokens.removeAt(0).type != TokenType.Select) {
-      throw Exception('Expected SELECT');
-    }
-
-    var current = tokens.removeAt(0);
-
-    List<SelectorData> operations = [];
-
-    while (current.type != TokenType.From && tokens.isNotEmpty) {
-      final TokenType token = current.type;
-      current = tokens.removeAt(0);
-      if (current.type == TokenType.Alias) {
-        operations.add(SelectorData(token, alias: tokens.removeAt(0).value));
-        current = tokens.removeAt(0);
-      } else {
-        operations.add(SelectorData(token));
+            selections.add(Operator(
+              type,
+              alias: alias,
+              meta: meta,
+            ));
+          }
+          break;
+        case State.Into:
+          //TODO: process the into stuff once the format is figured out
+          break;
+        case State.From:
+          requestFrom = data;
+          break;
+        case State.Where:
+          selector = data.last.last;
+          break;
       }
     }
 
-    //What document or element is the request for?
-    if (current.type != TokenType.From) {
-      throw Exception('Expected FROM');
+    if (requestFrom == null || selector == null) {
+      throw Exception('Invalid from or selector');
     }
 
-    final String request = tokens.removeAt(0).value;
-
-    //What selector is being used?
-    List<String> selectors = [];
-
-    if (tokens.isNotEmpty && tokens.removeAt(0).type == TokenType.Where) {
-      current = tokens.removeAt(0);
-      while (tokens.isNotEmpty) {
-        if (current.type == TokenType.Selector) {
-          current = tokens.removeAt(0);
-          selectors.add(current.value);
-        }
-
-        if (tokens.isNotEmpty) {
-          tokens.removeAt(0);
-        }
-      }
-    }
-
-    print(operations);
-    print(request);
-    print(selectors);
+    return Statement(selections, requestFrom, selector);
   }
 }
 
-class SelectorData {
-  final String? alias;
+class Operator {
   final TokenType type;
+  final String? alias;
+  final String? meta;
 
-  const SelectorData(this.type, {this.alias});
-
-  @override
-  String toString() {
-    return 'SelectorData{alias: $alias, type: $type}';
-  }
+  const Operator(this.type, {this.alias, this.meta});
 }
 
-class SelectOperation {
-  List<SelectorData> operations = [];
-  List<String> selectors = [];
+class Statement {
+  final String from;
+  final String selector;
+  final List<Operator> operators;
+
+  const Statement(this.operators, this.from, this.selector);
 }
