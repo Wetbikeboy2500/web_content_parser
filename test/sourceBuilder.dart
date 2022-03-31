@@ -53,19 +53,51 @@ void sourceBuilder(String html) {
   final selectorIs =
       stringIgnoreCase('selector is').trim().token() & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
 
+  final inputSelectors =
+      ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML) & alias).separatedBy(char(',').token());
+
+  final inputSelectorsName = ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML | name) & alias)
+      .separatedBy(char(',').token());
+
   final query = select & //Start of the selct
-      ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML) & alias)
-          .separatedBy(char(',').token()) & //alias for naming
+      inputSelectors & //alias for naming
       into.optional() &
       from & //marks next part
       name & //this represents the variable to extract from (this could be a document, element, etc.)
       (where & selectorIs).optional();
+
+  final transform = stringIgnoreCase('transform').trim().token();
+
+  final transformOperations = stringIgnoreCase('trim') |
+      stringIgnoreCase('lowercase') |
+      stringIgnoreCase('uppercase') |
+      stringIgnoreCase('concat');
+
+  final queryTransform = transform &
+      inputSelectorsName &
+      stringIgnoreCase('in').trim().token() &
+      name &
+      stringIgnoreCase('with').trim().token() &
+      transformOperations &
+      alias.optional();
+
+  final allQueries = (query | queryTransform).separatedBy(char(';').token());
 
   final values0 = query.parse("SELECT innerHTML AS name FROM p WHERE SELECTOR IS 'body > p:nth-child(4)'");
   final values1 = query.parse('SELECT innerHTML FROM p WHERE SELECTOR IS p:nth-child(3)');
   final values2 = query.parse("SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'");
   final values3 =
       query.parse("SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'");
+
+  final values4 = allQueries.parse([
+    "SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'",
+    "SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'"
+        "TRANSFORM name IN doc WITH TRIM, LOWERCASE"
+  ].join(';'));
+
+  print(values4);
+
+  return;
 
   /*
       TRANSFORM name IN doc WITH TRIM, LOWERCASE
