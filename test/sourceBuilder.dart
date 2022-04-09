@@ -97,6 +97,14 @@ void sourceBuilder(String html) {
 
   print(values4);
 
+  final v = allQueries.parse("TRANSFORM name IN doc WITH TRIM, LOWERCASE");
+  final inew = Interpreter();
+  if (v.isSuccess) {
+    inew.processAll(v.value);
+  } else {
+    print(v.message);
+  }
+
   return;
 
   /*
@@ -116,7 +124,7 @@ void sourceBuilder(String html) {
   if (values3.isSuccess) {
     var s = i.process(values3.value);
     i.setValue('document', document);
-    i.run(s);
+    i.runSelect(s);
     print(i.getValue('doc'));
   }
 }
@@ -135,10 +143,21 @@ enum TokenType {
   Selector,
   Value,
   End,
+  In,
+  Transform,
   Unknown
 }
 
-enum State { Select, Into, From, Where, Unkown }
+enum State {
+  Select,
+  Transform,
+  In,
+  Into,
+  From,
+  Where,
+  With,
+  Unknown,
+}
 
 class Interpreter {
   final Map<String, dynamic> _values = {};
@@ -168,8 +187,7 @@ class Interpreter {
     }
   }
 
-  void run(Statement statement) {
-    //TODO: Implement this
+  void runSelect(Statement statement) {
     dynamic data = _values[statement.from];
     if (data == null) {
       throw Exception('No data found for ${statement.from}');
@@ -178,7 +196,11 @@ class Interpreter {
     late final List<Element> elements;
 
     if (data is Document || data is Element) {
-      elements = data.querySelectorAll(statement.selector);
+      if (statement.selector == null) {
+        elements = [data];
+      } else {
+        elements = data.querySelectorAll(statement.selector);
+      }
     } else {
       throw Exception('Data is not an Element');
     }
@@ -198,8 +220,22 @@ class Interpreter {
     }
   }
 
+  List<Statement> processAll(List values) {
+    final List<Statement> statements = [];
+    for (var value in values) {
+      if (value is Token) {
+        continue;
+      }
+
+      statements.add(process(value));
+    }
+    return statements;
+  }
+
   Statement process(List values) {
-    State currentState = State.Unkown;
+    State currentState = State.Unknown;
+
+    TokenType? operation = null;
 
     final List<Operator> selections = [];
     String? requestFrom;
@@ -213,9 +249,20 @@ class Interpreter {
 
       if (data is Token && (data.value as String).toLowerCase() == 'select') {
         currentState = State.Select;
+        operation = TokenType.Select;
+        continue;
+      } else if (data is Token && (data.value as String).toLowerCase() == 'transform') {
+        currentState = State.Transform;
+        operation = TokenType.Transform;
+        continue;
+      } else if (data is Token && (data as String).toLowerCase() == 'in') {
+        currentState = State.In;
         continue;
       } else if (data is Token && (data.value as String).toLowerCase() == 'from') {
         currentState = State.From;
+        continue;
+      } else if (data is Token && (data.value as String).toLowerCase() == 'with') {
+        currentState = State.With;
         continue;
       } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'into') {
         currentState = State.Into;
@@ -223,8 +270,12 @@ class Interpreter {
         currentState = State.Where;
       }
 
+      if (operation == null) {
+        throw Exception('No operation found');
+      }
+
       switch (currentState) {
-        case State.Unkown:
+        case State.Unknown:
           throw Exception('Invalid starting syntax');
         case State.Select:
           for (dynamic operators in data) {
@@ -280,23 +331,64 @@ class Interpreter {
             ));
           }
           break;
+        case State.Transform:
+          for (dynamic operators in data) {
+            if (operators is Token && operators.value == ',') {
+              continue;
+            }
+
+            late TokenType type;
+            String? alias;
+            String? meta;
+
+            List items = operators;
+
+            if (operators.first is List) {
+              items = operators.first;
+            }
+
+            type = TokenType.Value;
+            meta = items[0];
+
+            if (operators.last is List &&
+                operators.last.first is Token &&
+                operators.last.first.value.toLowerCase() == 'as') {
+              alias = operators.last.last;
+            }
+
+            selections.add(Operator(
+              type,
+              alias: alias,
+              meta: meta,
+            ));
+          }
+          break;
         case State.Into:
           into = data[1];
           break;
+        case State.In:
         case State.From:
           requestFrom = data;
           break;
         case State.Where:
           selector = data.last.last;
           break;
+        case State.With:
+          print(data);
+          exit(0);
+          break;
       }
     }
 
-    if (requestFrom == null || selector == null) {
+    if (operation == null) {
+      throw Exception('Invalid operation');
+    }
+
+    if (requestFrom == null) {
       throw Exception('Invalid from or selector');
     }
 
-    return Statement(selections, requestFrom, selector, into);
+    return Statement(operation, selections, requestFrom, selector, into);
   }
 }
 
@@ -309,10 +401,11 @@ class Operator {
 }
 
 class Statement {
+  final TokenType operation;
   final String from;
-  final String selector;
+  final String? selector;
   final String? into;
   final List<Operator> operators;
 
-  const Statement(this.operators, this.from, this.selector, this.into);
+  const Statement(this.operation, this.operators, this.from, this.selector, this.into);
 }
