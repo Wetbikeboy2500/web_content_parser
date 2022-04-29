@@ -36,6 +36,7 @@ void sourceBuilder(String html) {
   final outerHTML = stringIgnoreCase('outerHTML').trim().token();
   final nameSelect = stringIgnoreCase('name').trim().token();
   final attribute = stringIgnoreCase('attribute').token() & char('.').token() & value;
+  final valueAccess = stringIgnoreCase('attribute').token() & char('.').token() & value;
 
   final from = stringIgnoreCase('from').trim().token();
 
@@ -56,7 +57,7 @@ void sourceBuilder(String html) {
   final inputSelectors =
       ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML) & alias).separatedBy(char(',').token());
 
-  final inputSelectorsName = ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML | name) & alias)
+  final inputSelectorsName = ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML | valueAccess) & alias)
       .separatedBy(char(',').token());
 
   final query = select & //Start of the selct
@@ -68,17 +69,17 @@ void sourceBuilder(String html) {
 
   final transform = stringIgnoreCase('transform').trim().token();
 
-  final transformOperations = stringIgnoreCase('trim') |
-      stringIgnoreCase('lowercase') |
-      stringIgnoreCase('uppercase') |
-      stringIgnoreCase('concat');
+  final transformOperations = stringIgnoreCase('trim').trim().token() |
+      stringIgnoreCase('lowercase').trim().token() |
+      stringIgnoreCase('uppercase').trim().token() |
+      stringIgnoreCase('concat').trim().token();
 
   final queryTransform = transform &
       inputSelectorsName &
       stringIgnoreCase('in').trim().token() &
       name &
       stringIgnoreCase('with').trim().token() &
-      transformOperations &
+      transformOperations.separatedBy(char(',').token()) &
       alias.optional();
 
   final allQueries = (query | queryTransform).separatedBy(char(';').token());
@@ -95,12 +96,16 @@ void sourceBuilder(String html) {
         "TRANSFORM name IN doc WITH TRIM, LOWERCASE"
   ].join(';'));
 
-  print(values4);
+  //print(values4);
 
   final v = allQueries.parse("TRANSFORM name IN doc WITH TRIM, LOWERCASE");
   final inew = Interpreter();
   if (v.isSuccess) {
-    inew.processAll(v.value);
+    List<Statement> statements = inew.processAll(v.value);
+    //print all statements
+    for (var statement in statements) {
+      print(statement);
+    }
   } else {
     print(v.message);
   }
@@ -145,6 +150,10 @@ enum TokenType {
   End,
   In,
   Transform,
+  Trim,
+  Lowercase,
+  Uppercase,
+  Concat,
   Unknown
 }
 
@@ -220,6 +229,43 @@ class Interpreter {
     }
   }
 
+  void runTransform(Statement statement) {
+    //from
+    dynamic data = _values[statement.from];
+    if (data == null) {
+      throw Exception('No data found for ${statement.from}');
+    }
+
+    //select
+    final List<dynamic> values = [];
+    for (Operator select in statement.operators) {
+      switch (select.type) {
+        case TokenType.Value:
+          values.add(data[select.type]);
+          break;
+      }
+    }
+
+    for (var transform in statement.operators) {
+      switch (transform.type) {
+        case TokenType.Trim:
+          values.forEach((value) => value = value.trim());
+          break;
+        case TokenType.Lowercase:
+          values.forEach((value) => value = value.toLowerCase());
+          break;
+        case TokenType.Uppercase:
+          values.forEach((value) => value = value.toUpperCase());
+          break;
+        case TokenType.Concat:
+          values.forEach((value) => value = value.toString() + value.toString());
+          break;
+        default:
+          throw Exception('Unknown transform ${transform.type}');
+      }
+    }
+  }
+
   List<Statement> processAll(List values) {
     final List<Statement> statements = [];
     for (var value in values) {
@@ -237,10 +283,14 @@ class Interpreter {
 
     TokenType? operation = null;
 
+    List<Operator>? transformations;
+
     final List<Operator> selections = [];
     String? requestFrom;
     String? selector;
     String? into;
+
+    print(values);
 
     for (var data in values) {
       if (data == null) {
@@ -255,7 +305,7 @@ class Interpreter {
         currentState = State.Transform;
         operation = TokenType.Transform;
         continue;
-      } else if (data is Token && (data as String).toLowerCase() == 'in') {
+      } else if (data is Token && (data.value as String).toLowerCase() == 'in') {
         currentState = State.In;
         continue;
       } else if (data is Token && (data.value as String).toLowerCase() == 'from') {
@@ -347,8 +397,31 @@ class Interpreter {
               items = operators.first;
             }
 
-            type = TokenType.Value;
-            meta = items[0];
+            if (items[0] is Token) {
+              switch ((items[0].value as String).toLowerCase()) {
+                case 'innerhtml':
+                  type = TokenType.InnerHTML;
+                  break;
+                case 'outerhtml':
+                  type = TokenType.OuterHTML;
+                  break;
+                case 'name':
+                  type = TokenType.Name;
+                  break;
+                case '*':
+                  type = TokenType.All;
+                  break;
+                case 'attribute':
+                  type = TokenType.Attribute;
+                  meta = items[2];
+                  break;
+                default:
+                  type = TokenType.Value;
+                  meta = items[0].value as String;
+              }
+            } else {
+              throw Exception('Invalid operator');
+            }
 
             if (operators.last is List &&
                 operators.last.first is Token &&
@@ -374,8 +447,49 @@ class Interpreter {
           selector = data.last.last;
           break;
         case State.With:
-          print(data);
-          exit(0);
+          //loop through tokens in data
+          for (dynamic operators in data) {
+            if (operators is Token && operators.value == ',') {
+              continue;
+            }
+            late TokenType type;
+            String? alias;
+            String? meta;
+
+            late List items;
+
+            if (operators is List) {
+              items = operators;
+            } else {
+              items = [operators];
+            }
+
+            switch ((items[0].value as String).toLowerCase()) {
+              case 'trim':
+                type = TokenType.Trim;
+                break;
+              case 'lowercase':
+                type = TokenType.Lowercase;
+                break;
+              case 'uppercase':
+                type = TokenType.Uppercase;
+                break;
+              case 'concat':
+                type = TokenType.Concat;
+                if (items.last is List && items.last.first is Token && items.last.first.value.toLowerCase() == 'as') {
+                  alias = items.last.last;
+                }
+                break;
+            }
+
+            transformations ??= [];
+
+            transformations.add(Operator(
+              type,
+              alias: alias,
+              meta: meta,
+            ));
+          }
           break;
       }
     }
@@ -388,7 +502,7 @@ class Interpreter {
       throw Exception('Invalid from or selector');
     }
 
-    return Statement(operation, selections, requestFrom, selector, into);
+    return Statement(operation, selections, requestFrom, selector, into, transformations: transformations);
   }
 }
 
@@ -406,6 +520,66 @@ class Statement {
   final String? selector;
   final String? into;
   final List<Operator> operators;
+  final List<Operator>? transformations;
 
-  const Statement(this.operation, this.operators, this.from, this.selector, this.into);
+  const Statement(this.operation, this.operators, this.from, this.selector, this.into, {this.transformations});
+
+  //create to string
+  @override
+  String toString() {
+    final StringBuffer buffer = StringBuffer();
+
+    buffer.write('$operation ');
+
+    for (Operator operator in operators) {
+      buffer.write('${operator.type}');
+
+      if (operator.meta != null) {
+        buffer.write('(${operator.meta})');
+      }
+
+      if (operator.alias != null) {
+        buffer.write(' as ${operator.alias}');
+      }
+
+      buffer.write(', ');
+    }
+
+    buffer.write('from $from');
+
+    if (selector != null) {
+      buffer.write(' where $selector');
+    }
+
+    if (into != null) {
+      buffer.write(' into $into');
+    }
+
+    if (transformations != null) {
+      buffer.write(' with ');
+
+      for (Operator operator in transformations!) {
+        buffer.write('${operator.type}');
+
+        if (operator.meta != null) {
+          buffer.write('(${operator.meta})');
+        }
+
+        if (operator.alias != null) {
+          buffer.write(' as ${operator.alias}');
+        }
+
+        buffer.write(', ');
+      }
+    }
+
+    return buffer.toString();
+  }
 }
+
+
+/*
+parse and tokenize
+convert to statements
+run statements
+*/
