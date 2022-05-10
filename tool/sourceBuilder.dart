@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 import 'package:html/parser.dart' show parse;
@@ -36,7 +38,7 @@ void sourceBuilder(String html) {
   final outerHTML = stringIgnoreCase('outerHTML').trim().token();
   final nameSelect = stringIgnoreCase('name').trim().token();
   final attribute = stringIgnoreCase('attribute').token() & char('.').token() & value;
-  final valueAccess = stringIgnoreCase('attribute').token() & char('.').token() & value;
+  final valueAccess = stringIgnoreCase('value').token() & char('.').token() & value;
 
   final from = stringIgnoreCase('from').trim().token();
 
@@ -54,10 +56,7 @@ void sourceBuilder(String html) {
   final selectorIs =
       stringIgnoreCase('selector is').trim().token() & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
 
-  final inputSelectors =
-      ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML) & alias).separatedBy(char(',').token());
-
-  final inputSelectorsName = ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML | valueAccess) & alias)
+  final inputSelectors = ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML | valueAccess) & alias)
       .separatedBy(char(',').token());
 
   final query = select & //Start of the selct
@@ -75,7 +74,7 @@ void sourceBuilder(String html) {
       stringIgnoreCase('concat').trim().token();
 
   final queryTransform = transform &
-      inputSelectorsName &
+      inputSelectors &
       stringIgnoreCase('in').trim().token() &
       name &
       stringIgnoreCase('with').trim().token() &
@@ -91,23 +90,31 @@ void sourceBuilder(String html) {
       query.parse("SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'");
 
   final values4 = allQueries.parse([
-    "SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'",
-    "SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'"
-        "TRANSFORM name IN doc WITH TRIM, LOWERCASE"
+    // "SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'",
+    "SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'",
+    "TRANSFORM value.random IN doc WITH TRIM, LOWERCASE",
+    "TRANSFORM value.innerHTML IN doc WITH UPPERCASE"
   ].join(';'));
 
   //print(values4);
 
-  final v = allQueries.parse("TRANSFORM name IN doc WITH TRIM, LOWERCASE");
+  // final v = allQueries.parse("TRANSFORM value.name IN doc WITH TRIM, LOWERCASE");
   final inew = Interpreter();
-  if (v.isSuccess) {
-    List<Statement> statements = inew.processAll(v.value);
+  if (values4.isSuccess) {
+    //process statements
+    final List<Statement> statements = inew.processAll(values4.value);
+    //set the document
+    inew.setValue('document', document);
     //print all statements
     for (var statement in statements) {
-      print(statement);
+      if (statement.operation == TokenType.Select) {
+        inew.runSelect(statement);
+      } else if (statement.operation == TokenType.Transform) {
+        inew.runTransform(statement);
+      }
     }
   } else {
-    print(v.message);
+    print(values4.message);
   }
 
   return;
@@ -202,13 +209,21 @@ class Interpreter {
       throw Exception('No data found for ${statement.from}');
     }
 
-    late final List<Element> elements;
+    late final List<dynamic> elements;
 
     if (data is Document || data is Element) {
       if (statement.selector == null) {
         elements = [data];
       } else {
         elements = data.querySelectorAll(statement.selector);
+      }
+    } else if (data is Map) {
+      elements = [data];
+    } else if (data is List) {
+      if (data.isNotEmpty) {
+        elements = data;
+      } else {
+        elements = [];
       }
     } else {
       throw Exception('Data is not an Element');
@@ -219,7 +234,17 @@ class Interpreter {
     for (var element in elements) {
       final Map<String, dynamic> values = {};
       for (var select in statement.operators) {
-        values[select.alias ?? select.type.name] = getProperty(element, select.type);
+        late final dynamic value;
+        if (element is Element) {
+          value = getProperty(element, select.type);
+        } else if (element is Map) {
+          if (select.type == TokenType.Select) {
+            value = element[select.type];
+          } else {
+            print('Must use value selector when accessing maps');
+          }
+        }
+        values[select.alias ?? select.type.name.substring(0, 1).toLowerCase() + select.type.name.substring(1)] = value;
       }
       results.add(values);
     }
@@ -236,34 +261,53 @@ class Interpreter {
       throw Exception('No data found for ${statement.from}');
     }
 
-    //select
-    final List<dynamic> values = [];
+    //add the specific values to transform
+    List<String> values = [];
     for (Operator select in statement.operators) {
+      Map<String, dynamic> objectValues = {};
       switch (select.type) {
         case TokenType.Value:
-          values.add(data[select.type]);
+          /* if (data is Map) {
+            objectValues[select.meta!] = data[select.meta];
+          } else if (data is List && data.isNotEmpty && data.first is Map) {
+            for (final Map d in data) {
+              objectValues[select.meta!] = d[select.meta!];
+            }
+          } */
+          values.add(select.meta!);
           break;
+        default:
+        //do nothing
       }
     }
 
-    for (var transform in statement.operators) {
-      switch (transform.type) {
-        case TokenType.Trim:
-          values.forEach((value) => value = value.trim());
-          break;
-        case TokenType.Lowercase:
-          values.forEach((value) => value = value.toLowerCase());
-          break;
-        case TokenType.Uppercase:
-          values.forEach((value) => value = value.toUpperCase());
-          break;
-        case TokenType.Concat:
-          values.forEach((value) => value = value.toString() + value.toString());
-          break;
-        default:
-          throw Exception('Unknown transform ${transform.type}');
+    //loop through all the data
+    for (var d in data) {
+      //TODO: add an into
+      //TODO: support as for transforms that work on maps
+      for (final value in values) {
+        for (final transform in statement.transformations ?? []) {
+          switch (transform.type) {
+            case TokenType.Trim:
+              d[value] = d[value].trim();
+              break;
+            case TokenType.Lowercase:
+              d[value] = d[value].toLowerCase();
+              break;
+            case TokenType.Uppercase:
+              d[value] = d[value].toUpperCase();
+              break;
+            case TokenType.Concat:
+              d[value] += d[value].toString();
+              break;
+            default:
+              throw Exception('Unknown transform ${transform.type}');
+          }
+        }
       }
     }
+
+    _values[statement.from] = data;
   }
 
   List<Statement> processAll(List values) {
@@ -361,6 +405,10 @@ class Interpreter {
                   type = TokenType.Attribute;
                   meta = items[2];
                   break;
+                case 'value':
+                  type = TokenType.Value;
+                  meta = items[2];
+                  break;
                 default:
                   throw Exception('Invalid token for operator');
               }
@@ -415,9 +463,9 @@ class Interpreter {
                   type = TokenType.Attribute;
                   meta = items[2];
                   break;
-                default:
+                case 'value':
                   type = TokenType.Value;
-                  meta = items[0].value as String;
+                  meta = items[2];
               }
             } else {
               throw Exception('Invalid operator');
@@ -576,7 +624,6 @@ class Statement {
     return buffer.toString();
   }
 }
-
 
 /*
 parse and tokenize
