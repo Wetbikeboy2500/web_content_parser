@@ -7,6 +7,7 @@ import 'package:html/dom.dart';
 import 'package:path/path.dart';
 
 import 'package:petitparser/petitparser.dart';
+import 'package:web_content_parser/scraper.dart';
 
 //This file is for testing purposes only. The goal is to try and develop a rebust system for selecting elements from a website correctly.
 
@@ -26,26 +27,35 @@ void sourceBuilder(String html) {
   //define intVal int 23
   //define boolVal bool true
   //select value.stringVal, value.intVal FROM * INTO newObject
+  //define url string 'https://google.com'
+  //set var2 to request with url, newObject
 
   final code = [
-    "SELECT name AS random, innerHTML INTO doc FROM document WHERE SELECTOR IS 'body > p:nth-child(3)'",
+    "DEFINE url STRING 'https://google.com'",
+    "SET document TO getRequest WITH url",
+    "SET status TO getStatusCode WITH document", //need conditionals for this
+    "SET html TO parseBody WITH document",
+    "SELECT innerHTML as title INTO title FROM html WHERE SELECTOR IS 'title'",
+    /* "SELECT name AS random, innerHTML INTO doc FROM document WHERE SELECTOR IS 'body > p:nth-child(3)'",
     "TRANSFORM value.random, value.innerHTML IN doc WITH CONCAT AS new",
     "SELECT value.new INTO return FROM doc",
     "DEFINE stringVal STRING 'hello world'",
     "DEFINE intVal INT 23",
     "DEFINE boolVal BOOL true",
-    "SELECT value.stringVal, value.intVal INTO newObject FROM *",
+    "SELECT value.stringVal, value.intVal INTO newObject FROM *", */
   ].join(';');
 
-  final i = Interpreter()
-    ..setValue('document', document)
-    ..runStatements(parseStatements(parseAndTokenize(code)));
+  print(code);
 
-  print(i._values);
+  final i = Interpreter();
+  i.runStatements(parseStatements(parseAndTokenize(code))).then((value) {
+    print(i._values);
+  });
 }
 
 enum TokenType {
   Select,
+  Set,
   InnerHTML,
   Name,
   OuterHTML,
@@ -71,14 +81,17 @@ enum TokenType {
 enum State {
   Select,
   Transform,
+  Set,
   Define, //get name
   Define1, //get type
   Define2, //get value
   In,
   Into,
+  To,
   From,
   Where,
   With,
+  With1, //for set operation
   Unknown,
 }
 
@@ -110,7 +123,7 @@ class Interpreter {
     }
   }
 
-  void runStatements(List<Statement> statements) {
+  Future<void> runStatements(List<Statement> statements) async {
     for (var statement in statements) {
       if (statement.operation == TokenType.Select) {
         runSelect(statement);
@@ -118,8 +131,59 @@ class Interpreter {
         runTransform(statement);
       } else if (statement.operation == TokenType.Define) {
         runDefine(statement);
+      } else if (statement.operation == TokenType.Set) {
+        await runSet(statement);
       }
     }
+  }
+
+  Future<void> runSet(Statement statement) async {
+    final into = statement.into;
+    final function = statement.from.toLowerCase();
+    final arguments = statement.operators;
+
+    //gets the args to pass along
+    final List args = [];
+    for (final arg in arguments) {
+      args.add(getValue(arg.meta!));
+    }
+
+    //runs the function
+    late dynamic value;
+
+    switch (function) {
+      case 'getrequest':
+        //for the second argument, we are going to assume it is a map within a list
+        value = await getRequest(
+          args[0],
+          (args.length > 1) ? args[1].first : const <String, String>{},
+        );
+        break;
+      case 'getrequestdynamic':
+        value = await getDynamicPage(args[0]);
+        break;
+      case 'postrequest':
+        value = await postRequest(
+          args[0],
+          args[1].first,
+          (args.length > 2) ? args[2].first : const <String, String>{},
+        );
+        break;
+      case 'parse':
+        value = parse(args[0].first);
+        break;
+      case 'getstatuscode':
+        value = args[0].statusCode;
+        break;
+      case 'parsebody':
+        value = parse(args[0].body);
+        break;
+      default:
+        throw UnsupportedError('Unsupported function: $function');
+    }
+
+    //set the value
+    _values[into!] = value;
   }
 
   void runDefine(Statement statement) {
@@ -193,14 +257,14 @@ class Interpreter {
             throw Exception('Must use value selector when accessing maps');
           }
         } else {
-          print(element);
           throw Exception('Data is not an Element nor Map');
         }
 
         if (select.alias == null && select.type == TokenType.Value) {
           values[select.meta!] = value;
         } else {
-          values[select.alias ?? select.type.name.substring(0, 1).toLowerCase() + select.type.name.substring(1)] = value;
+          values[select.alias ?? select.type.name.substring(0, 1).toLowerCase() + select.type.name.substring(1)] =
+              value;
         }
       }
       results.add(values);
@@ -429,7 +493,13 @@ List parseAndTokenize(String input) {
 
   final queryDefine = define & name & type & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
 
-  final allQueries = (query | queryTransform | queryDefine).separatedBy(char(';').token());
+  final setName = stringIgnoreCase('set').trim().token();
+  final to = stringIgnoreCase('to').trim().token();
+
+  final querySet =
+      setName & name & to & name & stringIgnoreCase('with').trim().token() & name.separatedBy(char(',').token());
+
+  final allQueries = (query | queryTransform | queryDefine | querySet).separatedBy(char(';').token());
 
   final parsed = allQueries.parse(input);
 
@@ -472,9 +542,14 @@ Statement parseStatement(List tokens) {
       continue;
     }
 
+    //TODO: separate all the different statements by their operation when complexity is too high
     if (data is Token && (data.value as String).toLowerCase() == 'select') {
       currentState = State.Select;
       operation = TokenType.Select;
+      continue;
+    } else if (data is Token && (data.value as String).toLowerCase() == 'set') {
+      currentState = State.Set;
+      operation = TokenType.Set;
       continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'transform') {
       currentState = State.Transform;
@@ -487,11 +562,18 @@ Statement parseStatement(List tokens) {
     } else if (data is Token && (data.value as String).toLowerCase() == 'in') {
       currentState = State.In;
       continue;
+    } else if (data is Token && (data.value as String).toLowerCase() == 'to') {
+      currentState = State.To;
+      continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'from') {
       currentState = State.From;
       continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'with') {
-      currentState = State.With;
+      if (operation == TokenType.Set) {
+        currentState = State.With1;
+      } else {
+        currentState = State.With;
+      }
       continue;
     } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'into') {
       currentState = State.Into;
@@ -506,6 +588,12 @@ Statement parseStatement(List tokens) {
     switch (currentState) {
       case State.Unknown:
         throw Exception('Invalid starting syntax');
+      case State.Set:
+        into = data;
+        break;
+      case State.To:
+        requestFrom = data;
+        break;
       case State.Define:
         //name
         into = data;
@@ -685,6 +773,18 @@ Statement parseStatement(List tokens) {
             type,
             alias: alias,
             meta: meta,
+          ));
+        }
+        break;
+      case State.With1:
+        for (dynamic operators in data) {
+          if (operators is Token && operators.value == ',') {
+            continue;
+          }
+
+          selections.add(Operator(
+            TokenType.Value,
+            meta: operators,
           ));
         }
         break;

@@ -20,26 +20,29 @@ import 'package:http/http.dart';
 ///Hetu post request
 ///
 ///Returns a response object wrapped with a result as a map
-Future<Map<String, dynamic>> postRequest(
+Future<Map<String, dynamic>> postRequestHetu(
   HTEntity entity, {
   List<dynamic> positionalArgs = const [],
   Map<String, dynamic> namedArgs = const {},
   List<HTType> typeArgs = const <HTType>[],
 }) async {
-  final Result<Uri> uri = UriResult.parse(positionalArgs[0]);
+  final Map<String, String>? headers =
+      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
+  return await postRequest(positionalArgs[0], positionalArgs[1], headers);
+}
+
+Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, String>? headers) async {
+  final Result<Uri> uri = UriResult.parse(url);
 
   if (uri.fail) {
     return ResultExtended.toJson(const Result.fail());
   }
 
-  final Map<String, String>? headers =
-      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
-
   try {
     final result = await post(
       uri.data!,
       headers: headers,
-      body: positionalArgs[1],
+      body: body,
     );
 
     return ResultExtended.toJson(Result.pass(result));
@@ -52,14 +55,22 @@ Future<Map<String, dynamic>> postRequest(
 final Map<String, Completer<Response>> _getCache = {};
 
 //TODO: make a lite version that just returns body and status which would be better for caching
-Future<Response?> getRequest(
+Future<Response?> getRequestHetu(
   HTEntity entity, {
   List<dynamic> positionalArgs = const [],
   Map<String, dynamic> namedArgs = const {},
   List<HTType> typeArgs = const <HTType>[],
 }) async {
+  //set any custom headers if provided
+  final Map<String, String>? headers =
+      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
+
+  return getRequest(positionalArgs[0], headers);
+}
+
+Future<Response?> getRequest(String url, Map<String, String>? headers) async {
   //get the request url to a standard format
-  final Uri uri = Uri.parse(positionalArgs[0]);
+  final Uri uri = Uri.parse(url);
   final String uriString = uri.toString();
 
   //return a cached element if it exists
@@ -71,10 +82,6 @@ Future<Response?> getRequest(
   //make sure we make a completer for the request asap
   final Completer<Response> request = Completer<Response>();
   _getCache[uriString] = request;
-
-  //set any custom headers if provided
-  final Map<String, String>? headers =
-      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
 
   //make the request
   final Response r = await get(uri, headers: headers);

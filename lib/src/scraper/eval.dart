@@ -42,9 +42,9 @@ Map<String, HTExternalFunction> _externalFunction = {
     positionalArgs[0] as Node;
     return positionalArgs[0].text;
   },
-  'fetchHtml': getRequest,
-  'getRequest': getRequest,
-  'postRequest': postRequest,
+  'fetchHtml': getRequestHetu,
+  'getRequest': getRequestHetu,
+  'postRequest': postRequestHetu,
   'getDynamicPage': getDynamicPageHetu,
   'parseBody': (
     HTEntity entity, {
