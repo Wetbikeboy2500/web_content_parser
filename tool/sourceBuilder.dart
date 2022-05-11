@@ -19,126 +19,20 @@ void sourceBuilder(String html) {
   //decode string as html
   Document document = parse(html);
 
-  //get user input
-  //final String? command = stdin.readLineSync();
+  //select document.name as doc.random, document.innerHTML as doc.random.innerHTML WHERE SELECTOR IS 'body > p:nth-child(3)'
+  //transform doc.random, doc.innerHTML WITH CONCAT AS doc.new
 
-  //SELECT innerHTML AS name FROM p WHERE SELECTOR IS 'body > p:nth-child(4)'
+  final code = [
+    "SELECT name AS random, innerHTML INTO doc FROM document WHERE SELECTOR IS 'body > p:nth-child(3)'",
+    "TRANSFORM value.random, value.innerHTML IN doc WITH CONCAT AS new",
+    "SELECT value.new INTO return FROM doc",
+  ].join(';');
 
-  final valueMatcher = patternIgnoreCase('~!@\$%&*()_+=,./\';:"?><[]{}|`#a-z0-9') | char('-') | char('^');
+  final i = Interpreter()
+    ..setValue('document', document)
+    ..runStatements(parseStatements(parseAndTokenize(code)));
 
-  final value = (valueMatcher).plus().flatten().trim();
-
-  final valueStringMatcher = (char("'") & pattern("^'").star().flatten() & char("'")).pick(1);
-
-  final select = stringIgnoreCase('select').trim().token();
-
-  final alias = (stringIgnoreCase('as').trim().token() & letter().plus().flatten().trim()).optional();
-
-  final innerHTML = stringIgnoreCase('innerHTML').trim().token();
-  final outerHTML = stringIgnoreCase('outerHTML').trim().token();
-  final nameSelect = stringIgnoreCase('name').trim().token();
-  final attribute = stringIgnoreCase('attribute').token() & char('.').token() & value;
-  final valueAccess = stringIgnoreCase('value').token() & char('.').token() & value;
-
-  final from = stringIgnoreCase('from').trim().token();
-
-  final where = stringIgnoreCase('where').trim().token();
-
-  final name = letter().plus().flatten().trim();
-
-  final nameValue = name & char('.').token() & value;
-
-  //TODO: I will need to revise the syntax for the comparisons
-  final into = stringIgnoreCase('into').trim().token() &
-      name.trim() &
-      (where & nameValue & char('=') & nameValue).trim().optional();
-
-  final selectorIs =
-      stringIgnoreCase('selector is').trim().token() & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
-
-  final inputSelectors = ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML | valueAccess) & alias)
-      .separatedBy(char(',').token());
-
-  final query = select & //Start of the selct
-      inputSelectors & //alias for naming
-      into.optional() &
-      from & //marks next part
-      name & //this represents the variable to extract from (this could be a document, element, etc.)
-      (where & selectorIs).optional();
-
-  final transform = stringIgnoreCase('transform').trim().token();
-
-  final transformOperations = stringIgnoreCase('trim').trim().token() |
-      stringIgnoreCase('lowercase').trim().token() |
-      stringIgnoreCase('uppercase').trim().token() |
-      stringIgnoreCase('concat').trim().token();
-
-  final queryTransform = transform &
-      inputSelectors &
-      stringIgnoreCase('in').trim().token() &
-      name &
-      stringIgnoreCase('with').trim().token() &
-      transformOperations.separatedBy(char(',').token()) &
-      alias.optional();
-
-  final allQueries = (query | queryTransform).separatedBy(char(';').token());
-
-  final values0 = query.parse("SELECT innerHTML AS name FROM p WHERE SELECTOR IS 'body > p:nth-child(4)'");
-  final values1 = query.parse('SELECT innerHTML FROM p WHERE SELECTOR IS p:nth-child(3)');
-  final values2 = query.parse("SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'");
-  final values3 =
-      query.parse("SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'");
-
-  final values4 = allQueries.parse([
-    // "SELECT attribute.data-id AS id from document WHERE SELECTOR IS 'body > p:nth-child(4)'",
-    "SELECT name AS random, innerHTML INTO doc from document WHERE SELECTOR IS 'body > p:nth-child(3)'",
-    "TRANSFORM value.random IN doc WITH TRIM, LOWERCASE",
-    "TRANSFORM value.innerHTML IN doc WITH UPPERCASE"
-  ].join(';'));
-
-  //print(values4);
-
-  // final v = allQueries.parse("TRANSFORM value.name IN doc WITH TRIM, LOWERCASE");
-  final inew = Interpreter();
-  if (values4.isSuccess) {
-    //process statements
-    final List<Statement> statements = inew.processAll(values4.value);
-    //set the document
-    inew.setValue('document', document);
-    //print all statements
-    for (var statement in statements) {
-      if (statement.operation == TokenType.Select) {
-        inew.runSelect(statement);
-      } else if (statement.operation == TokenType.Transform) {
-        inew.runTransform(statement);
-      }
-    }
-  } else {
-    print(values4.message);
-  }
-
-  return;
-
-  /*
-      TRANSFORM name IN doc WITH TRIM, LOWERCASE
-      TRANSFORM first, last IN doc WITH TRIM, LOWERCASE, CONCAT AS name
-      This would chnage the name on every map within the doc variable
-      */
-
-  print(values0);
-  print(values1);
-  print(values2);
-  print(values3);
-
-  print(document.querySelectorAll("body > p:nth-child(3)"));
-
-  Interpreter i = Interpreter();
-  if (values3.isSuccess) {
-    var s = i.process(values3.value);
-    i.setValue('document', document);
-    i.runSelect(s);
-    print(i.getValue('doc'));
-  }
+  print(i._values);
 }
 
 enum TokenType {
@@ -203,8 +97,18 @@ class Interpreter {
     }
   }
 
+  void runStatements(List<Statement> statements) {
+    for (var statement in statements) {
+      if (statement.operation == TokenType.Select) {
+        runSelect(statement);
+      } else if (statement.operation == TokenType.Transform) {
+        runTransform(statement);
+      }
+    }
+  }
+
   void runSelect(Statement statement) {
-    dynamic data = _values[statement.from];
+    final dynamic data = _values[statement.from];
     if (data == null) {
       throw Exception('No data found for ${statement.from}');
     }
@@ -238,11 +142,14 @@ class Interpreter {
         if (element is Element) {
           value = getProperty(element, select.type);
         } else if (element is Map) {
-          if (select.type == TokenType.Select) {
-            value = element[select.type];
+          if (select.type == TokenType.Value) {
+            value = element[select.meta];
           } else {
-            print('Must use value selector when accessing maps');
+            throw Exception('Must use value selector when accessing maps');
           }
+        } else {
+          print(element);
+          throw Exception('Data is not an Element nor Map');
         }
         values[select.alias ?? select.type.name.substring(0, 1).toLowerCase() + select.type.name.substring(1)] = value;
       }
@@ -256,7 +163,7 @@ class Interpreter {
 
   void runTransform(Statement statement) {
     //from
-    dynamic data = _values[statement.from];
+    final dynamic data = _values[statement.from];
     if (data == null) {
       throw Exception('No data found for ${statement.from}');
     }
@@ -284,21 +191,33 @@ class Interpreter {
     //loop through all the data
     for (var d in data) {
       //TODO: add an into
-      //TODO: support as for transforms that work on maps
+      //TODO: support as for transforms that work on map
       for (final value in values) {
-        for (final transform in statement.transformations ?? []) {
+        final dynamic storedValue = d[value];
+        for (final Operator transform in statement.transformations ?? []) {
           switch (transform.type) {
             case TokenType.Trim:
-              d[value] = d[value].trim();
+              d[transform.alias ?? value] = storedValue.trim();
               break;
             case TokenType.Lowercase:
-              d[value] = d[value].toLowerCase();
+              d[transform.alias ?? value] = storedValue.toLowerCase();
               break;
             case TokenType.Uppercase:
-              d[value] = d[value].toUpperCase();
+              d[transform.alias ?? value] = storedValue.toUpperCase();
               break;
             case TokenType.Concat:
-              d[value] += d[value].toString();
+              //make sure value exists
+              d[transform.alias ?? value] ??= '';
+              //fail if not string
+              if (d[transform.alias ?? value] is! String) {
+                throw Exception('Cannot concatenate a non string value');
+              }
+              //join strings
+              if (storedValue is String) {
+                d[transform.alias ?? value] += storedValue;
+              } else {
+                d[transform.alias ?? value] = storedValue.toString();
+              }
               break;
             default:
               throw Exception('Unknown transform ${transform.type}');
@@ -308,249 +227,6 @@ class Interpreter {
     }
 
     _values[statement.from] = data;
-  }
-
-  List<Statement> processAll(List values) {
-    final List<Statement> statements = [];
-    for (var value in values) {
-      if (value is Token) {
-        continue;
-      }
-
-      statements.add(process(value));
-    }
-    return statements;
-  }
-
-  Statement process(List values) {
-    State currentState = State.Unknown;
-
-    TokenType? operation = null;
-
-    List<Operator>? transformations;
-
-    final List<Operator> selections = [];
-    String? requestFrom;
-    String? selector;
-    String? into;
-
-    print(values);
-
-    for (var data in values) {
-      if (data == null) {
-        continue;
-      }
-
-      if (data is Token && (data.value as String).toLowerCase() == 'select') {
-        currentState = State.Select;
-        operation = TokenType.Select;
-        continue;
-      } else if (data is Token && (data.value as String).toLowerCase() == 'transform') {
-        currentState = State.Transform;
-        operation = TokenType.Transform;
-        continue;
-      } else if (data is Token && (data.value as String).toLowerCase() == 'in') {
-        currentState = State.In;
-        continue;
-      } else if (data is Token && (data.value as String).toLowerCase() == 'from') {
-        currentState = State.From;
-        continue;
-      } else if (data is Token && (data.value as String).toLowerCase() == 'with') {
-        currentState = State.With;
-        continue;
-      } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'into') {
-        currentState = State.Into;
-      } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'where') {
-        currentState = State.Where;
-      }
-
-      if (operation == null) {
-        throw Exception('No operation found');
-      }
-
-      switch (currentState) {
-        case State.Unknown:
-          throw Exception('Invalid starting syntax');
-        case State.Select:
-          for (dynamic operators in data) {
-            if (operators is Token && operators.value == ',') {
-              continue;
-            }
-
-            late TokenType type;
-            String? alias;
-            String? meta;
-
-            List items = operators;
-
-            if (operators.first is List) {
-              items = operators.first;
-            }
-
-            if (items[0] is Token) {
-              switch ((items[0].value as String).toLowerCase()) {
-                case 'innerhtml':
-                  type = TokenType.InnerHTML;
-                  break;
-                case 'outerhtml':
-                  type = TokenType.OuterHTML;
-                  break;
-                case 'name':
-                  type = TokenType.Name;
-                  break;
-                case '*':
-                  type = TokenType.All;
-                  break;
-                case 'attribute':
-                  type = TokenType.Attribute;
-                  meta = items[2];
-                  break;
-                case 'value':
-                  type = TokenType.Value;
-                  meta = items[2];
-                  break;
-                default:
-                  throw Exception('Invalid token for operator');
-              }
-            } else {
-              throw Exception('Invalid operator');
-            }
-
-            if (operators.last is List &&
-                operators.last.first is Token &&
-                operators.last.first.value.toLowerCase() == 'as') {
-              alias = operators.last.last;
-            }
-
-            selections.add(Operator(
-              type,
-              alias: alias,
-              meta: meta,
-            ));
-          }
-          break;
-        case State.Transform:
-          for (dynamic operators in data) {
-            if (operators is Token && operators.value == ',') {
-              continue;
-            }
-
-            late TokenType type;
-            String? alias;
-            String? meta;
-
-            List items = operators;
-
-            if (operators.first is List) {
-              items = operators.first;
-            }
-
-            if (items[0] is Token) {
-              switch ((items[0].value as String).toLowerCase()) {
-                case 'innerhtml':
-                  type = TokenType.InnerHTML;
-                  break;
-                case 'outerhtml':
-                  type = TokenType.OuterHTML;
-                  break;
-                case 'name':
-                  type = TokenType.Name;
-                  break;
-                case '*':
-                  type = TokenType.All;
-                  break;
-                case 'attribute':
-                  type = TokenType.Attribute;
-                  meta = items[2];
-                  break;
-                case 'value':
-                  type = TokenType.Value;
-                  meta = items[2];
-              }
-            } else {
-              throw Exception('Invalid operator');
-            }
-
-            if (operators.last is List &&
-                operators.last.first is Token &&
-                operators.last.first.value.toLowerCase() == 'as') {
-              alias = operators.last.last;
-            }
-
-            selections.add(Operator(
-              type,
-              alias: alias,
-              meta: meta,
-            ));
-          }
-          break;
-        case State.Into:
-          into = data[1];
-          break;
-        case State.In:
-        case State.From:
-          requestFrom = data;
-          break;
-        case State.Where:
-          selector = data.last.last;
-          break;
-        case State.With:
-          //loop through tokens in data
-          for (dynamic operators in data) {
-            if (operators is Token && operators.value == ',') {
-              continue;
-            }
-            late TokenType type;
-            String? alias;
-            String? meta;
-
-            late List items;
-
-            if (operators is List) {
-              items = operators;
-            } else {
-              items = [operators];
-            }
-
-            switch ((items[0].value as String).toLowerCase()) {
-              case 'trim':
-                type = TokenType.Trim;
-                break;
-              case 'lowercase':
-                type = TokenType.Lowercase;
-                break;
-              case 'uppercase':
-                type = TokenType.Uppercase;
-                break;
-              case 'concat':
-                type = TokenType.Concat;
-                if (items.last is List && items.last.first is Token && items.last.first.value.toLowerCase() == 'as') {
-                  alias = items.last.last;
-                }
-                break;
-            }
-
-            transformations ??= [];
-
-            transformations.add(Operator(
-              type,
-              alias: alias,
-              meta: meta,
-            ));
-          }
-          break;
-      }
-    }
-
-    if (operation == null) {
-      throw Exception('Invalid operation');
-    }
-
-    if (requestFrom == null) {
-      throw Exception('Invalid from or selector');
-    }
-
-    return Statement(operation, selections, requestFrom, selector, into, transformations: transformations);
   }
 }
 
@@ -628,5 +304,324 @@ class Statement {
 /*
 parse and tokenize
 convert to statements
-run statements
+run statements (this step will be done within an class to allow for scoped)
 */
+
+/// Tokenizes a string into a list of tokens.
+/// This defines the grammar of the language as well.
+List parseAndTokenize(String input) {
+  //Do not allow commas for value matcher
+  final valueMatcher = patternIgnoreCase('~!@\$%&*()_+=./\';:"?><[]{}|`#a-z0-9') | char('-') | char('^');
+
+  final value = (valueMatcher).plus().flatten().trim();
+
+  //allow any character except for the ' in the string since it is the terminating character
+  final valueStringMatcher = (char("'") & pattern("^'").star().flatten() & char("'")).pick(1);
+
+  final select = stringIgnoreCase(TokenType.Select.name).trim().token();
+
+  //TokenType.Alias
+  final alias = (stringIgnoreCase('as').trim().token() & letter().plus().flatten().trim()).optional();
+
+  final innerHTML = stringIgnoreCase(TokenType.InnerHTML.name).trim().token();
+  final outerHTML = stringIgnoreCase(TokenType.OuterHTML.name).trim().token();
+  final nameSelect = stringIgnoreCase(TokenType.Name.name).trim().token();
+  final attribute = stringIgnoreCase(TokenType.Attribute.name).token() & char('.').token() & value;
+  final valueAccess = stringIgnoreCase(TokenType.Value.name).token() & char('.').token() & value;
+
+  final from = stringIgnoreCase(TokenType.From.name).trim().token();
+
+  final where = stringIgnoreCase(TokenType.Where.name).trim().token();
+
+  final name = letter().plus().flatten().trim();
+
+  final nameValue = name & char('.').token() & value;
+
+  //TODO: I will need to revise the syntax for the comparisons
+  final into = stringIgnoreCase('into').trim().token() &
+      name.trim() &
+      (where & nameValue & char('=') & nameValue).trim().optional();
+
+  final selectorIs =
+      stringIgnoreCase('selector is').trim().token() & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
+
+  final inputSelectors =
+      ((char('*').token() | innerHTML | attribute | nameSelect | outerHTML | valueAccess.trim()) & alias)
+          .separatedBy(char(',').trim().token());
+
+  final query = select & //Start of the selct
+      inputSelectors & //alias for naming
+      into.optional() &
+      from & //marks next part
+      name & //this represents the variable to extract from (this could be a document, element, etc.)
+      (where & selectorIs).optional();
+
+  final transform = stringIgnoreCase('transform').trim().token();
+
+  final transformOperations = stringIgnoreCase('trim').trim().token() |
+      stringIgnoreCase('lowercase').trim().token() |
+      stringIgnoreCase('uppercase').trim().token() |
+      (stringIgnoreCase('concat').trim().token() & alias);
+
+  final queryTransform = transform &
+      inputSelectors &
+      stringIgnoreCase('in').trim().token() &
+      name &
+      stringIgnoreCase('with').trim().token() &
+      transformOperations.separatedBy(char(',').token()) &
+      alias.optional();
+
+  final allQueries = (query | queryTransform).separatedBy(char(';').token());
+
+  final parsed = allQueries.parse(input);
+
+  if (parsed.isFailure) {
+    return const [];
+  }
+
+  return parsed.value;
+}
+
+/// Runs all the statements in the list.
+/// THis will produce a list of statement which can then be run for their different contexts
+List<Statement> parseStatements(List tokens) {
+  final List<Statement> statements = [];
+  for (var value in tokens) {
+    //skipping for semicolons
+    if (value is Token) {
+      continue;
+    }
+
+    statements.add(parseStatement(value));
+  }
+  return statements;
+}
+
+Statement parseStatement(List tokens) {
+  State currentState = State.Unknown;
+
+  TokenType? operation;
+
+  List<Operator>? transformations;
+
+  final List<Operator> selections = [];
+  String? requestFrom;
+  String? selector;
+  String? into;
+
+  for (var data in tokens) {
+    if (data == null) {
+      continue;
+    }
+
+    if (data is Token && (data.value as String).toLowerCase() == 'select') {
+      currentState = State.Select;
+      operation = TokenType.Select;
+      continue;
+    } else if (data is Token && (data.value as String).toLowerCase() == 'transform') {
+      currentState = State.Transform;
+      operation = TokenType.Transform;
+      continue;
+    } else if (data is Token && (data.value as String).toLowerCase() == 'in') {
+      currentState = State.In;
+      continue;
+    } else if (data is Token && (data.value as String).toLowerCase() == 'from') {
+      currentState = State.From;
+      continue;
+    } else if (data is Token && (data.value as String).toLowerCase() == 'with') {
+      currentState = State.With;
+      continue;
+    } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'into') {
+      currentState = State.Into;
+    } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'where') {
+      currentState = State.Where;
+    }
+
+    if (operation == null) {
+      throw Exception('No operation found');
+    }
+
+    switch (currentState) {
+      case State.Unknown:
+        throw Exception('Invalid starting syntax');
+      case State.Select:
+        for (dynamic operators in data) {
+          if (operators is Token && operators.value == ',') {
+            continue;
+          }
+
+          late TokenType type;
+          String? alias;
+          String? meta;
+
+          List items = operators;
+
+          if (operators.first is List) {
+            items = operators.first;
+          }
+
+          if (items[0] is Token) {
+            switch ((items[0].value as String).toLowerCase()) {
+              case 'innerhtml':
+                type = TokenType.InnerHTML;
+                break;
+              case 'outerhtml':
+                type = TokenType.OuterHTML;
+                break;
+              case 'name':
+                type = TokenType.Name;
+                break;
+              case '*':
+                type = TokenType.All;
+                break;
+              case 'attribute':
+                type = TokenType.Attribute;
+                meta = items[2];
+                break;
+              case 'value':
+                type = TokenType.Value;
+                meta = items[2];
+                break;
+              default:
+                throw Exception('Invalid token for operator');
+            }
+          } else {
+            throw Exception('Invalid operator');
+          }
+
+          if (operators.last is List &&
+              operators.last.first is Token &&
+              operators.last.first.value.toLowerCase() == 'as') {
+            alias = operators.last.last;
+          }
+
+          selections.add(Operator(
+            type,
+            alias: alias,
+            meta: meta,
+          ));
+        }
+        break;
+      case State.Transform:
+        for (dynamic operators in data) {
+          if (operators is Token && operators.value == ',') {
+            continue;
+          }
+
+          late TokenType type;
+          String? alias;
+          String? meta;
+
+          List items = operators;
+
+          if (operators.first is List) {
+            items = operators.first;
+          }
+
+          if (items[0] is Token) {
+            switch ((items[0].value as String).toLowerCase()) {
+              case 'innerhtml':
+                type = TokenType.InnerHTML;
+                break;
+              case 'outerhtml':
+                type = TokenType.OuterHTML;
+                break;
+              case 'name':
+                type = TokenType.Name;
+                break;
+              case '*':
+                type = TokenType.All;
+                break;
+              case 'attribute':
+                type = TokenType.Attribute;
+                meta = items[2];
+                break;
+              case 'value':
+                type = TokenType.Value;
+                meta = items[2];
+            }
+          } else {
+            throw Exception('Invalid operator');
+          }
+
+          if (operators.last is List &&
+              operators.last.first is Token &&
+              operators.last.first.value.toLowerCase() == 'as') {
+            alias = operators.last.last;
+          }
+
+          selections.add(Operator(
+            type,
+            alias: alias,
+            meta: meta,
+          ));
+        }
+        break;
+      case State.Into:
+        into = data[1];
+        break;
+      case State.In:
+      case State.From:
+        requestFrom = data;
+        break;
+      case State.Where:
+        selector = data.last.last;
+        break;
+      case State.With:
+        //loop through tokens in data
+        for (dynamic operators in data) {
+          if (operators is Token && operators.value == ',') {
+            continue;
+          }
+          late TokenType type;
+          String? alias;
+          String? meta;
+
+          late List items;
+
+          if (operators is List) {
+            items = operators;
+          } else {
+            items = [operators];
+          }
+
+          switch ((items[0].value as String).toLowerCase()) {
+            case 'trim':
+              type = TokenType.Trim;
+              break;
+            case 'lowercase':
+              type = TokenType.Lowercase;
+              break;
+            case 'uppercase':
+              type = TokenType.Uppercase;
+              break;
+            case 'concat':
+              type = TokenType.Concat;
+              if (items.last is List && items.last.first is Token && items.last.first.value.toLowerCase() == 'as') {
+                alias = items.last.last;
+              }
+              break;
+          }
+
+          transformations ??= [];
+
+          transformations.add(Operator(
+            type,
+            alias: alias,
+            meta: meta,
+          ));
+        }
+        break;
+    }
+  }
+
+  if (operation == null) {
+    throw Exception('Invalid operation');
+  }
+
+  if (requestFrom == null) {
+    throw Exception('Invalid from or selector');
+  }
+
+  return Statement(operation, selections, requestFrom, selector, into, transformations: transformations);
+}
