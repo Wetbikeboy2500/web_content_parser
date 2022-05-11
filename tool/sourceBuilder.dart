@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
+import 'package:path/path.dart';
 
 import 'package:petitparser/petitparser.dart';
 
@@ -21,11 +22,19 @@ void sourceBuilder(String html) {
 
   //select document.name as doc.random, document.innerHTML as doc.random.innerHTML WHERE SELECTOR IS 'body > p:nth-child(3)'
   //transform doc.random, doc.innerHTML WITH CONCAT AS doc.new
+  //define stringVal string value
+  //define intVal int 23
+  //define boolVal bool true
+  //select value.stringVal, value.intVal FROM * INTO newObject
 
   final code = [
     "SELECT name AS random, innerHTML INTO doc FROM document WHERE SELECTOR IS 'body > p:nth-child(3)'",
     "TRANSFORM value.random, value.innerHTML IN doc WITH CONCAT AS new",
     "SELECT value.new INTO return FROM doc",
+    "DEFINE stringVal STRING 'hello world'",
+    "DEFINE intVal INT 23",
+    "DEFINE boolVal BOOL true",
+    "SELECT value.stringVal, value.intVal INTO newObject FROM *",
   ].join(';');
 
   final i = Interpreter()
@@ -54,6 +63,7 @@ enum TokenType {
   Trim,
   Lowercase,
   Uppercase,
+  Define,
   Concat,
   Unknown
 }
@@ -61,6 +71,9 @@ enum TokenType {
 enum State {
   Select,
   Transform,
+  Define, //get name
+  Define1, //get type
+  Define2, //get value
   In,
   Into,
   From,
@@ -103,12 +116,44 @@ class Interpreter {
         runSelect(statement);
       } else if (statement.operation == TokenType.Transform) {
         runTransform(statement);
+      } else if (statement.operation == TokenType.Define) {
+        runDefine(statement);
       }
     }
   }
 
+  void runDefine(Statement statement) {
+    if (statement.into == null) {
+      throw ArgumentError('No into specified.');
+    }
+
+    dynamic value = statement.from;
+
+    switch (statement.selector) {
+      case 'string':
+        value = value.toString();
+        break;
+      case 'int':
+        value = int.parse(value.toString());
+        break;
+      case 'bool':
+        value = value.toString() == 'true';
+        break;
+      default:
+        throw ArgumentError('Unknown type.');
+    }
+
+    _values[statement.into!] = value;
+  }
+
   void runSelect(Statement statement) {
-    final dynamic data = _values[statement.from];
+    late final dynamic data;
+    if (statement.from == '*') {
+      data = _values;
+    } else {
+      data = _values[statement.from];
+    }
+
     if (data == null) {
       throw Exception('No data found for ${statement.from}');
     }
@@ -151,7 +196,12 @@ class Interpreter {
           print(element);
           throw Exception('Data is not an Element nor Map');
         }
-        values[select.alias ?? select.type.name.substring(0, 1).toLowerCase() + select.type.name.substring(1)] = value;
+
+        if (select.alias == null && select.type == TokenType.Value) {
+          values[select.meta!] = value;
+        } else {
+          values[select.alias ?? select.type.name.substring(0, 1).toLowerCase() + select.type.name.substring(1)] = value;
+        }
       }
       results.add(values);
     }
@@ -310,8 +360,8 @@ run statements (this step will be done within an class to allow for scoped)
 /// Tokenizes a string into a list of tokens.
 /// This defines the grammar of the language as well.
 List parseAndTokenize(String input) {
-  //Do not allow commas for value matcher
-  final valueMatcher = patternIgnoreCase('~!@\$%&*()_+=./\';:"?><[]{}|`#a-z0-9') | char('-') | char('^');
+  //Do not allow commas or semicolons for value matcher
+  final valueMatcher = patternIgnoreCase('~!@\$%&*()_+=./\':"?><[]{}|`#a-z0-9') | char('-') | char('^');
 
   final value = (valueMatcher).plus().flatten().trim();
 
@@ -333,7 +383,7 @@ List parseAndTokenize(String input) {
 
   final where = stringIgnoreCase(TokenType.Where.name).trim().token();
 
-  final name = letter().plus().flatten().trim();
+  final name = letter().plus().flatten().trim() | char('*').trim();
 
   final nameValue = name & char('.').token() & value;
 
@@ -371,7 +421,15 @@ List parseAndTokenize(String input) {
       transformOperations.separatedBy(char(',').token()) &
       alias.optional();
 
-  final allQueries = (query | queryTransform).separatedBy(char(';').token());
+  final define = stringIgnoreCase('define').trim().token();
+
+  final type = stringIgnoreCase('string').trim().token() |
+      stringIgnoreCase('int').trim().token() |
+      stringIgnoreCase('bool').trim().token();
+
+  final queryDefine = define & name & type & (valueStringMatcher | (valueMatcher).plus().flatten().trim());
+
+  final allQueries = (query | queryTransform | queryDefine).separatedBy(char(';').token());
 
   final parsed = allQueries.parse(input);
 
@@ -422,6 +480,10 @@ Statement parseStatement(List tokens) {
       currentState = State.Transform;
       operation = TokenType.Transform;
       continue;
+    } else if (data is Token && (data.value as String).toLowerCase() == 'define') {
+      currentState = State.Define;
+      operation = TokenType.Define;
+      continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'in') {
       currentState = State.In;
       continue;
@@ -444,6 +506,20 @@ Statement parseStatement(List tokens) {
     switch (currentState) {
       case State.Unknown:
         throw Exception('Invalid starting syntax');
+      case State.Define:
+        //name
+        into = data;
+        currentState = State.Define1;
+        break;
+      case State.Define1:
+        //type
+        selector = (data.value as String).toLowerCase();
+        currentState = State.Define2;
+        break;
+      case State.Define2:
+        //raw value
+        requestFrom = data;
+        break;
       case State.Select:
         for (dynamic operators in data) {
           if (operators is Token && operators.value == ',') {
