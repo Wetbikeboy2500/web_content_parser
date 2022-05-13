@@ -9,7 +9,7 @@ import 'package:path/path.dart';
 import 'package:petitparser/petitparser.dart';
 import 'package:web_content_parser/scraper.dart';
 
-//This file is for testing purposes only. The goal is to try and develop a rebust system for selecting elements from a website correctly.
+//This file is for testing purposes only. The goal is to try and develop a robust system for selecting elements from a website correctly.
 
 void main() {
   sourceBuilder(File('./test/samples/scraper/test2.html').readAsStringSync());
@@ -98,17 +98,11 @@ enum TokenType {
 enum State {
   Select,
   Transform,
-  Set,
-  Define, //get name
-  Define1, //get type
-  Define2, //get value
   In,
   Into,
-  To,
   From,
   Where,
   With,
-  With1, //for set operation
   Unknown,
 }
 
@@ -305,34 +299,23 @@ Statement parseStatement(List tokens) {
       operation = TokenType.Select;
       continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'set') {
-      currentState = State.Set;
-      operation = TokenType.Set;
-      continue;
+      return SetStatement.fromTokens(tokens);
     } else if (data is Token && (data.value as String).toLowerCase() == 'if') {
-      return parseConditional(tokens);
+      return ConditionalStatement.fromTokens(tokens);
     } else if (data is Token && (data.value as String).toLowerCase() == 'transform') {
       currentState = State.Transform;
       operation = TokenType.Transform;
       continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'define') {
-      currentState = State.Define;
-      operation = TokenType.Define;
-      continue;
+      return DefineStatement.fromTokens(tokens);
     } else if (data is Token && (data.value as String).toLowerCase() == 'in') {
       currentState = State.In;
-      continue;
-    } else if (data is Token && (data.value as String).toLowerCase() == 'to') {
-      currentState = State.To;
       continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'from') {
       currentState = State.From;
       continue;
     } else if (data is Token && (data.value as String).toLowerCase() == 'with') {
-      if (operation == TokenType.Set) {
-        currentState = State.With1;
-      } else {
-        currentState = State.With;
-      }
+      currentState = State.With;
       continue;
     } else if (data is List && data[0] is Token && (data[0].value as String).toLowerCase() == 'into') {
       currentState = State.Into;
@@ -347,26 +330,6 @@ Statement parseStatement(List tokens) {
     switch (currentState) {
       case State.Unknown:
         throw Exception('Invalid starting syntax');
-      case State.Set:
-        into = data;
-        break;
-      case State.To:
-        requestFrom = data;
-        break;
-      case State.Define:
-        //name
-        into = data;
-        currentState = State.Define1;
-        break;
-      case State.Define1:
-        //type
-        selector = (data.value as String).toLowerCase();
-        currentState = State.Define2;
-        break;
-      case State.Define2:
-        //raw value
-        requestFrom = data;
-        break;
       case State.Select:
         for (dynamic operators in data) {
           if (operators is Token && operators.value == ',') {
@@ -535,18 +498,6 @@ Statement parseStatement(List tokens) {
           ));
         }
         break;
-      case State.With1:
-        for (dynamic operators in data) {
-          if (operators is Token && operators.value == ',') {
-            continue;
-          }
-
-          selections.add(Operator(
-            TokenType.Value,
-            meta: operators,
-          ));
-        }
-        break;
     }
   }
 
@@ -562,29 +513,9 @@ Statement parseStatement(List tokens) {
     return SelectStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
   } else if (operation == TokenType.Transform) {
     return TransformStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
-  } else if (operation == TokenType.Define) {
-    return DefineStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
-  } else if (operation == TokenType.Set) {
-    return SetStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
   } else {
     throw Exception('Invalid operation');
   }
-}
-
-ConditionalStatement parseConditional(List tokens) {
-  final String operand1 = tokens[1];
-  final String operand2 = tokens[3];
-  final String operation = tokens[2].value;
-
-  final List<Statement> truthful = parseStatements(tokens[5]);
-
-  List<Statement>? falsy;
-
-  if (tokens[6] != null) {
-    falsy = parseStatements(tokens[6][1]);
-  }
-
-  return ConditionalStatement(truthful, falsy, operand1, operand2, operation);
 }
 
 class Statement {
@@ -799,20 +730,26 @@ class TransformStatement extends SelectStatement {
   }
 }
 
-class DefineStatement extends SelectStatement {
-  const DefineStatement(TokenType operation, List<Operator> operators, String from, String? selector, String? into,
-      {List<Operator>? transformations})
-      : super(operation, operators, from, selector, into, transformations: transformations);
+class DefineStatement extends Statement {
+  final String name;
+  final String type;
+  final String value;
+
+  const DefineStatement(this.name, this.type, this.value);
+
+  factory DefineStatement.fromTokens(List tokens) {
+    final String name = tokens[1];
+    final String type = (tokens[2].value as String).toLowerCase();
+    final String value = tokens[3];
+
+    return DefineStatement(name, type, value);
+  }
 
   @override
   Future<void> execute(Interpreter interpreter) async {
-    if (into == null) {
-      throw ArgumentError('No into specified.');
-    }
+    dynamic value = this.value;
 
-    dynamic value = from;
-
-    switch (selector) {
+    switch (type) {
       case 'string':
         value = value.toString();
         break;
@@ -826,25 +763,39 @@ class DefineStatement extends SelectStatement {
         throw ArgumentError('Unknown type.');
     }
 
-    interpreter.setValue(into!, value);
+    interpreter.setValue(name, value);
   }
 }
 
-class SetStatement extends SelectStatement {
-  const SetStatement(TokenType operation, List<Operator> operators, String from, String? selector, String? into,
-      {List<Operator>? transformations})
-      : super(operation, operators, from, selector, into, transformations: transformations);
+class SetStatement extends Statement {
+  final String into;
+  final String function;
+  final List<String> arguments;
+
+  const SetStatement(this.into, this.function, this.arguments);
+
+  factory SetStatement.fromTokens(List tokens) {
+    final String into = tokens[1];
+    final String function = tokens[3].toLowerCase();
+    final List<String> arguments = [];
+
+    for (dynamic token in tokens[5]) {
+      if (token is Token && token.value == ',') {
+        continue;
+      }
+
+      arguments.add(token);
+    }
+
+    return SetStatement(into, function, arguments);
+  }
 
   @override
   Future<void> execute(Interpreter interpreter) async {
-    final into = this.into;
-    final function = from.toLowerCase();
-    final arguments = operators;
-
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
-      args.add(interpreter.getValue(arg.meta!));
+      args.add(interpreter.getValue(arg));
     }
 
     //runs the function
@@ -882,7 +833,7 @@ class SetStatement extends SelectStatement {
     }
 
     //set the value
-    interpreter.setValue(into!, value);
+    interpreter.setValue(into, value);
   }
 }
 
@@ -894,6 +845,22 @@ class ConditionalStatement extends Statement {
   final String operation;
 
   const ConditionalStatement(this.truthful, this.falsy, this.operand1, this.operand2, this.operation);
+
+  factory ConditionalStatement.fromTokens(List tokens) {
+    final String operand1 = tokens[1];
+    final String operand2 = tokens[3];
+    final String operation = tokens[2].value;
+
+    final List<Statement> truthful = parseStatements(tokens[5]);
+
+    List<Statement>? falsy;
+
+    if (tokens[6] != null) {
+      falsy = parseStatements(tokens[6][1]);
+    }
+
+    return ConditionalStatement(truthful, falsy, operand1, operand2, operation);
+  }
 
   @override
   Future<void> execute(Interpreter interpreter) async {
