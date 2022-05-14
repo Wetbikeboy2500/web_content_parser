@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:html/parser.dart' show parse;
+import 'package:path/path.dart' as path;
 import 'package:html/dom.dart';
 import 'package:path/path.dart';
 
@@ -40,7 +41,7 @@ void sourceBuilder(String html) {
     endif;
   '''; */
 
-  final code = '''
+  /* final code = '''
       DEFINE url STRING 'https://google.com';
       SET document TO getRequest WITH url;
       SET status TO getStatusCode WITH document;
@@ -49,6 +50,13 @@ void sourceBuilder(String html) {
         SET html TO parseBody WITH document;
         SELECT innerHTML as title INTO title FROM html WHERE SELECTOR IS 'title';
       ENDIF;
+    '''; */
+
+  final code = '''
+      DEFINE page INT 0;
+      DEFINE pageParam STRING '?page=';
+      SET page TO increment WITH page;
+      TRANSFORM value.pageParam, value.page IN * WITH CONCAT AS pageOutput;
     ''';
   /* "SELECT name AS random, innerHTML INTO doc FROM document WHERE SELECTOR IS 'body > p:nth-child(3)'",
     "TRANSFORM value.random, value.innerHTML IN doc WITH CONCAT AS new",
@@ -109,6 +117,10 @@ class Interpreter {
   final Map<String, dynamic> _values = {};
 
   Map<String, dynamic> get values => _values;
+
+  void setValues(Map<String, dynamic> values) {
+    _values.addAll(values);
+  }
 
   void setValue(String name, dynamic value) {
     _values[name] = value;
@@ -668,7 +680,12 @@ class TransformStatement extends SelectStatement {
   @override
   Future<void> execute(Interpreter interpreter) async {
     //from
-    final dynamic data = interpreter.getValue(from);
+    late dynamic data;
+    if (from == '*') {
+      data = interpreter.values;
+    } else {
+      data = interpreter.getValue(from);
+    }
     if (data == null) {
       throw Exception('No data found for $from');
     }
@@ -679,18 +696,15 @@ class TransformStatement extends SelectStatement {
       Map<String, dynamic> objectValues = {};
       switch (select.type) {
         case TokenType.Value:
-          /* if (data is Map) {
-            objectValues[select.meta!] = data[select.meta];
-          } else if (data is List && data.isNotEmpty && data.first is Map) {
-            for (final Map d in data) {
-              objectValues[select.meta!] = d[select.meta!];
-            }
-          } */
           values.add(select.meta!);
           break;
         default:
         //do nothing
       }
+    }
+
+    if (data is Map) {
+      data = [data];
     }
 
     //loop through all the data
@@ -699,6 +713,7 @@ class TransformStatement extends SelectStatement {
       //TODO: support as for transforms that work on map
       for (final value in values) {
         final dynamic storedValue = d[value];
+        print(storedValue);
         for (final Operator transform in transformations ?? []) {
           switch (transform.type) {
             case TokenType.Trim:
@@ -721,7 +736,7 @@ class TransformStatement extends SelectStatement {
               if (storedValue is String) {
                 d[transform.alias ?? value] += storedValue;
               } else {
-                d[transform.alias ?? value] = storedValue.toString();
+                d[transform.alias ?? value] += storedValue.toString();
               }
               break;
             default:
@@ -731,7 +746,11 @@ class TransformStatement extends SelectStatement {
       }
     }
 
-    interpreter.setValue(from, data);
+    if (from == '*') {
+      interpreter.setValues(data.first);
+    } else {
+      interpreter.setValue(from, data);
+    }
   }
 }
 
@@ -832,6 +851,15 @@ class SetStatement extends Statement {
         break;
       case 'parsebody':
         value = parse(args[0].body);
+        break;
+      case 'joinurl':
+        value = path.url.joinAll(List<String>.from(args));
+        break;
+      case 'increment':
+        value = args[0] + 1;
+        break;
+      case 'decrement':
+        value = args[0] - 1;
         break;
       default:
         throw UnsupportedError('Unsupported function: $function');
