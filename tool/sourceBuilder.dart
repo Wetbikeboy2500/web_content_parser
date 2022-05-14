@@ -41,15 +41,14 @@ void sourceBuilder(String html) {
   '''; */
 
   final code = '''
-    if status is 200:
       DEFINE url STRING 'https://google.com';
       SET document TO getRequest WITH url;
       SET status TO getStatusCode WITH document;
-      SET html TO parseBody WITH document;
-      SELECT innerHTML as title INTO title FROM html WHERE SELECTOR IS 'title';
-    else:
-      DEFINE url STRING 'https://google.com';
-    endif;
+      DEFINE passing INT 200;
+      IF value.status IS value.passing:
+        SET html TO parseBody WITH document;
+        SELECT innerHTML as title INTO title FROM html WHERE SELECTOR IS 'title';
+      ENDIF;
     ''';
   /* "SELECT name AS random, innerHTML INTO doc FROM document WHERE SELECTOR IS 'body > p:nth-child(3)'",
     "TRANSFORM value.random, value.innerHTML IN doc WITH CONCAT AS new",
@@ -160,8 +159,8 @@ run statements (this step will be done within an class to allow for scoped)
 /// Tokenizes a string into a list of tokens.
 /// This defines the grammar of the language as well.
 List parseAndTokenize(String input) {
-  //Do not allow commas or semicolons or colons for value matcher
-  final valueMatcher = patternIgnoreCase('~!@\$%&*()_+=./\'"?><[]{}|`#a-z0-9') | char('-') | char('^');
+  //Do not allow commas or semicolons or colons or periods for value matcher
+  final valueMatcher = patternIgnoreCase('~!@\$%&*()_+=/\'"?><[]{}|`#a-z0-9') | char('-') | char('^');
 
   final value = (valueMatcher).plus().flatten().trim();
 
@@ -186,6 +185,9 @@ List parseAndTokenize(String input) {
   final name = letter().plus().flatten().trim() | char('*').trim();
 
   final nameValue = name & char('.').token() & value;
+
+  final nameValueSeparated =
+      stringIgnoreCase('value') & char('.') & name.separatedBy(char('.'), includeSeparators: false);
 
   //TODO: I will need to revise the syntax for the comparisons
   final into = stringIgnoreCase('into').trim().token() &
@@ -240,10 +242,13 @@ List parseAndTokenize(String input) {
   final allQueries =
       ((query | queryTransform | queryDefine | querySet | conditional) & char(';').token().trim()).pick(0).star();
 
+  final conditionalVariables = (nameValueSeparated);
+
+  //TODO: revise operator to not be so exact
   final conditionalQuery = stringIgnoreCase('if').trim().token() &
-      name &
-      stringIgnoreCase('is').trim().token() &
-      (valueStringMatcher | (valueMatcher).plus().flatten().trim()) &
+      conditionalVariables &
+      (stringIgnoreCase('is').trim().token() | stringIgnoreCase('is not').trim().token()) &
+      conditionalVariables &
       char(':').trim().token() &
       allQueries &
       (stringIgnoreCase('else:').trim().token() & allQueries).optional() &
@@ -840,16 +845,16 @@ class SetStatement extends Statement {
 class ConditionalStatement extends Statement {
   final List<Statement> truthful;
   final List<Statement>? falsy;
-  final String operand1;
-  final String operand2;
+  final List<String> operand1;
+  final List<String> operand2;
   final String operation;
 
   const ConditionalStatement(this.truthful, this.falsy, this.operand1, this.operand2, this.operation);
 
   factory ConditionalStatement.fromTokens(List tokens) {
-    final String operand1 = tokens[1];
-    final String operand2 = tokens[3];
-    final String operation = tokens[2].value;
+    final List<String> operand1 = List<String>.from(tokens[1][2]);
+    final List<String> operand2 = List<String>.from(tokens[3][2]);
+    final String operation = tokens[2].value.toLowerCase();
 
     final List<Statement> truthful = parseStatements(tokens[5]);
 
@@ -864,11 +869,45 @@ class ConditionalStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter) async {
+    //get values
+    dynamic currentValue1 = interpreter.getValue(operand1[0]);
+    for (final String value in operand1.sublist(1)) {
+      if (currentValue1 is Map) {
+        currentValue1 = currentValue1[value];
+      } else {
+        throw Exception('Cannot access a non-map value');
+      }
+    }
+    dynamic currentValue2 = interpreter.getValue(operand2[0]);
+    for (final String value in operand2.sublist(1)) {
+      if (currentValue2 is Map) {
+        currentValue2 = currentValue2[value];
+      } else {
+        throw Exception('Cannot access a non-map value');
+      }
+    }
+
     //check if statement is truthy
-    //execute truthy if true
-    //execute falsy if false
-    for (final statement in truthful) {
-      await statement.execute(interpreter);
+    if (operation == 'is') {
+      if (currentValue1 == currentValue2) {
+        for (final Statement statement in truthful) {
+          await statement.execute(interpreter);
+        }
+      } else if (falsy != null) {
+        for (final Statement statement in falsy!) {
+          await statement.execute(interpreter);
+        }
+      }
+    } else if (operation == 'is not') {
+      if (currentValue1 != currentValue2) {
+        for (final Statement statement in truthful) {
+          await statement.execute(interpreter);
+        }
+      } else if (falsy != null) {
+        for (final Statement statement in falsy!) {
+          await statement.execute(interpreter);
+        }
+      }
     }
   }
 }

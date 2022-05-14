@@ -126,11 +126,11 @@ The scraper handles the interaction with [hetu-script](https://github.com/hetu-s
 
 ### Headless Browser Web Scrapers
 
-Headless browsers provide a lot of power to scrape dynamic pages. This project currently uses puppeteer and a forked repo of flutter_inappwebview. These two packages provide the power to scrape on any platform.
+Headless browsers provide a lot of power to scrape dynamic pages. This project currently uses puppeteer and flutter_inappwebview. These two packages provide the power to scrape on any platform.
 
-**Note:** These packages have only been tested on android and windows machines. flutter_inappwebview has not been maintained in a long time with a long list of reported issues on its repo. The stability of using headless browsers can not be guaranteed.
+**Note:** These packages have only been tested on android and windows machines.
 
-The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browser with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
+The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browsers with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
 
 #### Mobile:
 
@@ -255,4 +255,4 @@ When using the fromJson() constructor, the ID can be passed as a map or an objec
 
 ### Computing
 
-A ComputeDecorator is a class implementation for allowing different types of computes when converting objects. The decorator currently uses the Computer package which is agnostic to the platform it is run on. This decorator can be changed by setting `ParseSource.computeDecorator` to a different decorator implementation. This can allow for compute, which is available in Flutter, to be used. The ComputeDecorator can be turned off and not used by setting `ParseSource.computeEnabled`. It is enabled by default. Everything will function the same with the compute off, but it main perform worse when processing large amounts of objects.
+A ComputeDecorator is a class implementation for allowing different types of computes when converting objects. The decorator currently uses the Computer package which is agnostic to the platform it is run on. This decorator can be changed by setting `ParseSource.computeDecorator` to a different decorator implementation. This can allow for compute, which is available in Flutter, to be used. The ComputeDecorator can be turned off and not used by setting `ParseSource.computeEnabled`. It is enabled by default. Everything will function the same with the compute off, but it may perform worse when processing large amounts of objects.
