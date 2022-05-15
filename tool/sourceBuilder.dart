@@ -3,12 +3,18 @@
 import 'dart:io';
 
 import 'package:html/parser.dart' show parse;
-import 'package:path/path.dart' as path;
 import 'package:html/dom.dart';
-import 'package:path/path.dart';
 
 import 'package:petitparser/petitparser.dart';
 import 'package:web_content_parser/scraper.dart';
+
+import 'conditionalStatement.dart';
+import 'defineStatement.dart';
+import 'packStatement.dart';
+import 'selectStatement.dart';
+import 'setStatement.dart';
+import 'statement.dart';
+import 'transformStatement.dart';
 
 //This file is for testing purposes only. The goal is to try and develop a robust system for selecting elements from a website correctly.
 
@@ -41,7 +47,7 @@ void sourceBuilder(String html) {
     endif;
   '''; */
 
-  /* final code = '''
+  final code = '''
       DEFINE url STRING 'https://google.com';
       SET document TO getRequest WITH url;
       SET status TO getStatusCode WITH document;
@@ -50,14 +56,18 @@ void sourceBuilder(String html) {
         SET html TO parseBody WITH document;
         SELECT innerHTML as title INTO title FROM html WHERE SELECTOR IS 'title';
       ENDIF;
-    '''; */
+    ''';
 
-  final code = '''
-      DEFINE page INT 0;
+/*
+
+          select attribute.src into images from titles where select is 'img';
+          set id to getLastSegments with urls;
+*/
+
+  /* DEFINE page INT 0;
       DEFINE pageParam STRING '?page=';
       SET page TO increment WITH page;
-      TRANSFORM value.pageParam, value.page IN * WITH CONCAT AS pageOutput;
-    ''';
+      TRANSFORM value.pageParam, value.page IN * WITH CONCAT AS pageOutput; */
   /* "SELECT name AS random, innerHTML INTO doc FROM document WHERE SELECTOR IS 'body > p:nth-child(3)'",
     "TRANSFORM value.random, value.innerHTML IN doc WITH CONCAT AS new",
     "SELECT value.new INTO return FROM doc",
@@ -141,6 +151,8 @@ class Interpreter {
       case TokenType.All:
         return element;
       case TokenType.Attribute:
+        print(element.attributes);
+        print('Getting attribute $meta');
         return element.attributes[meta];
       default:
         return [];
@@ -217,7 +229,10 @@ List parseAndTokenize(String input) {
       inputSelectors & //alias for naming
       into.optional() &
       from & //marks next part
-      name & //this represents the variable to extract from (this could be a document, element, etc.)
+      (name |
+          name.separatedBy(char('.'),
+              includeSeparators:
+                  false)) & //this represents the variable to extract from (this could be a document, element, etc.)
       (where & selectorIs).optional();
 
   final transform = stringIgnoreCase('transform').trim().token();
@@ -251,8 +266,10 @@ List parseAndTokenize(String input) {
 
   final conditional = undefined();
 
-  final allQueries =
-      ((query | queryTransform | queryDefine | querySet | conditional) & char(';').token().trim()).pick(0).star();
+  final allQueries = ((query | queryTransform | queryDefine | querySet | conditional | PackStatement.getParser()) &
+          char(';').token().trim())
+      .pick(0)
+      .star();
 
   final conditionalVariables = (nameValueSeparated);
 
@@ -273,6 +290,8 @@ List parseAndTokenize(String input) {
   if (parsed.isFailure) {
     return const [];
   }
+
+  print(parsed.value);
 
   return parsed.value;
 }
@@ -308,6 +327,10 @@ Statement parseStatement(List tokens) {
   for (var data in tokens) {
     if (data == null) {
       continue;
+    }
+
+    if (data is Token && (data.value as String).toLowerCase() == 'pack') {
+      return PackStatement.fromTokens(tokens);
     }
 
     //TODO: separate all the different statements by their operation when complexity is too high
@@ -465,6 +488,7 @@ Statement parseStatement(List tokens) {
         break;
       case State.In:
       case State.From:
+        print(data);
         requestFrom = data;
         break;
       case State.Where:
@@ -532,410 +556,5 @@ Statement parseStatement(List tokens) {
     return TransformStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
   } else {
     throw Exception('Invalid operation');
-  }
-}
-
-class Statement {
-  const Statement();
-
-  Future<void> execute(Interpreter interpreter) async {
-    throw Exception('Not implemented');
-  }
-}
-
-class SelectStatement extends Statement {
-  final TokenType operation;
-  final String from;
-  final String? selector;
-  final String? into;
-  final List<Operator> operators;
-  final List<Operator>? transformations;
-
-  const SelectStatement(this.operation, this.operators, this.from, this.selector, this.into, {this.transformations});
-
-  @override
-  Future<void> execute(Interpreter interpreter) async {
-    late final dynamic data;
-    if (from == '*') {
-      data = interpreter.values;
-    } else {
-      data = interpreter.getValue(from);
-    }
-
-    if (data == null) {
-      throw Exception('No data found for $from');
-    }
-
-    late final List<dynamic> elements;
-
-    if (data is Document || data is Element) {
-      if (selector == null) {
-        elements = [data];
-      } else {
-        elements = data.querySelectorAll(selector);
-      }
-    } else if (data is Map) {
-      elements = [data];
-    } else if (data is List) {
-      if (data.isNotEmpty) {
-        elements = data;
-      } else {
-        elements = [];
-      }
-    } else {
-      throw Exception('Data is not an Element');
-    }
-
-    final List<Map> results = [];
-
-    for (var element in elements) {
-      final Map<String, dynamic> values = {};
-      for (var select in operators) {
-        late final dynamic value;
-        if (element is Element) {
-          value = interpreter.getProperty(element, select.type);
-        } else if (element is Map) {
-          if (select.type == TokenType.Value) {
-            value = element[select.meta];
-          } else {
-            throw Exception('Must use value selector when accessing maps');
-          }
-        } else {
-          throw Exception('Data is not an Element nor Map');
-        }
-
-        if (select.alias == null && select.type == TokenType.Value) {
-          values[select.meta!] = value;
-        } else {
-          values[select.alias ?? select.type.name.substring(0, 1).toLowerCase() + select.type.name.substring(1)] =
-              value;
-        }
-      }
-      results.add(values);
-    }
-
-    if (into != null) {
-      interpreter.setValue(into!, results);
-    }
-  }
-
-  //create to string
-  @override
-  String toString() {
-    final StringBuffer buffer = StringBuffer();
-
-    buffer.write('$operation ');
-
-    for (Operator operator in operators) {
-      buffer.write('${operator.type}');
-
-      if (operator.meta != null) {
-        buffer.write('(${operator.meta})');
-      }
-
-      if (operator.alias != null) {
-        buffer.write(' as ${operator.alias}');
-      }
-
-      buffer.write(', ');
-    }
-
-    buffer.write('from $from');
-
-    if (selector != null) {
-      buffer.write(' where $selector');
-    }
-
-    if (into != null) {
-      buffer.write(' into $into');
-    }
-
-    if (transformations != null) {
-      buffer.write(' with ');
-
-      for (Operator operator in transformations!) {
-        buffer.write('${operator.type}');
-
-        if (operator.meta != null) {
-          buffer.write('(${operator.meta})');
-        }
-
-        if (operator.alias != null) {
-          buffer.write(' as ${operator.alias}');
-        }
-
-        buffer.write(', ');
-      }
-    }
-
-    return buffer.toString();
-  }
-}
-
-class TransformStatement extends SelectStatement {
-  const TransformStatement(TokenType operation, List<Operator> operators, String from, String? selector, String? into,
-      {List<Operator>? transformations})
-      : super(operation, operators, from, selector, into, transformations: transformations);
-
-  @override
-  Future<void> execute(Interpreter interpreter) async {
-    //from
-    late dynamic data;
-    if (from == '*') {
-      data = interpreter.values;
-    } else {
-      data = interpreter.getValue(from);
-    }
-    if (data == null) {
-      throw Exception('No data found for $from');
-    }
-
-    //add the specific values to transform
-    List<String> values = [];
-    for (Operator select in operators) {
-      Map<String, dynamic> objectValues = {};
-      switch (select.type) {
-        case TokenType.Value:
-          values.add(select.meta!);
-          break;
-        default:
-        //do nothing
-      }
-    }
-
-    if (data is Map) {
-      data = [data];
-    }
-
-    //loop through all the data
-    for (var d in data) {
-      //TODO: add an into
-      //TODO: support as for transforms that work on map
-      for (final value in values) {
-        final dynamic storedValue = d[value];
-        print(storedValue);
-        for (final Operator transform in transformations ?? []) {
-          switch (transform.type) {
-            case TokenType.Trim:
-              d[transform.alias ?? value] = storedValue.trim();
-              break;
-            case TokenType.Lowercase:
-              d[transform.alias ?? value] = storedValue.toLowerCase();
-              break;
-            case TokenType.Uppercase:
-              d[transform.alias ?? value] = storedValue.toUpperCase();
-              break;
-            case TokenType.Concat:
-              //make sure value exists
-              d[transform.alias ?? value] ??= '';
-              //fail if not string
-              if (d[transform.alias ?? value] is! String) {
-                throw Exception('Cannot concatenate a non string value');
-              }
-              //join strings
-              if (storedValue is String) {
-                d[transform.alias ?? value] += storedValue;
-              } else {
-                d[transform.alias ?? value] += storedValue.toString();
-              }
-              break;
-            default:
-              throw Exception('Unknown transform ${transform.type}');
-          }
-        }
-      }
-    }
-
-    if (from == '*') {
-      interpreter.setValues(data.first);
-    } else {
-      interpreter.setValue(from, data);
-    }
-  }
-}
-
-class DefineStatement extends Statement {
-  final String name;
-  final String type;
-  final String value;
-
-  const DefineStatement(this.name, this.type, this.value);
-
-  factory DefineStatement.fromTokens(List tokens) {
-    final String name = tokens[1];
-    final String type = (tokens[2].value as String).toLowerCase();
-    final String value = tokens[3];
-
-    return DefineStatement(name, type, value);
-  }
-
-  @override
-  Future<void> execute(Interpreter interpreter) async {
-    dynamic value = this.value;
-
-    switch (type) {
-      case 'string':
-        value = value.toString();
-        break;
-      case 'int':
-        value = int.parse(value.toString());
-        break;
-      case 'bool':
-        value = value.toString() == 'true';
-        break;
-      default:
-        throw ArgumentError('Unknown type.');
-    }
-
-    interpreter.setValue(name, value);
-  }
-}
-
-class SetStatement extends Statement {
-  final String into;
-  final String function;
-  final List<String> arguments;
-
-  const SetStatement(this.into, this.function, this.arguments);
-
-  factory SetStatement.fromTokens(List tokens) {
-    final String into = tokens[1];
-    final String function = tokens[3].toLowerCase();
-    final List<String> arguments = [];
-
-    for (dynamic token in tokens[5]) {
-      if (token is Token && token.value == ',') {
-        continue;
-      }
-
-      arguments.add(token);
-    }
-
-    return SetStatement(into, function, arguments);
-  }
-
-  @override
-  Future<void> execute(Interpreter interpreter) async {
-    //gets the args to pass along
-    final List args = [];
-    for (final arg in arguments) {
-      args.add(interpreter.getValue(arg));
-    }
-
-    //runs the function
-    late dynamic value;
-
-    switch (function) {
-      case 'getrequest':
-        //for the second argument, we are going to assume it is a map within a list
-        value = await getRequest(
-          args[0],
-          (args.length > 1) ? args[1].first : const <String, String>{},
-        );
-        break;
-      case 'getrequestdynamic':
-        value = await getDynamicPage(args[0]);
-        break;
-      case 'postrequest':
-        value = await postRequest(
-          args[0],
-          args[1].first,
-          (args.length > 2) ? args[2].first : const <String, String>{},
-        );
-        break;
-      case 'parse':
-        value = parse(args[0].first);
-        break;
-      case 'getstatuscode':
-        value = args[0].statusCode;
-        break;
-      case 'parsebody':
-        value = parse(args[0].body);
-        break;
-      case 'joinurl':
-        value = path.url.joinAll(List<String>.from(args));
-        break;
-      case 'increment':
-        value = args[0] + 1;
-        break;
-      case 'decrement':
-        value = args[0] - 1;
-        break;
-      default:
-        throw UnsupportedError('Unsupported function: $function');
-    }
-
-    //set the value
-    interpreter.setValue(into, value);
-  }
-}
-
-class ConditionalStatement extends Statement {
-  final List<Statement> truthful;
-  final List<Statement>? falsy;
-  final List<String> operand1;
-  final List<String> operand2;
-  final String operation;
-
-  const ConditionalStatement(this.truthful, this.falsy, this.operand1, this.operand2, this.operation);
-
-  factory ConditionalStatement.fromTokens(List tokens) {
-    final List<String> operand1 = List<String>.from(tokens[1][2]);
-    final List<String> operand2 = List<String>.from(tokens[3][2]);
-    final String operation = tokens[2].value.toLowerCase();
-
-    final List<Statement> truthful = parseStatements(tokens[5]);
-
-    List<Statement>? falsy;
-
-    if (tokens[6] != null) {
-      falsy = parseStatements(tokens[6][1]);
-    }
-
-    return ConditionalStatement(truthful, falsy, operand1, operand2, operation);
-  }
-
-  @override
-  Future<void> execute(Interpreter interpreter) async {
-    //get values
-    dynamic currentValue1 = interpreter.getValue(operand1[0]);
-    for (final String value in operand1.sublist(1)) {
-      if (currentValue1 is Map) {
-        currentValue1 = currentValue1[value];
-      } else {
-        throw Exception('Cannot access a non-map value');
-      }
-    }
-    dynamic currentValue2 = interpreter.getValue(operand2[0]);
-    for (final String value in operand2.sublist(1)) {
-      if (currentValue2 is Map) {
-        currentValue2 = currentValue2[value];
-      } else {
-        throw Exception('Cannot access a non-map value');
-      }
-    }
-
-    //check if statement is truthy
-    if (operation == 'is') {
-      if (currentValue1 == currentValue2) {
-        for (final Statement statement in truthful) {
-          await statement.execute(interpreter);
-        }
-      } else if (falsy != null) {
-        for (final Statement statement in falsy!) {
-          await statement.execute(interpreter);
-        }
-      }
-    } else if (operation == 'is not') {
-      if (currentValue1 != currentValue2) {
-        for (final Statement statement in truthful) {
-          await statement.execute(interpreter);
-        }
-      } else if (falsy != null) {
-        for (final Statement statement in falsy!) {
-          await statement.execute(interpreter);
-        }
-      }
-    }
   }
 }
