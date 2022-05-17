@@ -50,8 +50,6 @@ class SelectStatement extends Statement {
       throw Exception('Data is not an Element');
     }
 
-    print(elements);
-
     if (operators.length == 1 && operators.first.type == TokenType.All) {
       //using an all selector so we just take every and through it into a list
       if (into != null) {

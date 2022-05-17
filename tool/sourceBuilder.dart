@@ -54,7 +54,11 @@ void sourceBuilder(String html) {
       DEFINE passing INT 200;
       IF value.status IS value.passing:
         SET html TO parseBody WITH document;
-        SELECT innerHTML as title INTO title FROM html WHERE SELECTOR IS 'title';
+        SELECT * INTO model FROM html WHERE SELECTOR IS 'div';
+        SELECT attribute.style as style, attribute.id as id INTO model FROM model;
+        SELECT value.url INTO urlObject FROM *;
+        PACK url INTO urlObjectTwo;
+        PACK model[], url, urlObject, urlObjectTwo[0] as realUrlObject INTO joined;
       ENDIF;
     ''';
 
@@ -151,8 +155,6 @@ class Interpreter {
       case TokenType.All:
         return element;
       case TokenType.Attribute:
-        print(element.attributes);
-        print('Getting attribute $meta');
         return element.attributes[meta];
       default:
         return [];
@@ -488,7 +490,6 @@ Statement parseStatement(List tokens) {
         break;
       case State.In:
       case State.From:
-        print(data);
         requestFrom = data;
         break;
       case State.Where:
