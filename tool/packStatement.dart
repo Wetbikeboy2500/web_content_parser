@@ -113,8 +113,11 @@ class PackStatement extends Statement {
     for (int i = 0; i < output.length; i++) {
       //TODO: account for lists that are just values. This can switch to useing the alias
       for (MapEntry entries in mergedLists) {
-        if (entries.value.first is Map) {
-          output[i].addAll(entries.value[i]);
+        if (entries.value.first is Map && entries.key.contains('[]')) {
+            //means no alias exists.
+            //we are merging all fields that exist
+            //TODO: add a better way to mark that there is no alias
+            output[i].addAll(entries.value[i]);
         } else {
           output[i][entries.key] = entries.value[i];
         }

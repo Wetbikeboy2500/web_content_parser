@@ -82,7 +82,11 @@ class SetStatement extends Statement {
           value = path.url.split(args[0]).last;
         }
         if (args[0] is List && args[0].isNotEmpty && args[0].first is Map) {
-          value = args[0].map((Map d) => ({url: path.url.split(d['url'])}));
+          List output = [];
+          for (Map item in args[0]) {
+            output.add(path.url.split(item['url']).last);
+          }
+          value = output;
         } else {
           throw Exception('Cannot get last segment of a non string or list');
         }
