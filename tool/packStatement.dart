@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:petitparser/petitparser.dart';
 
+import 'parserHelper.dart';
 import 'sourceBuilder.dart';
 import 'statement.dart';
 
@@ -27,18 +28,8 @@ class PackStatement extends Statement {
   }
 
   static Parser getParser() {
-    final name = letter().plus().flatten().trim();
-
-    final digitInput = (char('[').trim().token() &
-            digit().star().flatten().optional() &
-            (char(':') & digit().star().flatten()).optional() &
-            char(']').trim().token())
-        .flatten();
-
     return stringIgnoreCase('pack').token() &
-        ((name & digitInput.optional()).separatedBy(char('.'), includeSeparators: false) &
-                (stringIgnoreCase('as').trim() & name).pick(1).optional())
-            .separatedBy(char(','), includeSeparators: false) &
+        inputs &
         stringIgnoreCase('into') &
         name;
   }

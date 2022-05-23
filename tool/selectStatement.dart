@@ -1,5 +1,7 @@
 import 'package:html/dom.dart';
+import 'package:petitparser/petitparser.dart';
 
+import 'parserHelper.dart';
 import 'sourceBuilder.dart';
 import 'statement.dart';
 
@@ -12,6 +14,30 @@ class SelectStatement extends Statement {
   final List<Operator>? transformations;
 
   const SelectStatement(this.operation, this.operators, this.from, this.selector, this.into, {this.transformations});
+
+ /*  factory SelectStatement.fromTokens(List tokens) {
+    //select operators
+    final List<Operator> operators = [];
+
+
+    //select into if exists
+
+    //select from
+
+    //select selector if exists
+
+    return SelectStatement();
+  } */
+
+  static Parser getParser() {
+    return stringIgnoreCase('select').trim().token() &
+    inputs &
+    stringIgnoreCase('from').trim() &
+    name & //TODO: change this into a single input parser
+    (stringIgnoreCase('into').trim() & name).optional() & //TODO: change this into a single input parser
+    (stringIgnoreCase('where').trim().token() & stringIgnoreCase('selector is').trim() & rawInput).optional()
+  }
+
 
   @override
   Future<void> execute(Interpreter interpreter) async {
