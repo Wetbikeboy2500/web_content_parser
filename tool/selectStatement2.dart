@@ -1,0 +1,59 @@
+import 'package:html/dom.dart';
+import 'package:petitparser/petitparser.dart';
+
+import 'parserHelper.dart';
+import 'statement.dart';
+import 'operator.dart' as op;
+
+class SelectStatement extends Statement {
+  final List<op.Operator> operators;
+  final String from;
+  final String? into;
+  final String? selector;
+
+  const SelectStatement({required this.operators, required this.from, this.into, this.selector});
+
+  factory SelectStatement.fromTokens(List tokens) {
+    //select operators
+    final List<op.Operator> operators = [];
+
+    for (final List operatorTokens in tokens[1]) {
+      operators.add(op.Operator.fromTokens(operatorTokens));
+    }
+
+    //select into if exists
+    late final String? into;
+    if (tokens[4] != null) {
+      into = tokens[4].last;
+    } else {
+      into = null;
+    }
+
+    //select from
+    final String from = tokens[3];
+
+    //select selector if exists
+    final String? selector = null;
+
+    return SelectStatement(operators: operators, from: from, into: into, selector: selector);
+  }
+
+  static Parser getParser() {
+    return stringIgnoreCase('select').trim().token() &
+        inputs &
+        stringIgnoreCase('from').trim() &
+        name & //TODO: change this into a single input parser
+        (stringIgnoreCase('into').trim() & name).optional() & //TODO: change this into a single input parser
+        (stringIgnoreCase('where').trim().token() & stringIgnoreCase('selector is').trim() & rawInput).optional();
+  }
+
+  /* @override
+  Future<void> execute(Interpreter interpreter) async {}
+ */
+  //create to string
+  @override
+  String toString() {
+    //TODO: add to string
+    return '';
+  }
+}

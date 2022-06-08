@@ -19,6 +19,16 @@ import 'transformStatement.dart';
 //This file is for testing purposes only. The goal is to try and develop a robust system for selecting elements from a website correctly.
 
 void main() {
+  final parsed =
+      SelectStatement.getParser().parse('SELECT attribute.style as style, attribute.id as id, url, model[], model[0] FROM model INTO model');
+
+  if (parsed.isSuccess) {
+    SelectStatement.fromTokens(parsed.value);
+  } else {
+    print(parsed.message);
+  }
+
+  return;
   sourceBuilder(File('./test/samples/scraper/test2.html').readAsStringSync());
 }
 
