@@ -10,9 +10,11 @@ Parser get digitInput => (char('[').trim().token() &
         char(']').trim().token())
     .flatten();
 
-Parser get inputs => ((name & digitInput.optional()).separatedBy(char('.'), includeSeparators: false) &
+Parser get inputs => (input &
         (stringIgnoreCase('as').trim() & name).pick(1).optional())
     .separatedBy(char(','), includeSeparators: false);
+
+Parser get input => ((name & digitInput.optional()).separatedBy(char('.'), includeSeparators: false) | char('*').trim());
 
 Parser get safeChars => patternIgnoreCase('~!@\$%&*()_+=/\'"?><[]{}|`#a-z0-9') | char('-') | char('^');
 

@@ -11,7 +11,8 @@ import 'package:web_content_parser/scraper.dart';
 import 'conditionalStatement.dart';
 import 'defineStatement.dart';
 import 'packStatement.dart';
-import 'selectStatement.dart';
+// import 'selectStatement.dart';
+import 'selectStatement2.dart';
 import 'setStatement.dart';
 import 'statement.dart';
 import 'transformStatement.dart';
@@ -19,11 +20,22 @@ import 'transformStatement.dart';
 //This file is for testing purposes only. The goal is to try and develop a robust system for selecting elements from a website correctly.
 
 void main() {
-  final parsed =
-      SelectStatement.getParser().parse('SELECT attribute.style as style, attribute.id as id, url, model[], model[0] FROM model INTO model');
+  final i = Interpreter();
+
+  // i.setValue('model', {'hello': 'world'});
+  i.setValue('model', {
+    'hello': {
+      'hello': 'test',
+    }
+  });
+
+  final parsed = SelectStatement.getParser()
+      // .parse('SELECT attribute.style as style, attribute.id as id, url, model[], model[0], * FROM model INTO model');
+      .parse('SELECT hello.hello as tester FROM model INTO model');
 
   if (parsed.isSuccess) {
-    SelectStatement.fromTokens(parsed.value);
+    final statement = SelectStatement.fromTokens(parsed.value);
+    statement.execute(i);
   } else {
     print(parsed.message);
   }
@@ -562,10 +574,11 @@ Statement parseStatement(List tokens) {
   }
 
   if (operation == TokenType.Select) {
-    return SelectStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
+    //return SelectStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
   } else if (operation == TokenType.Transform) {
     return TransformStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
   } else {
     throw Exception('Invalid operation');
   }
+  throw Exception();
 }

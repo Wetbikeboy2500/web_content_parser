@@ -2,12 +2,13 @@ import 'package:html/dom.dart';
 import 'package:petitparser/petitparser.dart';
 
 import 'parserHelper.dart';
+import 'sourceBuilder.dart' show Interpreter;
 import 'statement.dart';
-import 'operator.dart' as op;
+import 'operator.dart';
 
 class SelectStatement extends Statement {
-  final List<op.Operator> operators;
-  final String from;
+  final List<Operator> operators;
+  final Operator from;
   final String? into;
   final String? selector;
 
@@ -15,10 +16,10 @@ class SelectStatement extends Statement {
 
   factory SelectStatement.fromTokens(List tokens) {
     //select operators
-    final List<op.Operator> operators = [];
+    final List<Operator> operators = [];
 
     for (final List operatorTokens in tokens[1]) {
-      operators.add(op.Operator.fromTokens(operatorTokens));
+      operators.add(Operator.fromTokens(operatorTokens));
     }
 
     //select into if exists
@@ -30,7 +31,7 @@ class SelectStatement extends Statement {
     }
 
     //select from
-    final String from = tokens[3];
+    final Operator from = Operator.fromTokensNoAlias(tokens[3]);
 
     //select selector if exists
     final String? selector = null;
@@ -42,14 +43,25 @@ class SelectStatement extends Statement {
     return stringIgnoreCase('select').trim().token() &
         inputs &
         stringIgnoreCase('from').trim() &
-        name & //TODO: change this into a single input parser
+        input & //TODO: change this into a single input parser
         (stringIgnoreCase('into').trim() & name).optional() & //TODO: change this into a single input parser
         (stringIgnoreCase('where').trim().token() & stringIgnoreCase('selector is').trim() & rawInput).optional();
   }
 
-  /* @override
-  Future<void> execute(Interpreter interpreter) async {}
- */
+  @override
+  Future<void> execute(Interpreter interpreter) async {
+    final dynamic value = from.getValue(interpreter.values).value.first;
+
+    final Map<String, dynamic> values = {};
+
+    for (final op in operators) {
+      final MapEntry entry = op.getValue(value);
+      values[entry.key] = entry.value;
+    }
+
+    print(values);
+  }
+
   //create to string
   @override
   String toString() {

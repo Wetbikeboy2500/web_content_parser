@@ -13,15 +13,70 @@ class Operator {
 
     final List<OperationName> names = [];
 
-    for (final List nameList in tokens.first) {
-      names.add(OperationName(nameList.first, nameList.last));
+    if (tokens.first is String) {
+      names.add(OperationName(tokens.first, null));
+    } else {
+      for (final List nameList in tokens.first) {
+        names.add(OperationName(nameList.first, nameList.last));
+      }
     }
 
     return Operator(names, alias);
   }
 
-  dynamic getValue() {
+  factory Operator.fromTokensNoAlias(List tokens) {
+    final List<OperationName> names = [];
 
+    if (tokens.first is String) {
+      names.add(OperationName(tokens.first, null));
+    } else {
+      for (final List nameList in tokens) {
+        names.add(OperationName(nameList.first, nameList.last));
+      }
+    }
+
+    return Operator(names, null);
+  }
+
+  MapEntry<String, List<dynamic>> getValue(dynamic context, {Map<String, Function> custom = const {}}) {
+    List value = [context];
+
+    //keeps track of if level of access is still the first level (attribute.name) <- attribute is first level
+    bool firstLevel = true;
+
+    for (final operation in names) {
+      //this might cause issues or unexpected issues
+      if (operation.name == '*') {
+        continue;
+      }
+
+      //select a value
+      value = value.map((e) {
+        if (firstLevel && custom.containsKey(operation.name)) {
+          return custom[operation.name]!(this, value);
+        }
+
+        print(e);
+
+        return e[operation.name];
+      }).toList();
+
+      firstLevel = false;
+
+      //try and get the values as a list based on the selector
+      if (operation.listAccess != null) {
+        if (operation.listAccess!.trim() == '[]') {
+          //join all the sublists to create a master list
+          value = value.reduce((value, element) => [...value, ...element]);
+        } else if (operation.listAccess!.trim() == '[0]') {
+          value = value[0];
+        } else {
+          print('Specialized list access is not supported yet');
+        }
+      }
+    }
+
+    return MapEntry(alias ?? names.last.name, value);
   }
 }
 
