@@ -38,8 +38,14 @@ class Operator {
     return Operator(names, null);
   }
 
-  MapEntry<String, List<dynamic>> getValue(dynamic context, {Map<String, Function> custom = const {}}) {
-    List value = [context];
+  MapEntry<String, List<dynamic>> getValue(dynamic context,
+      {Map<String, Function> custom = const {}, bool expand = false}) {
+    late List value;
+    if (expand) {
+      value = context;
+    } else {
+      value = [context];
+    }
 
     //keeps track of if level of access is still the first level (attribute.name) <- attribute is first level
     bool firstLevel = true;
@@ -52,11 +58,10 @@ class Operator {
 
       //select a value
       value = value.map((e) {
-        if (firstLevel && custom.containsKey(operation.name)) {
-          return custom[operation.name]!(this, value);
-        }
-
         print(e);
+        if (firstLevel && custom.containsKey(operation.name)) {
+          return custom[operation.name]!(this, e);
+        }
 
         return e[operation.name];
       }).toList();

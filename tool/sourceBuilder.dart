@@ -12,7 +12,7 @@ import 'conditionalStatement.dart';
 import 'defineStatement.dart';
 import 'packStatement.dart';
 // import 'selectStatement.dart';
-import 'selectStatement2.dart';
+import 'selectStatement.dart';
 import 'setStatement.dart';
 import 'statement.dart';
 import 'transformStatement.dart';
@@ -20,7 +20,7 @@ import 'transformStatement.dart';
 //This file is for testing purposes only. The goal is to try and develop a robust system for selecting elements from a website correctly.
 
 void main() {
-  final i = Interpreter();
+  /* final i = Interpreter();
 
   // i.setValue('model', {'hello': 'world'});
   i.setValue('model', {
@@ -29,9 +29,13 @@ void main() {
     }
   });
 
+  i.setValue('list', [
+    'value'
+  ]);
+
   final parsed = SelectStatement.getParser()
       // .parse('SELECT attribute.style as style, attribute.id as id, url, model[], model[0], * FROM model INTO model');
-      .parse('SELECT hello.hello as tester FROM model INTO model');
+      .parse('SELECT model.hello.hello as tester, list[0] FROM * INTO model');
 
   if (parsed.isSuccess) {
     final statement = SelectStatement.fromTokens(parsed.value);
@@ -40,7 +44,7 @@ void main() {
     print(parsed.message);
   }
 
-  return;
+  return; */
   sourceBuilder(File('./test/samples/scraper/test2.html').readAsStringSync());
 }
 
@@ -69,7 +73,7 @@ void sourceBuilder(String html) {
     endif;
   '''; */
 
-  final code = '''
+  /* final code = '''
       DEFINE url STRING 'https://google.com';
       SET document TO getRequest WITH url;
       SET status TO getStatusCode WITH document;
@@ -82,7 +86,7 @@ void sourceBuilder(String html) {
         PACK url INTO urlObjectTwo;
         PACK model[], url, urlObject, urlObjectTwo[0] as realUrlObject INTO joined;
       ENDIF;
-    ''';
+    '''; */
 
 /*
 
@@ -102,9 +106,14 @@ void sourceBuilder(String html) {
     "DEFINE boolVal BOOL true",
     "SELECT value.stringVal, value.intVal INTO newObject FROM *", */
 
-  print(code);
+  // print(code);
+
+  final code = '''
+    SELECT name AS random, innerHTML FROM document INTO doc WHERE SELECTOR IS 'body > p:nth-child(3)';
+  ''';
 
   final i = Interpreter();
+  i.setValue('document', document);
   i.runStatements(parseStatements(parseAndTokenize(code))).then((value) {
     print(i.values);
   });
@@ -290,7 +299,12 @@ List parseAndTokenize(String input) {
 
   final conditional = undefined();
 
-  final allQueries = ((query | queryTransform | queryDefine | querySet | conditional | PackStatement.getParser()) &
+  final allQueries = ((SelectStatement.getParser() |
+              queryTransform |
+              queryDefine |
+              querySet |
+              conditional |
+              PackStatement.getParser()) &
           char(';').token().trim())
       .pick(0)
       .star();
@@ -359,9 +373,7 @@ Statement parseStatement(List tokens) {
 
     //TODO: separate all the different statements by their operation when complexity is too high
     if (data is Token && (data.value as String).toLowerCase() == 'select') {
-      currentState = State.Select;
-      operation = TokenType.Select;
-      continue;
+      return SelectStatement.fromTokens(tokens);
     } else if (data is Token && (data.value as String).toLowerCase() == 'set') {
       return SetStatement.fromTokens(tokens);
     } else if (data is Token && (data.value as String).toLowerCase() == 'if') {
@@ -576,7 +588,7 @@ Statement parseStatement(List tokens) {
   if (operation == TokenType.Select) {
     //return SelectStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
   } else if (operation == TokenType.Transform) {
-    return TransformStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
+    // return TransformStatement(operation, selections, requestFrom, selector, into, transformations: transformations);
   } else {
     throw Exception('Invalid operation');
   }
