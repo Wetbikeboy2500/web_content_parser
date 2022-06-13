@@ -54,17 +54,16 @@ class Operator {
       //this might cause issues or unexpected issues
       if (operation.name == '*') {
         continue;
+      } else {
+        //select a value
+        value = value.map((e) {
+          if (firstLevel && custom.containsKey(operation.name)) {
+            return custom[operation.name]!(this, e);
+          }
+
+          return e[operation.name];
+        }).toList();
       }
-
-      //select a value
-      value = value.map((e) {
-        print(e);
-        if (firstLevel && custom.containsKey(operation.name)) {
-          return custom[operation.name]!(this, e);
-        }
-
-        return e[operation.name];
-      }).toList();
 
       firstLevel = false;
 
@@ -72,7 +71,7 @@ class Operator {
       if (operation.listAccess != null) {
         if (operation.listAccess!.trim() == '[]') {
           //join all the sublists to create a master list
-          value = value.reduce((value, element) => [...value, ...element]);
+          value = value.reduce((value, element) => [...(value ?? const []), ...(element ?? const [])]);
         } else if (operation.listAccess!.trim() == '[0]') {
           value = value[0];
         } else {

@@ -79,7 +79,10 @@ class SelectStatement extends Statement {
       expand = true;
     }
 
-    final Map<String, dynamic> values = {};
+    late final List returns = [];
+
+    final List<MapEntry> mergeLists = [];
+    final List<MapEntry> values = [];
 
     for (final op in operators) {
       final MapEntry entry = op.getValue(
@@ -100,10 +103,44 @@ class SelectStatement extends Statement {
         },
         expand: expand,
       );
-      values[entry.key] = entry.value;
+
+      //classify the type of the values
+      if (entry.value.length > 1) {
+        mergeLists.add(entry);
+      } else if (entry.value.isNotEmpty) {
+        values.add(entry);
+      }
     }
 
-    print(values);
+    //create a list of only the merge values
+    for (final entry in mergeLists) {
+      for (int i = 0; i < entry.value.length; i++) {
+        if (i == returns.length) {
+          if (entry.value[i] is Map) {
+            returns.add(entry.value[i]);
+          } else {
+            returns.add({entry.key: entry.value[i]});
+          }
+        } else {
+          if (entry.value[i] is Map) {
+            returns[i].addAll(entry.value[i]);
+          } else {
+            returns[i][entry.key] = entry.value[i];
+          }
+        }
+      }
+    }
+
+    //populate the values that everything needs. This occurs after the merged values to make sure everything works correctly
+    for (final entry in values) {
+      for (int i = 0; i < returns.length; i++) {
+        returns[i][entry.key] = entry.value.first;
+      }
+    }
+
+    if (into != null) {
+      interpreter.setValue(into!, returns);
+    }
   }
 
   //create to string

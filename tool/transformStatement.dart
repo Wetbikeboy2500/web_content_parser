@@ -1,85 +1,123 @@
+import 'package:html/dom.dart';
+import 'package:petitparser/petitparser.dart';
 
-// import 'selectStatement.dart';
-// import 'sourceBuilder.dart';
+import 'parserHelper.dart';
+import 'sourceBuilder.dart' show Interpreter;
+import 'statement.dart';
+import 'operator.dart';
 
-// class TransformStatement extends SelectStatement {
-//   const TransformStatement(TokenType operation, List<Operator> operators, String from, String? selector, String? into,
-//       {List<Operator>? transformations})
-//       : super(operation, operators, from, selector, into, transformations: transformations);
 
-//   @override
-//   Future<void> execute(Interpreter interpreter) async {
-//     //from
-//     late dynamic data;
-//     if (from == '*') {
-//       data = interpreter.values;
-//     } else {
-//       data = interpreter.getValue(from);
-//     }
-//     if (data == null) {
-//       throw Exception('No data found for $from');
-//     }
+//TODO: make transform support set functions. Some will be for single items and others for arrays
+class TransformStatement extends Statement {
+  final List<Operator> operators;
+  final Operator from;
+  final String? into;
+  final String? selector;
 
-//     //add the specific values to transform
-//     List<String> values = [];
-//     for (Operator select in operators) {
-//       Map<String, dynamic> objectValues = {};
-//       switch (select.type) {
-//         case TokenType.Value:
-//           values.add(select.meta!);
-//           break;
-//         default:
-//         //do nothing
-//       }
-//     }
+  const TransformStatement({required this.operators, required this.from, this.into, this.selector});
 
-//     if (data is Map) {
-//       data = [data];
-//     }
+  factory TransformStatement.fromTokens(List tokens) {
+    //select operators
+    final List<Operator> operators = [];
 
-//     //loop through all the data
-//     for (var d in data) {
-//       //TODO: add an into
-//       //TODO: support as for transforms that work on map
-//       for (final value in values) {
-//         final dynamic storedValue = d[value];
-//         print(storedValue);
-//         for (final Operator transform in transformations ?? []) {
-//           switch (transform.type) {
-//             case TokenType.Trim:
-//               d[transform.alias ?? value] = storedValue.trim();
-//               break;
-//             case TokenType.Lowercase:
-//               d[transform.alias ?? value] = storedValue.toLowerCase();
-//               break;
-//             case TokenType.Uppercase:
-//               d[transform.alias ?? value] = storedValue.toUpperCase();
-//               break;
-//             case TokenType.Concat:
-//               //make sure value exists
-//               d[transform.alias ?? value] ??= '';
-//               //fail if not string
-//               if (d[transform.alias ?? value] is! String) {
-//                 throw Exception('Cannot concatenate a non string value');
-//               }
-//               //join strings
-//               if (storedValue is String) {
-//                 d[transform.alias ?? value] += storedValue;
-//               } else {
-//                 d[transform.alias ?? value] += storedValue.toString();
-//               }
-//               break;
-//             default:
-//               throw Exception('Unknown transform ${transform.type}');
-//           }
-//         }
-//       }
-//     }
+    for (final List operatorTokens in tokens[1]) {
+      operators.add(Operator.fromTokens(operatorTokens));
+    }
 
-//     if (from == '*') {
-//       interpreter.setValues(data.first);
-//     } else {
-//       interpreter.setValue(from, data);
-//     }
-//   }
-// }
+    //select into if exists
+    late final String? into;
+    if (tokens[4] != null) {
+      into = tokens[4].last;
+    } else {
+      into = null;
+    }
+
+    //select from
+    late final Operator from;
+    if (tokens[3] is String) {
+      if (tokens[3].trim() == '*') {
+        from = const Operator([OperationName('*', null)], null);
+      } else {
+        throw Exception('Not supported');
+      }
+    } else {
+      from = Operator.fromTokensNoAlias(tokens[3]);
+    }
+
+    //select selector if exists
+    late final String? selector;
+
+    if (tokens.last != null) {
+      selector = tokens.last.last;
+    } else {
+      selector = null;
+    }
+
+    return TransformStatement(operators: operators, from: from, into: into, selector: selector);
+  }
+
+  static Parser getParser() {
+    final alias = (stringIgnoreCase('as').trim().token() & letter().plus().flatten().trim()).optional();
+    final transformOperations = (stringIgnoreCase('trim').trim().token() |
+            stringIgnoreCase('lowercase').trim().token() |
+            stringIgnoreCase('uppercase').trim().token() |
+            (stringIgnoreCase('concat').trim().token() & alias))
+        .separatedBy(char(',').token());
+    return stringIgnoreCase('transform').trim().token() &
+        inputs &
+        stringIgnoreCase('in').trim() &
+        input & //TODO: change this into a single input parser
+        stringIgnoreCase('with').trim() &
+        transformOperations;
+  }
+
+  @override
+  Future<void> execute(Interpreter interpreter) async {
+    dynamic value = from.getValue(interpreter.values).value.first;
+
+    bool expand = false;
+
+    //run where
+    if (selector != null) {
+      if (value is List) {
+        value = value.map((e) => e.querySelectorAll(selector)).toList();
+      } else {
+        value = value.querySelectorAll(selector);
+      }
+      expand = true;
+    }
+
+    final Map<String, dynamic> values = {};
+
+    for (final op in operators) {
+      final MapEntry entry = op.getValue(
+        value,
+        custom: {
+          'innerHTML': (Operator op1, dynamic value) {
+            return value.innerHtml;
+          },
+          'name': (Operator op1, dynamic value) {
+            return value.localName;
+          },
+          'outerHTML': (Operator op1, dynamic value) {
+            return value.outerHtml;
+          },
+          'attribute': (Operator op1, dynamic value) {
+            return value.attributes[op1.names.last.name];
+          }
+        },
+        expand: expand,
+      );
+      values[entry.key] = entry.value;
+    }
+
+    print(values);
+  }
+
+  //create to string
+  @override
+  String toString() {
+    //TODO: add to string
+    return '';
+  }
+}

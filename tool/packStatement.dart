@@ -116,6 +116,9 @@ class PackStatement extends Statement {
       output[i].addAll(mergeValues);
     }
 
+    print('pack');
+    print(output);
+
     //set the value
     interpreter.setValue(into, output);
   }

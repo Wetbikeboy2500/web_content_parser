@@ -10,13 +10,13 @@ Parser get digitInput => (char('[').trim().token() &
         char(']').trim().token())
     .flatten();
 
-Parser get inputs => (input &
-        (stringIgnoreCase('as').trim() & name).pick(1).optional())
+Parser get inputs => (input.trim() & (stringIgnoreCase('as').trim() & name).pick(1).optional())
     .separatedBy(char(','), includeSeparators: false);
 
-Parser get input => ((name & digitInput.optional()).separatedBy(char('.'), includeSeparators: false) | char('*').trim());
+Parser get input => (safeChars.plus().flatten().trim() & digitInput.optional()).separatedBy(char('.'), includeSeparators: false);
 
-Parser get safeChars => patternIgnoreCase('~!@\$%&*()_+=/\'"?><[]{}|`#a-z0-9') | char('-') | char('^');
+//don't allow square brackets, semi-colon, colon, and comma
+Parser get safeChars => patternIgnoreCase('~!@\$%&*()_+=/\'"?><{}|`#a-zA-Z0-9') | char('-') | char('^');
 
 Parser get rawInputSingleQuote => (char("'") & pattern("^'").star().flatten() & char("'")).pick(1);
 

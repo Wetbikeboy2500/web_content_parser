@@ -106,10 +106,11 @@ void sourceBuilder(String html) {
     "DEFINE boolVal BOOL true",
     "SELECT value.stringVal, value.intVal INTO newObject FROM *", */
 
-  // print(code);
-
   final code = '''
-    SELECT name AS random, innerHTML FROM document INTO doc WHERE SELECTOR IS 'body > p:nth-child(3)';
+    DEFINE firstname STRING hello;
+    SELECT name AS random, innerHTML FROM document INTO doc WHERE SELECTOR IS 'body > p';
+    SELECT doc[], firstname FROM * into doctwo;
+    SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
   ''';
 
   final i = Interpreter();
@@ -302,7 +303,7 @@ List parseAndTokenize(String input) {
   final allQueries = ((SelectStatement.getParser() |
               queryTransform |
               queryDefine |
-              querySet |
+              SetStatement.getParser() |
               conditional |
               PackStatement.getParser()) &
           char(';').token().trim())
