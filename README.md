@@ -256,3 +256,19 @@ When using the fromJson() constructor, the ID can be passed as a map or an objec
 ### Computing
 
 A ComputeDecorator is a class implementation for allowing different types of computes when converting objects. The decorator currently uses the Computer package which is agnostic to the platform it is run on. This decorator can be changed by setting `ParseSource.computeDecorator` to a different decorator implementation. This can allow for compute, which is available in Flutter, to be used. The ComputeDecorator can be turned off and not used by setting `ParseSource.computeEnabled`. It is enabled by default. Everything will function the same with the compute off, but it may perform worse when processing large amounts of objects.
+
+## WQL: Web Query Language
+
+The WQL is a language built for writing scripts to extract data from web pages. It is designed to use a declarative syntax like SQL. The goal is to simplify web scraping and reduce the common patterns that a more traditional scripting language forms when scraping websites.
+
+### Why use a custom language?
+
+Using a scripting language within another language is overkill. A general purpose language does allow flexibility but leaves design and access patterns up to the developer. These choices end up adding bloat to scripts that also adds more cognitive load. When there are many scripts for web scraping, a developer must be able to understand them and make changes to them quickly: websites are not a stable source.
+
+Websites can also be thought of as a place where structured data is stored. SQL works with a relational database. WQL works with websites.
+
+Lastly, I can't find a comparable language. The select statement itself is something that I would love to have in regular front-end development.
+
+### How to use it
+
+### Select Statement
