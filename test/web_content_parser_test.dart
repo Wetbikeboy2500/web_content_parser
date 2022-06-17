@@ -2,10 +2,14 @@
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
 import 'package:hetu_script/hetu_script.dart';
+import 'package:hetu_script/shared/util.dart';
 import 'package:web_content_parser/web_content_parser.dart';
 
 import 'dart:io';
 import 'package:test/test.dart';
+
+import 'package:html/dom.dart';
+import 'package:html/parser.dart';
 
 import 'blank.dart';
 import 'heroku.dart';
@@ -436,7 +440,27 @@ void main() {
   });
 
   //Tests the features of the source builder language
-  group('Source Builder', () => {
+  group('Source Builder', () {
+    test('Get basic information', () async {
+      Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
+      final code = '''
+        SELECT name AS random, innerHTML FROM document INTO doc WHERE SELECTOR IS 'body > p';
+        DEFINE firstname STRING hello;
+        SELECT doc[], firstname FROM * into doctwo;
+        SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
+      ''';
+
+      final values = await runWQL(code, parameters: {'document': document});
+      expect(values['doctwo'], equals(values['docthree']));
+      expect(
+          values['doctwo'],
+          equals([
+            {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 3 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
+          ]));
+    });
   }, skip: true);
 }

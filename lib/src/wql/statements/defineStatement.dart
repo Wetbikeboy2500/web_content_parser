@@ -1,5 +1,5 @@
 
-import 'sourceBuilder.dart';
+import '../interpreter/interpreter.dart';
 import 'statement.dart';
 
 class DefineStatement extends Statement {

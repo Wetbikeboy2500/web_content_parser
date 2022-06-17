@@ -1,4 +1,4 @@
-import 'sourceBuilder.dart';
+import '../interpreter/interpreter.dart';
 
 class Statement {
   const Statement();

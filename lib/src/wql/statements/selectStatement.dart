@@ -1,10 +1,8 @@
-import 'package:html/dom.dart';
 import 'package:petitparser/petitparser.dart';
-
-import 'parserHelper.dart';
-import 'sourceBuilder.dart' show Interpreter;
+import '../interpreter/interpreter.dart';
+import '../parserHelper.dart';
 import 'statement.dart';
-import 'operator.dart';
+import '../operator.dart';
 
 class SelectStatement extends Statement {
   final List<Operator> operators;

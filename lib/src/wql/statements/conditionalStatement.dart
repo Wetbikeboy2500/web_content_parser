@@ -1,5 +1,6 @@
 
-import 'sourceBuilder.dart';
+import '../interpreter/interpreter.dart';
+import '../interpreter/parseStatements.dart';
 import 'statement.dart';
 
 class ConditionalStatement extends Statement {

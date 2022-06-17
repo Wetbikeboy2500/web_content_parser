@@ -4,9 +4,9 @@ import 'package:petitparser/parser.dart';
 import 'package:web_content_parser/scraper.dart';
 import 'package:path/path.dart' as path;
 
-import 'operator.dart';
-import 'parserHelper.dart';
-import 'sourceBuilder.dart' hide Operator;
+import '../interpreter/interpreter.dart';
+import '../operator.dart';
+import '../parserHelper.dart';
 import 'statement.dart';
 
 class SetStatement extends Statement {

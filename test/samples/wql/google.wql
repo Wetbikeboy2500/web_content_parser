@@ -1,0 +1,12 @@
+DEFINE url STRING 'https://google.com';
+SET document TO getRequest WITH url;
+SET status TO getStatusCode WITH document;
+DEFINE passing INT 200;
+IF value.status IS value.passing:
+    SET html TO parseBody WITH document;
+    SELECT * INTO model FROM html WHERE SELECTOR IS 'div';
+    SELECT attribute.style as style, attribute.id as id INTO model FROM model;
+    SELECT value.url INTO urlObject FROM *;
+    PACK url INTO urlObjectTwo;
+    PACK model[], url, urlObject, urlObjectTwo[0] as realUrlObject INTO joined;
+ENDIF;
