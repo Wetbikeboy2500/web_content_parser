@@ -68,8 +68,10 @@ class ScraperSource {
       }
 
       if (!supportedProgramTypes.contains(yaml['programType'])) {
-        throw const FormatException('Unknown program type');
+        throw const FormatException('Unknown global program type');
       }
+
+      final String globalProgramType = yaml['programType'] as String;
 
       //save all yaml into info
       info = yaml;
@@ -82,11 +84,18 @@ class ScraperSource {
       });
       //add functions (type, file, entry)
       for (final request in requests) {
+        String? localProgramType = request['programType'] as String?;
+
+        if (localProgramType != null && !supportedProgramTypes.contains(localProgramType)) {
+          throw const FormatException('Unknown local program type');
+        }
+
         this.requests[request['type']] = Request(
           type: requestMap(request['type']),
           file: File(p.join(directory.path, request['file'])),
           entry: request['entry'],
           compiled: request['compiled'] ?? false,
+          programType: localProgramType ?? globalProgramType,
         );
       }
     } catch (e, stack) {
@@ -123,5 +132,6 @@ class Request {
   final File file;
   final String entry;
   final bool compiled;
-  const Request({required this.type, required this.file, required this.entry, this.compiled = false});
+  final String programType;
+  const Request({required this.type, required this.file, required this.entry, required this.programType, this.compiled = false});
 }

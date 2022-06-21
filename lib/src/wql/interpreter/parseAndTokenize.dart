@@ -1,10 +1,8 @@
 
 import 'package:petitparser/petitparser.dart';
 
-import '../statements/packStatement.dart';
 import '../statements/selectStatement.dart';
 import '../statements/setStatement.dart';
-import '../statements/transformStatement.dart';
 
 /// Tokenizes a string into a list of tokens.
 /// This defines the grammar of the language as well.
@@ -31,11 +29,9 @@ List parseAndTokenize(String input) {
   final conditional = undefined();
 
   final allQueries = ((SelectStatement.getParser() |
-              TransformStatement.getParser() |
               queryDefine |
               SetStatement.getParser() |
-              conditional |
-              PackStatement.getParser()) &
+              conditional) &
           char(';').token().trim())
       .pick(0)
       .star();
