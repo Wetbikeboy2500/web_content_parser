@@ -85,6 +85,7 @@ class SelectStatement extends Statement {
     for (final op in operators) {
       final MapEntry entry = op.getValue(
         value,
+        //TODO: add a test function to make check if there is a valid object being used
         custom: {
           'innerHTML': (Operator op1, dynamic value) {
             return value.innerHtml;
@@ -97,6 +98,9 @@ class SelectStatement extends Statement {
           },
           'attribute': (Operator op1, dynamic value) {
             return value.attributes[op1.names.last.name];
+          },
+          'text': (Operator op1, dynamic value) {
+            return value.txt;
           }
         },
         expand: expand,

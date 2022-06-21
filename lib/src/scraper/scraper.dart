@@ -38,7 +38,7 @@ List<ScraperSource> loadExternalScarperSources(Directory dir) {
       //get file contents
       final file = File(fileEntity.path);
       //load scraper
-      ScraperSource scraper = ScraperSource(file.readAsStringSync(), file.parent);
+      final ScraperSource scraper = ScraperSource(file.readAsStringSync(), file.parent);
       //add for return
       scrapers.add(scraper);
     } catch (e, stack) {

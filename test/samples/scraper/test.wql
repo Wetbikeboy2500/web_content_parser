@@ -1,0 +1,7 @@
+SET html TO getRequest WITH path;
+SET html TO parse WITH html;
+SELECT text FROM html INTO first WHERE SELECTOR IS '#main-tag';
+SELECT text FROM html INTO second WHERE SELECTOR IS 'body p';
+SET first TO trim WITH first;
+SET second TO trim WITH second;
+SET return TO merge WITH first, second;

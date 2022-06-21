@@ -11,6 +11,8 @@ import '../util/log.dart';
 import '../../util.dart';
 import 'scrapeFunctions.dart';
 
+//TODO: convert this to a more generic call list for WQL
+
 ///Functions that can be imported and used inside of hetu scripts
 ///
 ///This also allows for overriding of functions using the insert function feature

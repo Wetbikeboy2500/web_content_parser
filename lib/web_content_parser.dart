@@ -28,3 +28,4 @@ export 'src/util/parseUriResult.dart';
 
 //WQL
 export 'src/wql/wql.dart';
+export 'src/wql/statements/setStatement.dart';

@@ -52,7 +52,8 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapterImages(chapterId);
     }
 
-    return await scraper.makeRequest<Map<int, String>>(RequestType.images.string, [chapterId.toJson()]);
+    return await scraper
+        .makeRequest<Map<int, String>>(RequestType.images.string, [MapEntry('chapterId', chapterId.toJson())]);
   }
 
   @override
@@ -61,7 +62,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapterImagesUrl(url);
     }
 
-    return await scraper.makeRequest<Map<int, String>>(RequestType.imagesUrl.string, [url]);
+    return await scraper.makeRequest<Map<int, String>>(RequestType.imagesUrl.string, [MapEntry('url', url)]);
   }
 
   @override
@@ -70,7 +71,8 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapters(id);
     }
 
-    final Result<List> chapters = await scraper.makeRequest<List>(RequestType.chapters.string, [id.toJson()]);
+    final Result<List> chapters =
+        await scraper.makeRequest<List>(RequestType.chapters.string, [MapEntry('id', id.toJson())]);
 
     if (chapters.fail) {
       return const Result.fail();
@@ -109,7 +111,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchPostUrl(url);
     }
 
-    final Result post = await scraper.makeRequest(RequestType.postUrl.string, [url]);
+    final Result post = await scraper.makeRequest(RequestType.postUrl.string, [MapEntry('url', url)]);
 
     if (post.fail) {
       return const Result.fail();
@@ -130,7 +132,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchPost(id);
     }
 
-    final Result post = await scraper.makeRequest(RequestType.post.string, [id.toJson()]);
+    final Result post = await scraper.makeRequest(RequestType.post.string, [MapEntry('id', id.toJson())]);
 
     if (post.fail && post.data == null) {
       return const Result.fail();
@@ -158,7 +160,8 @@ class ParseSource extends SourceTemplate {
       return super.fetchCatalog();
     }
 
-    final Result<List> entries = await scraper.makeRequest<List>(requestType.string, [page, options]);
+    final Result<List> entries =
+        await scraper.makeRequest<List>(requestType.string, [MapEntry('page', page), MapEntry('options', options)]);
 
     if (entries.fail) {
       return const Result.fail();

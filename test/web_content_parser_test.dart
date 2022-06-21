@@ -190,11 +190,13 @@ void main() {
 
   group('Scraper', () {
     test('Load yaml file', () {
+      WebContentParser.verbose = true;
+
       List<ScraperSource> scrapers = loadExternalScarperSources(Directory('test/samples/scraper'));
       //have one scraper
       expect(scrapers.length, equals(1));
-      //scraper has 6 requests
-      expect(scrapers[0].requests.length, equals(7));
+      //scraper has 8 requests
+      expect(scrapers[0].requests.length, equals(8));
       //info is correct
       expect(
         scrapers[0].info,
@@ -241,7 +243,12 @@ void main() {
               'type': 'test',
               'file': 'test.ht',
               'entry': 'main',
-            }
+            },
+            {
+              'type': 'test2',
+              'file': 'test.wql',
+              'programType': 'wql',
+            },
           ],
         }),
       );
@@ -250,7 +257,7 @@ void main() {
       ScraperSource? result = ScraperSource.scrapper('invalid');
       expect(result, isNull);
     });
-    test('Load global scraper source and run entry', () async {
+    test('Load global scraper source and run Hetu entry', () async {
       WebContentParser.verbose = true;
 
       loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
@@ -269,7 +276,29 @@ void main() {
         return await File(positionalArgs[0]).readAsString();
       });
 
-      Result<List> response = await result!.makeRequest<List>('test', ['test/samples/scraper/test.html']);
+      Result<List> response = await result!.makeRequest<List>('test', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
+      expect(response.pass, isTrue);
+
+      expect(response.data, equals(['Some testing text', 'Some testing text']));
+    });
+    test('Load global scraper source and run WQL entry', () async {
+      WebContentParser.verbose = true;
+
+      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
+
+      ScraperSource? result = ScraperSource.scrapper('testSource');
+
+      expect(result, isNotNull);
+
+      //override setstatement function to work with loading a file
+      SetStatement.functions['getrequest'] = (args) async {
+        return await File(args[0]).readAsString();
+      };
+
+      Result<List> response = await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
+      print(response.data);
 
       expect(response.pass, isTrue);
 

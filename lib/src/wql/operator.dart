@@ -67,6 +67,8 @@ class Operator {
 
       firstLevel = false;
 
+      //TODO: allow list access to have keywords ex: [first] [last] [all]
+
       //try and get the values as a list based on the selector
       if (operation.listAccess != null) {
         if (operation.listAccess!.trim() == '[]') {

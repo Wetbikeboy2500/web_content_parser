@@ -27,3 +27,6 @@ requests:
   - type: test
     file: test.ht
     entry: main
+  - type: test2
+    file: test.wql
+    programType: wql

@@ -38,6 +38,68 @@ class SetStatement extends Statement {
         inputs;
   }
 
+  static Map<String, Function> functions = {
+    'getrequest': (args) async {
+      //for the second argument, we are going to assume it is a map within a list
+      return await getRequest(
+        args[0],
+        (args.length > 1) ? args[1].first : const <String, String>{},
+      );
+    },
+    'getdynamicrequest': (args) async {
+      return await getDynamicPage(args[0]);
+    },
+    'postrequest': (args) async {
+      return await postRequest(
+        args[0],
+        args[1].first,
+        (args.length > 2) ? args[2].first : const <String, String>{},
+      );
+    },
+    'parse': (args) {
+      return parse(args[0].first);
+    },
+    'getstatuscode': (args) {
+      return args[0].statusCode;
+    },
+    'parsebody': (args) {
+      return parse(args[0].body);
+    },
+    'joinurl': (args) {
+      return path.url.joinAll(List<String>.from(args));
+    },
+    'increment': (args) {
+      return args[0] + 1;
+    },
+    'decrement': (args) {
+      return args[0] - 1;
+    },
+    'getlastsegment': (args) {
+      if (args[0] is String) {
+          return path.url.split(args[0]).last;
+        }
+        if (args[0] is List && args[0].isNotEmpty && args[0].first is Map) {
+          List output = [];
+          for (Map item in args[0]) {
+            output.add(path.url.split(item['url']).last);
+          }
+          return output;
+        } else {
+          throw Exception('Cannot get last segment of a non string or list');
+        }
+    },
+    'trim': (args) {
+      return args[0].trim();
+    },
+    'merge': (args) {
+      final List results = [];
+      for (List l in args) {
+        results.addAll(l);
+      }
+      return results;
+    },
+  };
+
   @override
   Future<void> execute(Interpreter interpreter) async {
     //gets the args to pass along
@@ -46,65 +108,14 @@ class SetStatement extends Statement {
       args.add(arg.getValue(interpreter.values));
     }
 
-    //runs the function
-    late dynamic value;
+    final Function? func = functions[function];
 
-    switch (function) {
-      case 'getrequest':
-        //for the second argument, we are going to assume it is a map within a list
-        value = await getRequest(
-          args[0],
-          (args.length > 1) ? args[1].first : const <String, String>{},
-        );
-        break;
-      case 'getrequestdynamic':
-        value = await getDynamicPage(args[0]);
-        break;
-      case 'postrequest':
-        value = await postRequest(
-          args[0],
-          args[1].first,
-          (args.length > 2) ? args[2].first : const <String, String>{},
-        );
-        break;
-      case 'parse':
-        value = parse(args[0].first);
-        break;
-      case 'getstatuscode':
-        value = args[0].statusCode;
-        break;
-      case 'parsebody':
-        value = parse(args[0].body);
-        break;
-      case 'joinurl':
-        value = path.url.joinAll(List<String>.from(args));
-        break;
-      case 'increment':
-        value = args[0] + 1;
-        break;
-      case 'decrement':
-        value = args[0] - 1;
-        break;
-      case 'getlastsegment':
-        if (args[0] is String) {
-          value = path.url.split(args[0]).last;
-        }
-        if (args[0] is List && args[0].isNotEmpty && args[0].first is Map) {
-          List output = [];
-          for (Map item in args[0]) {
-            output.add(path.url.split(item['url']).last);
-          }
-          value = output;
-        } else {
-          throw Exception('Cannot get last segment of a non string or list');
-        }
-        break;
-      case 'trim':
-        value = args[0].trim();
-        break;
-      default:
-        throw UnsupportedError('Unsupported function: $function');
+    if (func == null) {
+      throw UnsupportedError('Unsupported function: $function');
     }
+
+    //runs the function
+    final dynamic value = await func(args);
 
     //set the value
     interpreter.setValue(target, value);
