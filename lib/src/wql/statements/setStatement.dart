@@ -89,7 +89,7 @@ class SetStatement extends Statement {
         }
     },
     'trim': (args) {
-      return args[0].trim();
+      return args[0].first.trim();
     },
     'merge': (args) {
       final List results = [];
@@ -105,7 +105,7 @@ class SetStatement extends Statement {
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
-      args.add(arg.getValue(interpreter.values));
+      args.add(arg.getValue(interpreter.values).value);
     }
 
     final Function? func = functions[function];

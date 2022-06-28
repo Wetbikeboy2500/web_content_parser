@@ -100,7 +100,7 @@ class SelectStatement extends Statement {
             return value.attributes[op1.names.last.name];
           },
           'text': (Operator op1, dynamic value) {
-            return value.txt;
+            return value.text;
           }
         },
         expand: expand,
@@ -131,6 +131,11 @@ class SelectStatement extends Statement {
           }
         }
       }
+    }
+
+    //make sure there is a place for values to be added
+    if (returns.isEmpty) {
+      returns.add({});
     }
 
     //populate the values that everything needs. This occurs after the merged values to make sure everything works correctly

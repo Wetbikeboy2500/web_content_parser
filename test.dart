@@ -13,6 +13,7 @@ void main(List<String> args) {
     if (!element.endsWith('.dart') ||
         element.endsWith('g.dart') ||
         element.endsWith('lib/web_content_parser.dart') ||
+        element.endsWith('lib/web_content_parser_full.dart') ||
         element.endsWith('lib/util.dart') ||
         element.endsWith('lib/scraper.dart') ||
         element.endsWith('lib/parser.dart') ||

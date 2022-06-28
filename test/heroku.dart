@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:logging/logging.dart';
-import 'package:web_content_parser/web_content_parser.dart';
+import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'package:http/http.dart' as http;
 

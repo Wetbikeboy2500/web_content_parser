@@ -1,4 +1,4 @@
-import 'package:web_content_parser/web_content_parser.dart';
+import 'package:web_content_parser/web_content_parser_full.dart';
 
 //Tests exceptions for missing sources and subdomain stuff
 class BlankSource extends SourceTemplate {

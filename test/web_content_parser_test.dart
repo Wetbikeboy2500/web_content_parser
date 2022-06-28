@@ -3,7 +3,7 @@
 
 import 'package:hetu_script/hetu_script.dart';
 import 'package:hetu_script/shared/util.dart';
-import 'package:web_content_parser/web_content_parser.dart';
+import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'dart:io';
 import 'package:test/test.dart';
@@ -189,6 +189,48 @@ void main() {
   });
 
   group('Scraper', () {
+    test('Parse Yaml to Map', () {
+      final Map<String, dynamic> map = parseYaml('''
+                                  source: testSource
+                                  baseUrl: testSource.com
+                                  subdomain: null
+                                  version: 1
+                                  contentType: seriesImage
+                                  programType: hetu0.3
+                                  requests:
+                                    - type: post
+                                      file: fetch.ht
+                                      entry: main
+                                      compiled: true
+                                    - type: postUrl
+                                      file: fetch.ht
+                                      entry: url
+                                  ''');
+      expect(
+          map,
+          equals({
+            'source': 'testSource',
+            'baseUrl': 'testSource.com',
+            'subdomain': null,
+            'version': 1,
+            'contentType': 'seriesImage',
+            'programType': 'hetu0.3',
+            'requests': [
+              {
+                'type': 'post',
+                'file': 'fetch.ht',
+                'entry': 'main',
+                'compiled': true,
+              },
+              {
+                'type': 'postUrl',
+                'file': 'fetch.ht',
+                'entry': 'url',
+              },
+            ],
+          }));
+    });
+
     test('Load yaml file', () {
       WebContentParser.verbose = true;
 
@@ -276,7 +318,8 @@ void main() {
         return await File(positionalArgs[0]).readAsString();
       });
 
-      Result<List> response = await result!.makeRequest<List>('test', [MapEntry('path', 'test/samples/scraper/test.html')]);
+      Result<List> response =
+          await result!.makeRequest<List>('test', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
       expect(response.pass, isTrue);
 
@@ -293,12 +336,11 @@ void main() {
 
       //override setstatement function to work with loading a file
       SetStatement.functions['getrequest'] = (args) async {
-        return await File(args[0]).readAsString();
+        return await File(args[0].first).readAsString();
       };
 
-      Result<List> response = await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);
-
-      print(response.data);
+      Result<List> response =
+          await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
       expect(response.pass, isTrue);
 
@@ -491,5 +533,6 @@ void main() {
             {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
           ]));
     });
-  }, skip: true);
+    //TODO: add tests for set statement functions
+  });
 }

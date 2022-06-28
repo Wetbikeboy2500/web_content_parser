@@ -16,3 +16,17 @@ export 'src/parser/json/catalogEntry.dart';
 //Scraper
 export 'src/scraper/scraperSource.dart';
 export 'src/scraper/scraper.dart';
+export 'src/scraper/eval.dart';
+export 'src/scraper/parseYaml.dart';
+
+//Utils
+export 'src/util/Result.dart';
+export 'src/util/ResultExtended.dart';
+export 'src/util/ResultStatus.dart';
+export 'src/util/RequestType.dart';
+export 'src/util/firstWhereResult.dart';
+export 'src/util/parseUriResult.dart';
+
+//WQL
+export 'src/wql/wql.dart';
+export 'src/wql/statements/setStatement.dart';

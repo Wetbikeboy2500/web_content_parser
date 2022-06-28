@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:web_content_parser/src/scraper/parseYaml.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
 
 import '../util/ResultExtended.dart';
@@ -9,7 +10,6 @@ import '../util/Result.dart';
 import '../util/log.dart';
 
 import 'eval.dart';
-import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as p;
 
 import '../util/RequestType.dart';
@@ -51,23 +51,30 @@ class ScraperSource {
   //TODO: make the logic cleaner and more modular
   ScraperSource(String input, this.directory) {
     try {
-      //decode yaml
-      var yaml = loadYaml(input);
-      if (yaml is YamlMap) {
-        yaml = Map<String, dynamic>.fromEntries(yaml.entries.map((e) {
-          if (e.value is YamlList) {
-            return MapEntry(e.key.toString(), e.value.map((e) => e is YamlMap ? Map.fromEntries(e.entries) : e).toList());
-          }
+      final Map<String, dynamic> yaml = parseYaml(input);
 
-          return MapEntry(e.key.toString(), e.value);
-        }));
+      if (!yaml.containsKey('source')) {
+        throw Exception('Source is not defined');
       }
 
-      //make sure it meets requirements (source, baseurl, subdomain, version, programTarget, functions)
-      const requiredAttributes = ['source', 'baseUrl', 'subdomain', 'version', 'programType', 'requests'];
-      if (!requiredAttributes.every((element) => yaml.containsKey(element))) {
-        log2('Missing fields', requiredAttributes.where((element) => !yaml.containsKey(element)));
-        throw const FormatException('Missing fields');
+      if (!yaml.containsKey('requests')) {
+        throw Exception('Requests are not defined');
+      }
+
+      if (!yaml.containsKey('baseUrl')) {
+        throw Exception('BaseUrl is not defined');
+      }
+
+      if (!yaml.containsKey('subdomain')) {
+        throw Exception('Subdomain is not defined');
+      }
+
+      if (!yaml.containsKey('version')) {
+        throw Exception('Version is not defined');
+      }
+
+      if (!yaml.containsKey('programType')) {
+        throw Exception('ProgramType is not defined');
       }
 
       if (!supportedProgramTypes.contains(yaml['programType'])) {
@@ -79,21 +86,25 @@ class ScraperSource {
       //save all yaml into info
       info = yaml;
 
-      //get all allowed functions
-      final List requests = yaml['requests'] as List;
-      requests.removeWhere((value) {
-        value as Map;
-        return !value.containsKey('type') || !value.containsKey('file');
-      });
       //add functions (type, file, entry)
-      for (final request in requests) {
+      for (final request in yaml['requests']) {
+        if (!request.containsKey('type')) {
+          log2('No type included', request);
+          continue;
+        }
+
+        if (!request.containsKey('file')) {
+          log2('No file included', request);
+          continue;
+        }
+
         final String? localProgramType = request['programType'] as String?;
 
         if (localProgramType != null && !supportedProgramTypes.contains(localProgramType)) {
           throw const FormatException('Unknown local program type');
         }
 
-        this.requests[request['type']] = Request(
+        requests[request['type']] = Request(
           type: requestMap(request['type']),
           file: File(p.join(directory.path, request['file'])),
           entry: request['entry'] ?? '',
@@ -113,7 +124,6 @@ class ScraperSource {
     final Request? r = requests[name];
     if (r != null) {
       if (r.programType == 'wql') {
-        print((await runWQL(await r.file.readAsString(), parameters: Map.fromEntries(arguments))));
         return await ResultExtended.unsafeAsync<T>(
           () async => (await runWQL(await r.file.readAsString(), parameters: Map.fromEntries(arguments)))['return'],
           errorMessage: 'Error running WQL',
