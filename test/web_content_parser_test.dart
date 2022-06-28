@@ -335,9 +335,9 @@ void main() {
       expect(result, isNotNull);
 
       //override setstatement function to work with loading a file
-      SetStatement.functions['getrequest'] = (args) async {
+      /* SetStatement.functions['getrequest'] = (args) async {
         return await File(args[0].first).readAsString();
-      };
+      }; */
 
       Result<List> response =
           await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);
@@ -534,5 +534,36 @@ void main() {
           ]));
     });
     //TODO: add tests for set statement functions
+    test('increment', () async {
+      final code = '''
+        DEFINE number INT 0;
+        SET number TO increment WITH number;
+      ''';
+
+      final values = await runWQL(code);
+
+      expect(values['number'], equals(1));
+    });
+    test('decrement', () async {
+      final code = '''
+        DEFINE number INT 0;
+        SET number TO decrement WITH number;
+      ''';
+
+      final values = await runWQL(code);
+
+      expect(values['number'], equals(-1));
+    });
+    test('concat', () async {
+      final code = '''
+        DEFINE first STRING hello;
+        DEFINE second STRING ' world';
+        SET output TO concat WITH first, second;
+      ''';
+
+      final values = await runWQL(code);
+
+      expect(values['output'], equals('hello world'));
+    });
   });
 }

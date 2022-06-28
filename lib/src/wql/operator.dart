@@ -50,7 +50,15 @@ class Operator {
     //keeps track of if level of access is still the first level (attribute.name) <- attribute is first level
     bool firstLevel = true;
 
+    bool end = false;
+
     for (final operation in names) {
+      //end the loop if a top level operation ran.
+      //TODO: make a skip for top level functions to allow potentially chaining them if it could be useful
+      if (end) {
+        break;
+      }
+
       //this might cause issues or unexpected issues
       if (operation.name == '*') {
         continue;
@@ -58,6 +66,7 @@ class Operator {
         //select a value
         value = value.map((e) {
           if (firstLevel && custom.containsKey(operation.name)) {
+            end = true;
             return custom[operation.name]!(this, e);
           }
 

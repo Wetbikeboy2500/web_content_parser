@@ -69,10 +69,22 @@ class SelectStatement extends Statement {
 
     //run where
     if (selector != null) {
+      dynamic querySelect(dynamic given) {
+        if (given is Map) {
+          if (!given.containsKey('element')) {
+            throw Exception('No element found in map for selector');
+          }
+
+          return given['element'].querySelector(selector);
+        } else {
+          return given.querySelectorAll(selector);
+        }
+      }
+
       if (value is List) {
-        value = value.map((e) => e.querySelectorAll(selector)).toList();
+        value = value.map((e) => querySelect(e)).toList();
       } else {
-        value = value.querySelectorAll(selector);
+        value = querySelect(value);
       }
       expand = true;
     }
@@ -107,7 +119,7 @@ class SelectStatement extends Statement {
       );
 
       //classify the type of the values
-      if (entry.value.length > 1) {
+      if (op.alias == null && entry.value.length > 1) {
         mergeLists.add(entry);
       } else if (entry.value.isNotEmpty) {
         values.add(entry);

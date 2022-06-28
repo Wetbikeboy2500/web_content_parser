@@ -42,16 +42,16 @@ class SetStatement extends Statement {
     'getrequest': (args) async {
       //for the second argument, we are going to assume it is a map within a list
       return await getRequest(
-        args[0],
+        args[0].first,
         (args.length > 1) ? args[1].first : const <String, String>{},
       );
     },
     'getdynamicrequest': (args) async {
-      return await getDynamicPage(args[0]);
+      return await getDynamicPage(args[0].first);
     },
     'postrequest': (args) async {
       return await postRequest(
-        args[0],
+        args[0].first,
         args[1].first,
         (args.length > 2) ? args[2].first : const <String, String>{},
       );
@@ -60,27 +60,28 @@ class SetStatement extends Statement {
       return parse(args[0].first);
     },
     'getstatuscode': (args) {
-      return args[0].statusCode;
+      return args[0].first.statusCode;
     },
     'parsebody': (args) {
-      return parse(args[0].body);
+      return parse(args[0].first.body);
     },
     'joinurl': (args) {
-      return path.url.joinAll(List<String>.from(args));
+      return path.url.joinAll(List<String>.from(args.map((e) => e.first)));
     },
     'increment': (args) {
-      return args[0] + 1;
+      return args[0].first + 1;
     },
     'decrement': (args) {
-      return args[0] - 1;
+      return args[0].first - 1;
     },
     'getlastsegment': (args) {
-      if (args[0] is String) {
-          return path.url.split(args[0]).last;
+      final arg = args[0].first;
+      if (arg is String) {
+          return path.url.split(arg).last;
         }
-        if (args[0] is List && args[0].isNotEmpty && args[0].first is Map) {
-          List output = [];
-          for (Map item in args[0]) {
+        if (arg is List && arg.isNotEmpty && arg.first is Map) {
+          final List output = [];
+          for (Map item in arg) {
             output.add(path.url.split(item['url']).last);
           }
           return output;
@@ -98,6 +99,13 @@ class SetStatement extends Statement {
       }
       return results;
     },
+    'concat': (args) {
+      final List results = [];
+      for (List l in args) {
+        results.addAll(l);
+      }
+      return results.join('');
+    }
   };
 
   @override
