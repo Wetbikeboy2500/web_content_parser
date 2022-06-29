@@ -1,3 +1,5 @@
+import '../util/log.dart';
+
 ///Keeps track of the operations that a specific operator has
 ///
 ///This is important to standardizing the data access and traversal syntax
@@ -86,7 +88,7 @@ class Operator {
         } else if (operation.listAccess!.trim() == '[0]') {
           value = value[0];
         } else {
-          print('Specialized list access is not supported yet');
+          log('Specialized list access is not supported yet');
         }
       }
     }

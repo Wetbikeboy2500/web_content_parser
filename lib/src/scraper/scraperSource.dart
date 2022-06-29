@@ -61,14 +61,6 @@ class ScraperSource {
         throw Exception('Requests are not defined');
       }
 
-      if (!yaml.containsKey('baseUrl')) {
-        throw Exception('BaseUrl is not defined');
-      }
-
-      if (!yaml.containsKey('subdomain')) {
-        throw Exception('Subdomain is not defined');
-      }
-
       if (!yaml.containsKey('version')) {
         throw Exception('Version is not defined');
       }

@@ -244,10 +244,7 @@ void main() {
         scrapers[0].info,
         equals(<String, dynamic>{
           'source': 'testSource',
-          'baseUrl': 'testSource.com',
-          'subdomain': null,
           'version': 1,
-          'contentType': 'seriesImage',
           'programType': 'hetu0.3',
           'requests': [
             {
@@ -335,9 +332,9 @@ void main() {
       expect(result, isNotNull);
 
       //override setstatement function to work with loading a file
-      /* SetStatement.functions['getrequest'] = (args) async {
+      SetStatement.functions['getrequest'] = (args) async {
         return await File(args[0].first).readAsString();
-      }; */
+      };
 
       Result<List> response =
           await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);

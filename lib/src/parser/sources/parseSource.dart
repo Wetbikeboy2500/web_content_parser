@@ -38,9 +38,17 @@ class ParseSource extends SourceTemplate {
           source: scraper.info['source'],
           requestTypes: scraper.requests.values.map((request) => request.type).toSet(),
           version: scraper.info['version'],
-          baseurl: scraper.info['baseUrl'],
+          baseurl: scraper.info['baseUrl'] ?? '',
           subdomain: scraper.info['subdomain'],
         ) {
+    if (!scraper.info.containsKey('baseUrl')) {
+      throw Exception('BaseUrl is not defined');
+    }
+
+    if (!scraper.info.containsKey('subdomain')) {
+      throw Exception('Subdomain is not defined');
+    }
+
     if (strict && !['seriesImage'].contains(scraper.info['contentType'])) {
       throw const FormatException('Doesn\'t have valid contentType');
     }

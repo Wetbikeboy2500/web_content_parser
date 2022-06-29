@@ -44,7 +44,7 @@ jobs:
           SOURCE: ${{ secrets.SOURCE }}
           SUB: ${{ secrets.SUB }}
           BASE: ${{ secrets.BASE }}
-        run: dart run test.dart
+        run: dart run tool/test.dart
 
       - uses: dorny/test-reporter@v1
         with:

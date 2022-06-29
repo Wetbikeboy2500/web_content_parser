@@ -1,8 +1,5 @@
 source: testSource
-baseUrl: testSource.com
-subdomain: null
 version: 1
-contentType: seriesImage
 programType: hetu0.3
 requests:
   - type: post

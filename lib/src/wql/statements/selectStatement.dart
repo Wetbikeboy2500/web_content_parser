@@ -119,7 +119,7 @@ class SelectStatement extends Statement {
       );
 
       //classify the type of the values
-      if (op.alias == null && entry.value.length > 1) {
+      if (op.alias == null && (entry.value.length > 1 || op.names.last.listAccess?.trim() == '[]')) {
         mergeLists.add(entry);
       } else if (entry.value.isNotEmpty) {
         values.add(entry);
