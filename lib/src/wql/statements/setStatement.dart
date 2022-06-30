@@ -69,10 +69,18 @@ class SetStatement extends Statement {
       return path.url.joinAll(List<String>.from(args.map((e) => e.first)));
     },
     'increment': (args) {
-      return args[0].first + 1;
+      dynamic value = args[0].first;
+      if (value is String) {
+        value = num.parse(value);
+      }
+      return value + 1;
     },
     'decrement': (args) {
-      return args[0].first - 1;
+      dynamic value = args[0].first;
+      if (value is String) {
+        value = num.parse(value);
+      }
+      return value - 1;
     },
     'getlastsegment': (args) {
       final arg = args[0].first;
