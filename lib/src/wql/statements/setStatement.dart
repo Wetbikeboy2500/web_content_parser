@@ -82,7 +82,7 @@ class SetStatement extends Statement {
         if (arg is List && arg.isNotEmpty && arg.first is Map) {
           final List output = [];
           for (Map item in arg) {
-            output.add(path.url.split(item['url']).last);
+            output.add(path.url.split(item[args[1].first]).last);
           }
           return output;
         } else {

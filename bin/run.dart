@@ -7,6 +7,7 @@ import 'package:web_content_parser/src/scraper/scraper.dart';
 import 'package:path/path.dart' as path;
 
 ///Example: dart bin/run.dart ./test/samples/wql google text
+///TODO: add a verbose option
 void main(List<String> args) {
   late final List<MapEntry<String, dynamic>> entries;
 

@@ -75,14 +75,14 @@ class SelectStatement extends Statement {
             throw Exception('No element found in map for selector');
           }
 
-          return given['element'].querySelector(selector);
+          return given['element'].querySelectorAll(selector);
         } else {
           return given.querySelectorAll(selector);
         }
       }
 
       if (value is List) {
-        value = value.map((e) => querySelect(e)).toList();
+        value = value.map((e) => querySelect(e)).expand((element) => element).toList();
       } else {
         value = querySelect(value);
       }
@@ -145,15 +145,25 @@ class SelectStatement extends Statement {
       }
     }
 
-    //make sure there is a place for values to be added
-    if (returns.isEmpty) {
-      returns.add({});
-    }
+    //sort by decreasing length to make sure values populate correctly
+    values.sort((a, b) => b.value.length.compareTo(a.value.length));
 
     //populate the values that everything needs. This occurs after the merged values to make sure everything works correctly
     for (final entry in values) {
-      for (int i = 0; i < returns.length; i++) {
-        returns[i][entry.key] = entry.value.first;
+      //match value length
+      while (returns.length < entry.value.length) {
+        returns.add({});
+      }
+      //if a single value, duplicate
+      if (entry.value.length > 1) {
+        for (int i = 0; i < entry.value.length; i++) {
+          returns[i][entry.key] = entry.value[i];
+        }
+      } else {
+        //add the values by key to value
+        for (int i = 0; i < returns.length; i++) {
+          returns[i][entry.key] = entry.value.first;
+        }
       }
     }
 
