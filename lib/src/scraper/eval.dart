@@ -260,10 +260,14 @@ dynamic eval(
   //Define the eval script for recursion
   _eval = (name, _args) async {
     //invokes specific functions by name to be run
-    final response = hetu.invoke(
+    dynamic response = hetu.invoke(
       name,
       positionalArgs: _args,
     );
+
+    if (response is HTStruct) {
+      response = Map.fromIterables(response.keys, response.values);
+    }
 
     //If the return is a map, it could be for an async function to be called
     //Returned maps for async functions must have a target and data key

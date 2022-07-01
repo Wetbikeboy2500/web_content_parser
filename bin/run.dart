@@ -14,7 +14,13 @@ void main(List<String> args) {
   if (args.length > 3) {
     entries = args.skip(3).map((e) {
       final List<String> split = e.split('=');
-      return MapEntry(split[0], split.skip(1).join(''));
+      String key = split[0];
+      dynamic value = split.skip(1).join('');
+      if (key.endsWith('[num]')) {
+        value = num.parse(value);
+        key = key.substring(0, key.length - 5);
+      }
+      return MapEntry(key, value);
     }).toList();
   } else {
     entries = [];
@@ -32,9 +38,8 @@ void run(String projectName, Directory dir, String type, List<MapEntry<String, d
 
   if (sources.isNotEmpty) {
     try {
-      final r = await sources
-          .firstWhere((element) => element.info['source'] == projectName)
-          .makeRequest(type, arguments);
+      final r =
+          await sources.firstWhere((element) => element.info['source'] == projectName).makeRequest(type, arguments);
       if (r.pass) {
         //encode json
         final String json = jsonEncode(r.data);
