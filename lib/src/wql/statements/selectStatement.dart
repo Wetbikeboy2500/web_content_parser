@@ -53,12 +53,36 @@ class SelectStatement extends Statement {
   }
 
   static Parser getParser() {
+    final matches = input & stringIgnoreCase('matches').trim() & input;
+    final contains = input & stringIgnoreCase('contains').trim() & input;
+    final startsWith = input & stringIgnoreCase('startsWith').trim() & input;
+    final endsWith = input & stringIgnoreCase('endsWith').trim() & input;
+    final equals = input & stringIgnoreCase('equals').trim() & input;
+
+    final terms = matches | contains | startsWith | endsWith | equals;
+
+    final term = undefined();
+    final andClause = undefined();
+    final parenClause = undefined();
+
+    final Parser or = (andClause & stringIgnoreCase('or').trim() & term);
+    term.set(or | andClause);
+
+    final Parser and = (parenClause & stringIgnoreCase('and').trim() & andClause);
+    andClause.set(and | parenClause);
+
+    final Parser paren = (char('(').trim() & term & stringIgnoreCase(')').trim()).map((values) => values[1]);
+    ;
+    parenClause.set(paren | terms);
+
+    final logicalSelector = term.end();
+
     return stringIgnoreCase('select').trim().token() &
         inputs &
         stringIgnoreCase('from').trim() &
         input & //TODO: change this into a single input parser
         (stringIgnoreCase('into').trim() & name).optional() & //TODO: change this into a single input parser
-        (stringIgnoreCase('where').trim().token() & stringIgnoreCase('selector is').trim() & rawInput).optional();
+        (stringIgnoreCase('where').trim().token() & logicalSelector).optional();
   }
 
   @override

@@ -1,5 +1,9 @@
 import '../util/log.dart';
 
+//TODO: support strings marked by ' or "
+//TODO: support numbers which start as a numeric
+//TODO: support boolean values true or false
+
 ///Keeps track of the operations that a specific operator has
 ///
 ///This is important to standardizing the data access and traversal syntax
