@@ -5,7 +5,7 @@ import 'package:web_content_parser/scraper.dart';
 import 'package:path/path.dart' as path;
 
 import '../interpreter/interpreter.dart';
-import '../operator.dart';
+import '../suboperations/operator.dart';
 import '../parserHelper.dart';
 import 'statement.dart';
 

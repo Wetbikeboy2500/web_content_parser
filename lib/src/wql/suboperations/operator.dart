@@ -1,4 +1,4 @@
-import '../util/log.dart';
+import '../../util/log.dart';
 
 //TODO: support strings marked by ' or "
 //TODO: support numbers which start as a numeric

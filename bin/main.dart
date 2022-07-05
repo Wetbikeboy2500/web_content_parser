@@ -8,9 +8,11 @@ void main(List<String> args) {
   final endsWith = input & stringIgnoreCase('endsWith').trim() & input;
   final equals = input & stringIgnoreCase('equals').trim() & input;
 
-  // final terms = matches | contains | startsWith | endsWith | equals;
+  final terms = matches | contains | startsWith | endsWith | equals;
 
-  final terms = letter().plus().flatten().trim();
+  // final terms = letter().plus().flatten().trim();
+
+  //select * from * into * where selector is '' or selector is '' when input matches '';
 
   final term = undefined();
   final andClause = undefined();
@@ -29,12 +31,12 @@ void main(List<String> args) {
 
   // final p = logicalSelector.parse('input MATCHES input');
   final ops = [
-    'true',
-    'false',
-    'true and false or true',
-    'true or false and true',
-    'true and (false or true) and false',
-    'true and (false or true) or false',
+    'input matches input',
+    'input equals input',
+    // 'true and false or true',
+    // 'true or false and true',
+    // 'true and (false or true) and false',
+    // 'true and (false or true) or false',
   ];
 
   evaluate(dynamic value) {
@@ -67,7 +69,7 @@ void main(List<String> args) {
     final p = logicalSelector.parse(op);
     if (p.isSuccess) {
       print('input: ' + p.value.toString());
-      print('output: ' + evaluate(p.value).toString());
+      // print('output: ' + evaluate(p.value).toString());
     } else {
       print(p.message);
     }

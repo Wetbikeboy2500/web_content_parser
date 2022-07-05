@@ -1,16 +1,18 @@
 import 'package:petitparser/petitparser.dart';
+import 'package:web_content_parser/src/wql/suboperations/logicalSelector.dart';
 import '../interpreter/interpreter.dart';
 import '../parserHelper.dart';
 import 'statement.dart';
-import '../operator.dart';
+import '../suboperations/operator.dart';
 
 class SelectStatement extends Statement {
   final List<Operator> operators;
   final Operator from;
   final String? into;
   final String? selector;
+  final LogicalSelector? when;
 
-  const SelectStatement({required this.operators, required this.from, this.into, this.selector});
+  const SelectStatement({required this.operators, required this.from, this.into, this.selector, this.when});
 
   factory SelectStatement.fromTokens(List tokens) {
     //select operators
@@ -43,46 +45,32 @@ class SelectStatement extends Statement {
     //select selector if exists
     late final String? selector;
 
-    if (tokens.last != null) {
-      selector = tokens.last.last;
+    if (tokens[5] != null) {
+      selector = tokens[5].last;
     } else {
       selector = null;
     }
 
-    return SelectStatement(operators: operators, from: from, into: into, selector: selector);
+    //get when conditions
+    late final LogicalSelector? when;
+
+    if (tokens[6] != null) {
+      when = LogicalSelector(tokens[6]);
+    } else {
+      when = null;
+    }
+
+    return SelectStatement(operators: operators, from: from, into: into, selector: selector, when: when);
   }
 
   static Parser getParser() {
-    final matches = input & stringIgnoreCase('matches').trim() & input;
-    final contains = input & stringIgnoreCase('contains').trim() & input;
-    final startsWith = input & stringIgnoreCase('startsWith').trim() & input;
-    final endsWith = input & stringIgnoreCase('endsWith').trim() & input;
-    final equals = input & stringIgnoreCase('equals').trim() & input;
-
-    final terms = matches | contains | startsWith | endsWith | equals;
-
-    final term = undefined();
-    final andClause = undefined();
-    final parenClause = undefined();
-
-    final Parser or = (andClause & stringIgnoreCase('or').trim() & term);
-    term.set(or | andClause);
-
-    final Parser and = (parenClause & stringIgnoreCase('and').trim() & andClause);
-    andClause.set(and | parenClause);
-
-    final Parser paren = (char('(').trim() & term & stringIgnoreCase(')').trim()).map((values) => values[1]);
-    ;
-    parenClause.set(paren | terms);
-
-    final logicalSelector = term.end();
-
     return stringIgnoreCase('select').trim().token() &
         inputs &
         stringIgnoreCase('from').trim() &
         input & //TODO: change this into a single input parser
         (stringIgnoreCase('into').trim() & name).optional() & //TODO: change this into a single input parser
-        (stringIgnoreCase('where').trim().token() & logicalSelector).optional();
+        (stringIgnoreCase('where').trim().token() & stringIgnoreCase('selector is').trim() & rawInput).optional() &
+        (stringIgnoreCase('when').trim().token() & LogicalSelector.getParser()).optional();
   }
 
   @override
@@ -111,6 +99,17 @@ class SelectStatement extends Statement {
         value = querySelect(value);
       }
       expand = true;
+    }
+
+    //run when
+    if (when != null) {
+      if (value is List) {
+        //filter by the when condition per element
+        value = value.where((e) => when!.evaluate(e)).toList();
+      } else if (!when!.evaluate(value)) {
+        //clear value if it doesn't meet the when condition
+        value = [];
+      }
     }
 
     late final List returns = [];
