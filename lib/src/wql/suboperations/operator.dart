@@ -76,7 +76,11 @@ class Operator {
             return custom[operation.name]!(this, e);
           }
 
-          return e[operation.name];
+          if (e is Map) {
+            return e[operation.name];
+          } else {
+            return e;
+          }
         }).toList();
       }
 

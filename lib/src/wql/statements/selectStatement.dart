@@ -55,7 +55,7 @@ class SelectStatement extends Statement {
     late final LogicalSelector? when;
 
     if (tokens[6] != null) {
-      when = LogicalSelector(tokens[6]);
+      when = LogicalSelector(tokens[6].last);
     } else {
       when = null;
     }

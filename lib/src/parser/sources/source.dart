@@ -42,6 +42,8 @@ Future<Result<Post>> fetchPost(ID id) async {
 Future<Result<Post>> fetchPostUrl(String url) async {
   final u = UriResult.parse(url);
 
+  print(url);
+
   if (u.fail) {
     log2('Error parsing url:', url);
     return const Result.fail();
@@ -55,6 +57,9 @@ Future<Result<Post>> fetchPostUrl(String url) async {
   for (SourceTemplate a in sources.values) {
     if (a.supports(RequestType.postUrl)) {
       allowedSourcesFound = true;
+      print('compare');
+      print(u.data!.host);
+      print(a.host);
       if (u.data!.host.contains(a.host)) {
         source = a;
         break;

@@ -29,9 +29,7 @@ class LogicalSelector {
     final Parser paren = (char('(').trim() & term & stringIgnoreCase(')').trim()).map((values) => values[1]);
     parenClause.set(paren | terms);
 
-    final logicalSelector = term.end();
-
-    return logicalSelector;
+    return term;
   }
 
   bool evaluate(dynamic context) {
@@ -47,7 +45,7 @@ class LogicalSelector {
         final firstValue = first.getValue(context).value.first;
         final secondValue = second.getValue(context).value.first;
 
-        switch(value[1]) {
+        switch(value[1].toLowerCase()) {
           case 'matches':
             return firstValue.querySelector(secondValue) != null;
           case 'contains':

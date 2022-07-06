@@ -482,7 +482,15 @@ void main() {
       });
 
       test('Get post url', () async {
-        Result<Post> p = await fetchPostUrl('${env["SOURCE"]}/manga/get/1');
+        //load env
+        load();
+
+        if (env['BASE'] == null && env['SUB'] == null) {
+          throw 'Source needs to be defined in .env';
+        }
+
+        addSource('heroku', TestSource(env['BASE']!, env['SUB']!));
+        Result<Post> p = await fetchPostUrl('https://${env["SOURCE"]}/manga/get/1');
         expect(p.pass, isTrue);
       });
 
@@ -561,6 +569,40 @@ void main() {
       final values = await runWQL(code);
 
       expect(values['output'], equals('hello world'));
+    });
+    test('Select When', () async {
+      final code = '''
+        DEFINE first STRING hello;
+        DEFINE match STRING 'ell';
+        DEFINE noMatch STRING 'weird';
+        SELECT first FROM * INTO matchOutput WHEN first contains match;
+        SELECT first FROM * INTO noMatchOutput WHEN first contains noMatch;
+        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
+        SELECT matchOutput, noMatchOutput FROM * INTO outputList;
+      ''';
+
+      final values = await runWQL(code);
+
+      expect(
+          values['output'],
+          equals([
+            {
+              'matchOutput': {'first': 'hello'},
+              'noMatchOutput': {'first': []}
+            }
+          ]));
+      expect(
+          values['outputList'],
+          equals([
+            {
+              'matchOutput': [
+                {'first': 'hello'}
+              ],
+              'noMatchOutput': [
+                {'first': []}
+              ]
+            }
+          ]));
     });
   });
 }
