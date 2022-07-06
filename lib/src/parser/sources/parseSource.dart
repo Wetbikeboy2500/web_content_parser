@@ -82,7 +82,7 @@ class ParseSource extends SourceTemplate {
     final Result<List> chapters =
         await scraper.makeRequest<List>(RequestType.chapters.string, [MapEntry('id', id.toJson())]);
 
-    if (chapters.fail) {
+    if (chapters.fail || chapters.data == null) {
       return const Result.fail();
     }
 
@@ -121,7 +121,7 @@ class ParseSource extends SourceTemplate {
 
     final Result post = await scraper.makeRequest(RequestType.postUrl.string, [MapEntry('url', url)]);
 
-    if (post.fail) {
+    if (post.fail || post.data == null) {
       return const Result.fail();
     }
 
@@ -142,7 +142,7 @@ class ParseSource extends SourceTemplate {
 
     final Result post = await scraper.makeRequest(RequestType.post.string, [MapEntry('id', id.toJson())]);
 
-    if (post.fail && post.data == null) {
+    if (post.fail || post.data == null) {
       return const Result.fail();
     }
 
@@ -176,7 +176,8 @@ class ParseSource extends SourceTemplate {
     }
 
     try {
-      return Result.pass(List<CatalogEntry>.from(entries.data!.map((entry) => CatalogEntry.fromJson(entry))));
+      return Result.pass(List<CatalogEntry>.from(
+          entries.data!.map((entry) => CatalogEntry.fromJson(Map<String, dynamic>.from(entry)))));
     } catch (e, stack) {
       log2('Error fetching catalog:', e);
       log(stack);

@@ -22,3 +22,4 @@ coverage
 .vscode
 .env
 doc
+bin/main.dart
