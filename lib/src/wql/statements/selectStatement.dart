@@ -1,5 +1,5 @@
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/wql/suboperations/logicalSelector.dart';
+import '../suboperations/logicalSelector.dart';
 import '../interpreter/interpreter.dart';
 import '../parserHelper.dart';
 import 'statement.dart';
@@ -34,7 +34,7 @@ class SelectStatement extends Statement {
     late final Operator from;
     if (tokens[3] is String) {
       if (tokens[3].trim() == '*') {
-        from = const Operator([OperationName('*', null)], null);
+        from = const Operator([OperationName(name: '*', rawValue: false, listAccess: null)], null);
       } else {
         throw Exception('Not supported');
       }

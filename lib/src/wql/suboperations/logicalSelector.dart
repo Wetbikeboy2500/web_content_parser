@@ -1,6 +1,6 @@
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/wql/parserHelper.dart';
-import 'package:web_content_parser/src/wql/suboperations/operator.dart';
+import '../parserHelper.dart';
+import 'operator.dart';
 
 class LogicalSelector {
   final List tokens;
@@ -34,9 +34,7 @@ class LogicalSelector {
 
   bool evaluate(dynamic context) {
     bool _eval(List value) {
-      assert(value[1] is Token);
-
-      value[1] = (value[1] as Token).value;
+      value[1] = (value[1] is Token) ? (value[1] as Token).value : value[1];
 
       if (value[1] != 'or' && value[1] != 'and') {
         final first = Operator.fromTokensNoAlias(value[0]);
@@ -44,6 +42,9 @@ class LogicalSelector {
 
         final firstValue = first.getValue(context).value.first;
         final secondValue = second.getValue(context).value.first;
+
+        print(firstValue);
+        print(secondValue);
 
         switch(value[1].toLowerCase()) {
           case 'matches':

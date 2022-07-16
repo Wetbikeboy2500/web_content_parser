@@ -1,6 +1,7 @@
 
 import 'package:petitparser/petitparser.dart';
 
+import '../suboperations/logicalSelector.dart';
 import '../statements/selectStatement.dart';
 import '../statements/setStatement.dart';
 
@@ -14,9 +15,6 @@ List parseAndTokenize(String input) {
   final valueStringMatcher = (char("'") & pattern("^'").star().flatten() & char("'")).pick(1);
 
   final name = letter().plus().flatten().trim() | char('*').trim();
-
-  final nameValueSeparated =
-      stringIgnoreCase('value') & char('.') & name.separatedBy(char('.'), includeSeparators: false);
 
   final define = stringIgnoreCase('define').trim().token();
 
@@ -36,13 +34,8 @@ List parseAndTokenize(String input) {
       .pick(0)
       .star();
 
-  final conditionalVariables = (nameValueSeparated);
-
-  //TODO: revise operator to not be so exact
   final conditionalQuery = stringIgnoreCase('if').trim().token() &
-      conditionalVariables &
-      (stringIgnoreCase('is').trim().token() | stringIgnoreCase('is not').trim().token()) &
-      conditionalVariables &
+      LogicalSelector.getParser() &
       char(':').trim().token() &
       allQueries &
       (stringIgnoreCase('else:').trim().token() & allQueries).optional() &

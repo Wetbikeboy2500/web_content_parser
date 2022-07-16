@@ -13,7 +13,7 @@ Parser get digitInput => (char('[').trim().token() &
 Parser get inputs => (input.trim() & (stringIgnoreCase('as').trim() & name).pick(1).optional())
     .separatedBy(char(','), includeSeparators: false);
 
-Parser get input => (safeChars.plus().flatten().trim() & digitInput.optional()).separatedBy(char('.'), includeSeparators: false);
+Parser get input => rawInputSingleQuote.trim() | (safeChars.plus().flatten().trim() & digitInput.optional()).separatedBy(char('.'), includeSeparators: false);
 
 //don't allow square brackets, semi-colon, colon, and comma
 Parser get safeChars => patternIgnoreCase('~!@\$%&*()_+=/\'"?><{}|`#a-zA-Z0-9') | char('-') | char('^');

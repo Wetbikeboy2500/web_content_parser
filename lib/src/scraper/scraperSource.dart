@@ -114,7 +114,14 @@ class ScraperSource {
   Future<Result<T>> makeRequest<T>(String name, List<MapEntry<String, dynamic>> arguments) async {
     log2('Make request: ', name);
     final Request? r = requests[name];
+
     if (r != null) {
+      //ensure that the request file exists
+      if (!(await r.file.exists())) {
+        log2('Request file does not exist', r.file.path);
+        return const Result.fail();
+      }
+
       if (r.programType == 'wql') {
         return await ResultExtended.unsafeAsync<T>(
           () async => (await runWQL(await r.file.readAsString(), parameters: Map.fromEntries(arguments)))['return'],

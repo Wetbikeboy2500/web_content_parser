@@ -20,24 +20,47 @@ class Operator {
     final List<OperationName> names = [];
 
     if (tokens.first is String) {
-      names.add(OperationName(tokens.first, null));
+      names.add(OperationName(
+        name: tokens.first,
+        rawValue: true,
+        listAccess: null,
+      ));
     } else {
       for (final List nameList in tokens.first) {
-        names.add(OperationName(nameList.first, nameList.last));
+        names.add(OperationName(
+          name: nameList.first,
+          rawValue: false,
+          listAccess: nameList.last,
+        ));
       }
     }
 
     return Operator(names, alias);
   }
 
-  factory Operator.fromTokensNoAlias(List tokens) {
+  factory Operator.fromTokensNoAlias(dynamic tokens) {
+    assert(tokens is List || tokens is String);
     final List<OperationName> names = [];
 
-    if (tokens.first is String) {
-      names.add(OperationName(tokens.first, null));
+    if (tokens is String) {
+      names.add(OperationName(
+        name: tokens,
+        rawValue: true,
+        listAccess: null,
+      ));
+    } else if (tokens.first is String) {
+      names.add(OperationName(
+        name: tokens.first,
+        rawValue: false,
+        listAccess: null,
+      ));
     } else {
       for (final List nameList in tokens) {
-        names.add(OperationName(nameList.first, nameList.last));
+        names.add(OperationName(
+          name: nameList.first,
+          rawValue: false,
+          listAccess: nameList.last,
+        ));
       }
     }
 
@@ -46,6 +69,10 @@ class Operator {
 
   MapEntry<String, List<dynamic>> getValue(dynamic context,
       {Map<String, Function> custom = const {}, bool expand = false}) {
+    if (names.first.rawValue) {
+      return MapEntry(alias ?? names.first.name, [names.first.name]);
+    }
+
     late List value;
     if (expand) {
       value = context;
@@ -107,7 +134,8 @@ class Operator {
 
 class OperationName {
   final String name;
+  final bool rawValue;
   final String? listAccess;
 
-  const OperationName(this.name, this.listAccess);
+  const OperationName({required this.name, required this.rawValue, this.listAccess});
 }

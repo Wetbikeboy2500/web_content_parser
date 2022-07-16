@@ -604,5 +604,37 @@ void main() {
             }
           ]));
     });
+    test('Raw value operators', () async {
+      final code = '''
+        DEFINE first STRING hello;
+        SELECT first FROM * INTO matchOutput WHEN first contains 'ell';
+        SELECT first FROM * INTO noMatchOutput WHEN first contains 'weird';
+        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
+        SELECT matchOutput, noMatchOutput FROM * INTO outputList;
+      ''';
+
+      final values = await runWQL(code);
+
+      expect(
+          values['output'],
+          equals([
+            {
+              'matchOutput': {'first': 'hello'},
+              'noMatchOutput': {'first': []}
+            }
+          ]));
+      expect(
+          values['outputList'],
+          equals([
+            {
+              'matchOutput': [
+                {'first': 'hello'}
+              ],
+              'noMatchOutput': [
+                {'first': []}
+              ]
+            }
+          ]));
+    });
   });
 }
