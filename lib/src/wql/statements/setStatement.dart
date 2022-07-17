@@ -107,6 +107,17 @@ class SetStatement extends Statement {
       }
       return results;
     },
+    'mergekeyvalue': (args) {
+      final value1 = args[0];
+      final value2 = args[1];
+      final result = {};
+      int index = 0;
+      for (final key in value1) {
+        result[key] = value2[index];
+        index++;
+      }
+      return result;
+    },
     'concat': (args) {
       final List results = [];
       for (List l in args) {
@@ -119,7 +130,7 @@ class SetStatement extends Statement {
     },
     'createrange': (args) {
       final List<int> output = [];
-      for (int i = args[0].first; i <= args[1].first; i++) {
+      for (int i = args[0].first; i < args[1].first; i++) {
         output.add(i);
       }
       return output;
