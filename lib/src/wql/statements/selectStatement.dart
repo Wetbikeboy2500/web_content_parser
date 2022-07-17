@@ -75,9 +75,16 @@ class SelectStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter) async {
-    dynamic value = from.getValue(interpreter.values).value.first;
+    dynamic value = from.getValue(interpreter.values).value;
 
+    //this is relevant for the getValue on the operators to know if it is being passed a list to modify or a elements within a list to modify
     bool expand = false;
+
+    if ((value.length > 1 || from.names.last.listAccess?.trim() == '[]')) {
+      expand = true;
+    } else {
+      value = value.first;
+    }
 
     //run where
     if (selector != null) {

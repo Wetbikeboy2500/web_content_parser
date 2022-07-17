@@ -1,4 +1,5 @@
 import '../../util/log.dart';
+import 'package:petitparser/petitparser.dart';
 
 //TODO: support strings marked by ' or "
 //TODO: support numbers which start as a numeric
@@ -19,10 +20,11 @@ class Operator {
 
     final List<OperationName> names = [];
 
-    if (tokens.first is String) {
+    if (tokens.first is List && tokens.first.first is Token) {
       names.add(OperationName(
-        name: tokens.first,
+        name: tokens.first.last,
         rawValue: true,
+        value: _parseRawValue(tokens.first.first, tokens.first.last),
         listAccess: null,
       ));
     } else {
@@ -42,10 +44,11 @@ class Operator {
     assert(tokens is List || tokens is String);
     final List<OperationName> names = [];
 
-    if (tokens is String) {
+    if (tokens is List && tokens.first is Token) {
       names.add(OperationName(
-        name: tokens,
+        name: tokens.last,
         rawValue: true,
+        value: _parseRawValue(tokens.first, tokens.last),
         listAccess: null,
       ));
     } else if (tokens.first is String) {
@@ -67,10 +70,35 @@ class Operator {
     return Operator(names, null);
   }
 
+  static dynamic _parseRawValue(Token type, dynamic value) {
+    switch (type.value) {
+      case 'l':
+        return [];
+      case 's':
+        if (value is String) {
+          return value;
+        }
+
+        return value.toString();
+      case 'b':
+        if (value == 'true') {
+          return true;
+        }
+
+        return false;
+      case 'n':
+        if (value is num) {
+          return value;
+        }
+
+        return num.parse(value);
+    }
+  }
+
   MapEntry<String, List<dynamic>> getValue(dynamic context,
       {Map<String, Function> custom = const {}, bool expand = false}) {
     if (names.first.rawValue) {
-      return MapEntry(alias ?? names.first.name, [names.first.name]);
+      return MapEntry(alias ?? names.first.name, [names.first.value]);
     }
 
     late List value;
@@ -135,7 +163,8 @@ class Operator {
 class OperationName {
   final String name;
   final bool rawValue;
+  final dynamic? value;
   final String? listAccess;
 
-  const OperationName({required this.name, required this.rawValue, this.listAccess});
+  const OperationName({required this.name, required this.rawValue, this.value, this.listAccess});
 }

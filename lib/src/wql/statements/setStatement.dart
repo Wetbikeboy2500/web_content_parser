@@ -85,17 +85,17 @@ class SetStatement extends Statement {
     'getlastsegment': (args) {
       final arg = args[0].first;
       if (arg is String) {
-          return path.url.split(arg).last;
+        return path.url.split(arg).last;
+      }
+      if (arg is List && arg.isNotEmpty && arg.first is Map) {
+        final List output = [];
+        for (Map item in arg) {
+          output.add(path.url.split(item[args[1].first]).last);
         }
-        if (arg is List && arg.isNotEmpty && arg.first is Map) {
-          final List output = [];
-          for (Map item in arg) {
-            output.add(path.url.split(item[args[1].first]).last);
-          }
-          return output;
-        } else {
-          throw Exception('Cannot get last segment of a non string or list');
-        }
+        return output;
+      } else {
+        throw Exception('Cannot get last segment of a non string or list');
+      }
     },
     'trim': (args) {
       return args[0].first.trim();
@@ -113,6 +113,19 @@ class SetStatement extends Statement {
         results.addAll(l);
       }
       return results.join('');
+    },
+    'count': (args) {
+      return args[0].first.length;
+    },
+    'createrange': (args) {
+      final List<int> output = [];
+      for (int i = args[0].first; i <= args[1].first; i++) {
+        output.add(i);
+      }
+      return output;
+    },
+    'reverse': (args) {
+      return args[0].first.reversed.toList();
     }
   };
 

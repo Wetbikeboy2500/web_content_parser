@@ -124,7 +124,16 @@ class ScraperSource {
 
       if (r.programType == 'wql') {
         return await ResultExtended.unsafeAsync<T>(
-          () async => (await runWQL(await r.file.readAsString(), parameters: Map.fromEntries(arguments)))['return'],
+          () async {
+            final String code = await r.file.readAsString();
+            final parameters = Map.fromEntries(arguments);
+            final result = await runWQL(code, parameters: parameters, throwErrors: true);
+            if (result.pass) {
+              return result.data!['return'];
+            }
+
+            throw Exception('Fail state was no re-thrown');
+          },
           errorMessage: 'Error running WQL',
         );
       } else {

@@ -1,11 +1,21 @@
-import 'package:web_content_parser/src/wql/interpreter/interpreter.dart';
+import 'dart:io';
 
+import '../util/Result.dart';
+import 'interpreter/interpreter.dart';
 import 'interpreter/parseAndTokenize.dart';
 import 'interpreter/parseStatements.dart';
 
-Future<Map<String, dynamic>> runWQL(String code, {Map<String, dynamic> parameters = const {}}) async {
+Future<Result<Map<String, dynamic>>> runWQL(String code,
+    {Map<String, dynamic> parameters = const {}, bool throwErrors = false}) async {
   final Interpreter interpreter = Interpreter();
   interpreter.setValues(parameters);
-  await interpreter.runStatements(parseStatements(parseAndTokenize(code)));
-  return interpreter.values;
+  try {
+    await interpreter.runStatements(parseStatements(parseAndTokenize(code)));
+  } catch (e) {
+    if (throwErrors) {
+      rethrow;
+    }
+    return const Result.fail();
+  }
+  return Result.pass(interpreter.values);
 }

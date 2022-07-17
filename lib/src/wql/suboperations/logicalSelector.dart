@@ -43,9 +43,6 @@ class LogicalSelector {
         final firstValue = first.getValue(context).value.first;
         final secondValue = second.getValue(context).value.first;
 
-        print(firstValue);
-        print(secondValue);
-
         switch(value[1].toLowerCase()) {
           case 'matches':
             return firstValue.querySelector(secondValue) != null;

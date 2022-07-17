@@ -527,10 +527,13 @@ void main() {
         SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
       ''';
 
-      final values = await runWQL(code, parameters: {'document': document});
-      expect(values['doctwo'], equals(values['docthree']));
+      final Result values = await runWQL(code, parameters: {'document': document});
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['doctwo'], equals(values.data!['docthree']));
       expect(
-          values['doctwo'],
+          values.data!['doctwo'],
           equals([
             {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
             {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
@@ -545,9 +548,11 @@ void main() {
         SET number TO increment WITH number;
       ''';
 
-      final values = await runWQL(code);
+      final Result values = await runWQL(code);
 
-      expect(values['number'], equals(1));
+      expect(values.pass, isTrue);
+
+      expect(values.data!['number'], equals(1));
     });
     test('decrement', () async {
       final code = '''
@@ -555,9 +560,11 @@ void main() {
         SET number TO decrement WITH number;
       ''';
 
-      final values = await runWQL(code);
+      final Result values = await runWQL(code);
 
-      expect(values['number'], equals(-1));
+      expect(values.pass, isTrue);
+
+      expect(values.data!['number'], equals(-1));
     });
     test('concat', () async {
       final code = '''
@@ -566,9 +573,11 @@ void main() {
         SET output TO concat WITH first, second;
       ''';
 
-      final values = await runWQL(code);
+      final Result values = await runWQL(code);
 
-      expect(values['output'], equals('hello world'));
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
     });
     test('Select When', () async {
       final code = '''
@@ -581,10 +590,12 @@ void main() {
         SELECT matchOutput, noMatchOutput FROM * INTO outputList;
       ''';
 
-      final values = await runWQL(code);
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
 
       expect(
-          values['output'],
+          values.data!['output'],
           equals([
             {
               'matchOutput': {'first': 'hello'},
@@ -592,7 +603,7 @@ void main() {
             }
           ]));
       expect(
-          values['outputList'],
+          values.data!['outputList'],
           equals([
             {
               'matchOutput': [
@@ -607,16 +618,18 @@ void main() {
     test('Raw value operators', () async {
       final code = '''
         DEFINE first STRING hello;
-        SELECT first FROM * INTO matchOutput WHEN first contains 'ell';
-        SELECT first FROM * INTO noMatchOutput WHEN first contains 'weird';
+        SELECT first FROM * INTO matchOutput WHEN first contains s'ell';
+        SELECT first FROM * INTO noMatchOutput WHEN first contains s'weird';
         SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
         SELECT matchOutput, noMatchOutput FROM * INTO outputList;
       ''';
 
-      final values = await runWQL(code);
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
 
       expect(
-          values['output'],
+          values.data!['output'],
           equals([
             {
               'matchOutput': {'first': 'hello'},
@@ -624,7 +637,7 @@ void main() {
             }
           ]));
       expect(
-          values['outputList'],
+          values.data!['outputList'],
           equals([
             {
               'matchOutput': [
@@ -635,6 +648,28 @@ void main() {
               ]
             }
           ]));
+    });
+    test('Raw values', () async {
+      final code = '''
+        SELECT s'hello' as intro, n'25' as number, b'true' as true, l'' as list FROM * INTO return;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data,
+          equals({
+            'return': [
+              {
+                'intro': 'hello',
+                'number': 25,
+                'true': true,
+                'list': [],
+              }
+            ],
+          }));
     });
   });
 }
