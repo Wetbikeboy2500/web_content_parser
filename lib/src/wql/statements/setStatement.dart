@@ -160,7 +160,6 @@ class SetStatement extends Statement {
       return args[0].first.reversed.toList();
     },
     'itself': (args) {
-      print(args[0].first);
       return args[0].first;
     },
     'datetimeago': (args) {
