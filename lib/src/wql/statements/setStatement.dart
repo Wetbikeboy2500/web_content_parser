@@ -1,4 +1,5 @@
 import 'package:html/parser.dart';
+import 'package:intl/intl.dart';
 import 'package:petitparser/core.dart';
 import 'package:petitparser/parser.dart';
 import 'package:web_content_parser/scraper.dart';
@@ -38,6 +39,7 @@ class SetStatement extends Statement {
         inputs;
   }
 
+  //TODO: move these outside of the WQL directory since these are for the web_content_parser
   static Map<String, Function> functions = {
     'getrequest': (args) async {
       //for the second argument, we are going to assume it is a map within a list
@@ -111,12 +113,31 @@ class SetStatement extends Statement {
       final value1 = args[0];
       final value2 = args[1];
       final result = {};
+
+      bool stringMap = true;
+      bool numMap = true;
+
       int index = 0;
       for (final key in value1) {
+        if (stringMap && key is! String) {
+          stringMap = false;
+        }
+
+        if (numMap && key is! num) {
+          numMap = false;
+        }
+
         result[key] = value2[index];
         index++;
       }
-      return result;
+
+      if (numMap) {
+        return Map<int, dynamic>.from(result);
+      } else if (stringMap) {
+        return Map<String, dynamic>.from(result);
+      } else {
+        return result;
+      }
     },
     'concat': (args) {
       final List results = [];
@@ -139,7 +160,29 @@ class SetStatement extends Statement {
       return args[0].first.reversed.toList();
     },
     'itself': (args) {
-      return args[0];
+      print(args[0].first);
+      return args[0].first;
+    },
+    'datetimeago': (args) {
+      return args[0].map((time) {
+        try {
+          Duration ago;
+          if (time.contains('mins ago') || time.contains('min ago')) {
+            ago = Duration(minutes: int.parse(time.substring(0, time.indexOf('min'))));
+          } else if (time.contains('hour ago') || time.contains('hours ago')) {
+            ago = Duration(hours: int.parse(time.substring(0, time.indexOf('hour'))));
+          } else if (time.contains('day ago') || time.contains('days ago')) {
+            ago = Duration(days: int.parse(time.substring(0, time.indexOf('day'))));
+          } else {
+            return DateFormat('MMMM dd, yyyy', 'en_US').parse(time);
+          }
+
+          return DateTime.now().subtract(ago);
+        } catch (e) {
+          //TODO: revise this to use a safe call and not default to datetime now
+          return DateTime.now();
+        }
+      }).toList();
     }
   };
 

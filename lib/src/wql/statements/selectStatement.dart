@@ -142,6 +142,8 @@ class SelectStatement extends Statement {
             return value.attributes[op1.names.last.name];
           },
           'text': (Operator op1, dynamic value) {
+            print(value);
+            print(value.text);
             return value.text;
           }
         },
@@ -163,7 +165,7 @@ class SelectStatement extends Statement {
           if (entry.value[i] is Map) {
             returns.add(entry.value[i]);
           } else {
-            returns.add({entry.key: entry.value[i]});
+            returns.add(<String, dynamic>{entry.key: entry.value[i]});
           }
         } else {
           if (entry.value[i] is Map) {
@@ -182,7 +184,7 @@ class SelectStatement extends Statement {
     for (final entry in values) {
       //match value length
       while (returns.length < entry.value.length) {
-        returns.add({});
+        returns.add(<String, dynamic>{});
       }
       //if a single value, duplicate
       if (entry.value.length > 1) {
