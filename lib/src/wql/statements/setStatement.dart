@@ -137,6 +137,9 @@ class SetStatement extends Statement {
     },
     'reverse': (args) {
       return args[0].first.reversed.toList();
+    },
+    'itself': (args) {
+      return args[0];
     }
   };
 
