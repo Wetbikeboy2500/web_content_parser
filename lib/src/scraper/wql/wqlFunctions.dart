@@ -36,20 +36,6 @@ void loadWQLFunctions() {
     'joinurl': (args) {
       return path.url.joinAll(List<String>.from(args.map((e) => e.first)));
     },
-    'increment': (args) {
-      dynamic value = args[0].first;
-      if (value is String) {
-        value = num.parse(value);
-      }
-      return value + 1;
-    },
-    'decrement': (args) {
-      dynamic value = args[0].first;
-      if (value is String) {
-        value = num.parse(value);
-      }
-      return value - 1;
-    },
     'getlastsegment': (args) {
       final arg = args[0].first;
       if (arg is String) {
@@ -64,69 +50,6 @@ void loadWQLFunctions() {
       } else {
         throw Exception('Cannot get last segment of a non string or list');
       }
-    },
-    'trim': (args) {
-      return args[0].first.trim();
-    },
-    'merge': (args) {
-      final List results = [];
-      for (List l in args) {
-        results.addAll(l);
-      }
-      return results;
-    },
-    'mergekeyvalue': (args) {
-      final value1 = args[0];
-      final value2 = args[1];
-      final result = {};
-
-      bool stringMap = true;
-      bool numMap = true;
-
-      int index = 0;
-      for (final key in value1) {
-        if (stringMap && key is! String) {
-          stringMap = false;
-        }
-
-        if (numMap && key is! num) {
-          numMap = false;
-        }
-
-        result[key] = value2[index];
-        index++;
-      }
-
-      if (numMap) {
-        return Map<int, dynamic>.from(result);
-      } else if (stringMap) {
-        return Map<String, dynamic>.from(result);
-      } else {
-        return result;
-      }
-    },
-    'concat': (args) {
-      final List results = [];
-      for (List l in args) {
-        results.addAll(l);
-      }
-      return results.join('');
-    },
-    'count': (args) {
-      return args[0].first.length;
-    },
-    'createrange': (args) {
-      final List<int> output = [];
-      for (int i = args[0].first; i < args[1].first; i++) {
-        output.add(i);
-      }
-      return output;
-    },
-    'reverse': (args) {
-      return args[0].first.reversed.toList();
-    },
-    'itself': (args) {
-      return args[0].first;
     },
     'datetimeago': (args) {
       return args[0].map((time) {

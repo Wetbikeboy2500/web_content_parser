@@ -542,7 +542,7 @@ void main() {
           ]));
     });
     //TODO: add tests for set statement functions
-    test('increment', () async {
+    test('Increment', () async {
       final code = '''
         DEFINE number INT 0;
         SET number TO increment WITH number;
@@ -554,7 +554,7 @@ void main() {
 
       expect(values.data!['number'], equals(1));
     });
-    test('decrement', () async {
+    test('Decrement', () async {
       final code = '''
         DEFINE number INT 0;
         SET number TO decrement WITH number;
@@ -566,7 +566,7 @@ void main() {
 
       expect(values.data!['number'], equals(-1));
     });
-    test('concat', () async {
+    test('Concat', () async {
       final code = '''
         DEFINE first STRING hello;
         DEFINE second STRING ' world';
@@ -578,6 +578,100 @@ void main() {
       expect(values.pass, isTrue);
 
       expect(values.data!['output'], equals('hello world'));
+    });
+    test('Trim', () async {
+      final code = '''
+        DEFINE first STRING '   hello world   ';
+        SET output TO trim WITH first;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Itself', () async {
+      final code = '''
+        SET output TO itself WITH s'hello world';
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Create Range', () async {
+      final code = '''
+        SET output TO createRange WITH n'0', n'10';
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+    });
+    test('Reverse', () async {
+      final code = '''
+        SET range TO createRange WITH n'0', n'10';
+        SET output TO reverse WITH range;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+    });
+    test('Count', () async {
+      final code = '''
+        SET range TO createRange WITH n'0', n'10';
+        SET output TO count WITH range;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals(10));
+    });
+    test('Merge Key Value', () async {
+      final code = '''
+        SET range TO createRange WITH n'0', n'10';
+        SET output TO mergeKeyValue WITH range[], range[];
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals(<int, dynamic>{
+        0: 0,
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8,
+        9: 9,
+      }));
+    });
+    test('Merge', () async {
+      final code = '''
+        SET rangeOne TO createRange WITH n'0', n'6';
+        SET rangeTwo TO createRange WITH n'6', n'10';
+        SET output TO merge WITH rangeOne[], rangeTwo[];
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
     });
     test('Select When', () async {
       final code = '''

@@ -25,7 +25,7 @@ class TestSource extends SourceTemplate {
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
-      var j = jsonDecode(response.body);
+      final j = jsonDecode(response.body);
       j['id'] = ID(id: j['id'], source: 'heroku').toJson();
       return Result.pass(Post.fromJson(j));
     } else {

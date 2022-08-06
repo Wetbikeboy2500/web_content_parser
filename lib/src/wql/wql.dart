@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import '../util/Result.dart';
 import 'interpreter/interpreter.dart';
 import 'interpreter/parseAndTokenize.dart';
