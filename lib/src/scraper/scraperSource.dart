@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:web_content_parser/src/scraper/parseYaml.dart';
+import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
+import 'package:web_content_parser/src/util/parseYaml.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
 
 import '../util/ResultExtended.dart';
@@ -9,7 +10,7 @@ import '../util/Result.dart';
 
 import '../util/log.dart';
 
-import 'eval.dart';
+import 'hetu/eval.dart';
 import 'package:path/path.dart' as p;
 
 import '../util/RequestType.dart';
@@ -111,6 +112,8 @@ class ScraperSource {
     }
   }
 
+  static bool _loadedWQLFunctions = false;
+
   Future<Result<T>> makeRequest<T>(String name, List<MapEntry<String, dynamic>> arguments) async {
     log2('Make request: ', name);
     final Request? r = requests[name];
@@ -123,6 +126,11 @@ class ScraperSource {
       }
 
       if (r.programType == 'wql') {
+        if (!_loadedWQLFunctions) {
+          loadWQLFunctions();
+          _loadedWQLFunctions = true;
+        }
+
         return await ResultExtended.unsafeAsync<T>(
           () async {
             final String code = await r.file.readAsString();

@@ -3,15 +3,15 @@ import 'dart:collection';
 
 import 'package:puppeteer/protocol/network.dart';
 import 'package:puppeteer/puppeteer.dart';
-import '../util/log.dart';
-import '../scraper/headless.dart';
-import '../util/firstWhereResult.dart';
-import '../util/ResultExtended.dart';
-import '../util/parseUriResult.dart';
+import '../../util/log.dart';
+import 'headless.dart';
+import '../../util/firstWhereResult.dart';
+import '../../util/ResultExtended.dart';
+import '../../util/parseUriResult.dart';
 
 import 'dart:io' show Platform;
 
-import '../util/Result.dart';
+import '../../util/Result.dart';
 
 class DesktopHeadless extends Headless {
   @override

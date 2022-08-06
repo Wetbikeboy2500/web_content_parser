@@ -1,4 +1,4 @@
-import 'scraper/headless.dart';
+import 'scraper/headless/headless.dart';
 
 ///Central class for settings
 class WebContentParser {
@@ -9,9 +9,9 @@ class WebContentParser {
   static List<Headless> headlessBrowsers = [];
 
   ///Duration for how long a request will persist
-  ///This is in-memory caching used to help allivate duplciate requests hitting the same endpoint
+  ///This is in-memory caching used to help alleviate duplicate requests hitting the same endpoint
   ///
-  ///This will cause the applciation to wait for the timer to end before the application ends
+  ///This will cause the application to wait for the timer to end before the application ends
   ///If a request single request is made and the duration is set to a minute, it will take at least a minute for the application to close
   ///
   static Duration cacheTime = const Duration(milliseconds: 1000);

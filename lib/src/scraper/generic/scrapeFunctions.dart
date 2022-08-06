@@ -3,33 +3,17 @@
 //TODO: build a tmp page cache(build in) and long page cache(developer defined) system. Tmp page cache for when two request need to be made for the same resource
 
 import 'dart:async';
-
-import 'package:hetu_script/hetu_script.dart';
 import 'package:web_content_parser/parser.dart';
 import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/src/util/parseUriResult.dart';
-import '../util/ResultExtended.dart';
+import '../../util/ResultExtended.dart';
 
-import '../scraper/headless.dart';
+import '../headless/headless.dart';
 
-import '../util/Result.dart';
-import '../util/firstWhereResult.dart';
+import '../../util/Result.dart';
+import '../../util/firstWhereResult.dart';
 
 import 'package:http/http.dart';
-
-///Hetu post request
-///
-///Returns a response object wrapped with a result as a map
-Future<Map<String, dynamic>> postRequestHetu(
-  HTEntity entity, {
-  List<dynamic> positionalArgs = const [],
-  Map<String, dynamic> namedArgs = const {},
-  List<HTType> typeArgs = const <HTType>[],
-}) async {
-  final Map<String, String>? headers =
-      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
-  return await postRequest(positionalArgs[0], positionalArgs[1], headers);
-}
 
 Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, String>? headers) async {
   final Result<Uri> uri = UriResult.parse(url);
@@ -53,20 +37,6 @@ Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, S
 }
 
 final Map<String, Completer<Response>> _getCache = {};
-
-//TODO: make a lite version that just returns body and status which would be better for caching
-Future<Response?> getRequestHetu(
-  HTEntity entity, {
-  List<dynamic> positionalArgs = const [],
-  Map<String, dynamic> namedArgs = const {},
-  List<HTType> typeArgs = const <HTType>[],
-}) async {
-  //set any custom headers if provided
-  final Map<String, String>? headers =
-      (namedArgs.containsKey('headers')) ? namedArgs['headers'] as Map<String, String> : null;
-
-  return getRequest(positionalArgs[0], headers);
-}
 
 Future<Response?> getRequest(String url, Map<String, String>? headers) async {
   //get the request url to a standard format
@@ -93,17 +63,6 @@ Future<Response?> getRequest(String url, Map<String, String>? headers) async {
 
   //return result
   return r;
-}
-
-Future<Map<String, dynamic>> getDynamicPageHetu(
-  HTEntity entity, {
-  List<dynamic> positionalArgs = const [],
-  Map<String, dynamic> namedArgs = const {},
-  List<HTType> typeArgs = const <HTType>[],
-}) async {
-  final String url = positionalArgs[0];
-
-  return ResultExtended.toJson(await getDynamicPage(url));
 }
 
 final Map<String, Completer<Result<String>>> _getDynamicCache = {};

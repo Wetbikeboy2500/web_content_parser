@@ -7,7 +7,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/src/util/parseUriResult.dart';
 import 'headless.dart';
-import '../util/Result.dart';
+import '../../util/Result.dart';
 
 class MobileHeadless extends Headless {
   @override

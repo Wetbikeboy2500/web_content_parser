@@ -7,9 +7,9 @@ import 'package:html/parser.dart' as parser show parse;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:hetu_script/hetu_script.dart';
-import '../util/log.dart';
-import '../../util.dart';
-import 'scrapeFunctions.dart';
+import '../../util/log.dart';
+import '../../../util.dart';
+import 'requests.dart';
 
 //TODO: convert this to a more generic call list for WQL
 
