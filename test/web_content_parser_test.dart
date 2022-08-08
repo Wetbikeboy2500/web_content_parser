@@ -673,6 +673,19 @@ void main() {
 
       expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
     });
+    test('If Statement', () async {
+      final code = '''
+        IF b'true' equals b'true':
+          SET output TO itself WITH s'passed';
+        ENDIF;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('passed'));
+    });
     test('Select When', () async {
       final code = '''
         DEFINE first STRING hello;
