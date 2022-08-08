@@ -34,7 +34,7 @@ class SelectStatement extends Statement {
     late final Operator from;
     if (tokens[3] is String) {
       if (tokens[3].trim() == '*') {
-        from = const Operator([OperationName(name: '*', rawValue: false, listAccess: null)], null);
+        from = const Operator([OperationName(name: '*', type: OperationType.access, listAccess: null)], null);
       } else {
         throw Exception('Not supported');
       }
@@ -75,7 +75,7 @@ class SelectStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter) async {
-    dynamic value = from.getValue(interpreter.values).value;
+    dynamic value = from.getValue(interpreter.values, interpreter).value;
 
     //this is relevant for the getValue on the operators to know if it is being passed a list to modify or a elements within a list to modify
     bool expand = false;
@@ -112,8 +112,8 @@ class SelectStatement extends Statement {
     if (when != null) {
       if (value is List) {
         //filter by the when condition per element
-        value = value.where((e) => when!.evaluate(e)).toList();
-      } else if (!when!.evaluate(value)) {
+        value = value.where((e) => when!.evaluate(e, interpreter)).toList();
+      } else if (!when!.evaluate(value, interpreter)) {
         //clear value if it doesn't meet the when condition
         value = [];
       }
@@ -127,23 +127,27 @@ class SelectStatement extends Statement {
     for (final op in operators) {
       final MapEntry entry = op.getValue(
         value,
+        interpreter,
         //TODO: add a test function to make check if there is a valid object being used
         custom: {
-          'innerHTML': (Operator op1, dynamic value) {
+          'innerHTML': (dynamic value, List params) {
             return value.innerHtml;
           },
-          'name': (Operator op1, dynamic value) {
+          'name': (dynamic value, List params) {
             return value.localName;
           },
-          'outerHTML': (Operator op1, dynamic value) {
+          'outerHTML': (dynamic value, List params) {
             return value.outerHtml;
           },
-          'attribute': (Operator op1, dynamic value) {
-            return value.attributes[op1.names.last.name];
+          'attribute': (dynamic value, List params) {
+            return value.attributes[params[0]];
           },
-          'text': (Operator op1, dynamic value) {
+          'text': (dynamic value, List params) {
             return value.text;
-          }
+          },
+          'trim': (dynamic value, List params) {
+            return value.trim();
+          },
         },
         expand: expand,
       );

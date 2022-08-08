@@ -1,3 +1,5 @@
+import '../interpreter/interpreter.dart';
+
 import '../../util/log.dart';
 import 'package:petitparser/petitparser.dart';
 
@@ -23,18 +25,12 @@ class Operator {
     if (tokens.first is List && tokens.first.first is Token) {
       names.add(OperationName(
         name: tokens.first.last,
-        rawValue: true,
+        type: OperationType.literal,
         value: _parseRawValue(tokens.first.first, tokens.first.last),
         listAccess: null,
       ));
     } else {
-      for (final List nameList in tokens.first) {
-        names.add(OperationName(
-          name: nameList.first,
-          rawValue: false,
-          listAccess: nameList.last,
-        ));
-      }
+      names.addAll(_generateOperatorList(tokens));
     }
 
     return Operator(names, alias);
@@ -47,27 +43,48 @@ class Operator {
     if (tokens is List && tokens.first is Token) {
       names.add(OperationName(
         name: tokens.last,
-        rawValue: true,
+        type: OperationType.literal,
         value: _parseRawValue(tokens.first, tokens.last),
         listAccess: null,
       ));
     } else if (tokens.first is String) {
       names.add(OperationName(
         name: tokens.first,
-        rawValue: false,
+        type: OperationType.access,
         listAccess: null,
       ));
     } else {
-      for (final List nameList in tokens) {
+      names.addAll(_generateOperatorList(tokens));
+    }
+
+    return Operator(names, null);
+  }
+
+  static List<OperationName> _generateOperatorList(List tokens) {
+    final List<OperationName> names = [];
+
+    for (final List nameList in tokens.first) {
+      final dynamic firstIdentifier = nameList.first;
+      final dynamic listAccess = nameList.last;
+
+      //support for functions
+      if (firstIdentifier is List) {
         names.add(OperationName(
           name: nameList.first,
-          rawValue: false,
-          listAccess: nameList.last,
+          type: OperationType.function,
+          value: Operator.fromTokensNoAlias(firstIdentifier.last),
+          listAccess: listAccess,
+        ));
+      } else {
+        names.add(OperationName(
+          name: nameList.first,
+          type: OperationType.access,
+          listAccess: listAccess,
         ));
       }
     }
 
-    return Operator(names, null);
+    return names;
   }
 
   static dynamic _parseRawValue(Token type, dynamic value) {
@@ -95,9 +112,10 @@ class Operator {
     }
   }
 
-  MapEntry<String, List<dynamic>> getValue(dynamic context,
+  //TODO: remove custom functions and switch to the wql functions to be allowed
+  MapEntry<String, List<dynamic>> getValue(dynamic context, Interpreter interpreter,
       {Map<String, Function> custom = const {}, bool expand = false}) {
-    if (names.first.rawValue) {
+    if (names.first.type == OperationType.literal) {
       return MapEntry(alias ?? names.first.name, [names.first.value]);
     }
 
@@ -108,27 +126,18 @@ class Operator {
       value = [context];
     }
 
-    //keeps track of if level of access is still the first level (attribute.name) <- attribute is first level
-    bool firstLevel = true;
-
-    bool end = false;
-
     for (final operation in names) {
-      //end the loop if a top level operation ran.
-      //TODO: make a skip for top level functions to allow potentially chaining them if it could be useful
-      if (end) {
-        break;
-      }
-
       //this might cause issues or unexpected issues
       if (operation.name == '*') {
         continue;
       } else {
         //select a value
         value = value.map((e) {
-          if (firstLevel && custom.containsKey(operation.name)) {
-            end = true;
-            return custom[operation.name]!(this, e);
+          if (operation.type == OperationType.function) {
+            final List values = (operation.value ?? const [])
+                .map((op) => op.getValue(interpreter.values, interpreter, custom: custom))
+                .toList();
+            return custom[operation.name]!(e, values);
           }
 
           if (e is Map) {
@@ -138,8 +147,6 @@ class Operator {
           }
         }).toList();
       }
-
-      firstLevel = false;
 
       //TODO: allow list access to have keywords ex: [first] [last] [all]
 
@@ -160,11 +167,17 @@ class Operator {
   }
 }
 
+enum OperationType {
+  function,
+  literal,
+  access,
+}
+
 class OperationName {
+  final OperationType type;
   final String name;
-  final bool rawValue;
-  final dynamic? value;
+  final dynamic value;
   final String? listAccess;
 
-  const OperationName({required this.name, required this.rawValue, this.value, this.listAccess});
+  const OperationName({required this.name, required this.type, this.value, this.listAccess});
 }

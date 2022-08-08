@@ -686,6 +686,17 @@ void main() {
 
       expect(values.data!['output'], equals('passed'));
     });
+    test('Trim Function', () async {
+      final code = '''
+        SET output TO itself WITH trim(s'   hello world   ');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
     test('Select When', () async {
       final code = '''
         DEFINE first STRING hello;

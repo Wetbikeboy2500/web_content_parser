@@ -120,7 +120,7 @@ class SetStatement extends Statement {
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
-      args.add(arg.getValue(interpreter.values).value);
+      args.add(arg.getValue(interpreter.values, interpreter).value);
     }
 
     final Function? func = functions[function];
