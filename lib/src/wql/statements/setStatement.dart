@@ -51,7 +51,12 @@ class SetStatement extends Statement {
       return value - 1;
     },
     'trim': (args) {
-      return args[0].first.trim();
+      if (args[0] is List) {
+        return args[0].first.trim();
+      } else if (args[0] is String) {
+        //need to support raw values
+        return args[0].trim();
+      }
     },
     'merge': (args) {
       final List results = [];
@@ -120,7 +125,7 @@ class SetStatement extends Statement {
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
-      args.add(arg.getValue(interpreter.values, interpreter).value);
+      args.add(arg.getValue(interpreter.values, interpreter, custom: functions).value);
     }
 
     final Function? func = functions[function];

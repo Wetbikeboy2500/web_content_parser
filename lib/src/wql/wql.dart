@@ -1,4 +1,5 @@
 import '../util/Result.dart';
+import '../util/log.dart';
 import 'interpreter/interpreter.dart';
 import 'interpreter/parseAndTokenize.dart';
 import 'interpreter/parseStatements.dart';
@@ -13,6 +14,7 @@ Future<Result<Map<String, dynamic>>> runWQL(String code,
     if (throwErrors) {
       rethrow;
     }
+    log(e, level: const LogLevel.error());
     return const Result.fail();
   }
   return Result.pass(interpreter.values);

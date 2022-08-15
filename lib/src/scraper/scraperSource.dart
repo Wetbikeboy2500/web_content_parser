@@ -82,12 +82,12 @@ class ScraperSource {
       //add functions (type, file, entry)
       for (final request in yaml['requests']) {
         if (!request.containsKey('type')) {
-          log2('No type included', request);
+          log2('No type included', request, level: const LogLevel.warn());
           continue;
         }
 
         if (!request.containsKey('file')) {
-          log2('No file included', request);
+          log2('No file included', request, level: const LogLevel.warn());
           continue;
         }
 
@@ -106,8 +106,8 @@ class ScraperSource {
         );
       }
     } catch (e, stack) {
-      log2('Parsing error for global source', e);
-      log(stack);
+      log2('Parsing error for global source', e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
       throw const FormatException('Failed to parse source');
     }
   }
@@ -115,13 +115,13 @@ class ScraperSource {
   static bool _loadedWQLFunctions = false;
 
   Future<Result<T>> makeRequest<T>(String name, List<MapEntry<String, dynamic>> arguments) async {
-    log2('Make request: ', name);
+    log2('Make request: ', name, level: const LogLevel.info());
     final Request? r = requests[name];
 
     if (r != null) {
       //ensure that the request file exists
       if (!(await r.file.exists())) {
-        log2('Request file does not exist', r.file.path);
+        log2('Request file does not exist', r.file.path, level: const LogLevel.warn());
         return const Result.fail();
       }
 

@@ -31,7 +31,7 @@ Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, S
 
     return ResultExtended.toJson(Result.pass(result));
   } catch (e) {
-    log2('Post failed: ', e);
+    log2('Post failed: ', e, level: const LogLevel.error());
     return ResultExtended.toJson(const Result.fail());
   }
 }

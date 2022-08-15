@@ -112,7 +112,7 @@ Map<String, HTExternalFunction> _externalFunction = {
     try {
       return DateTime(int.parse(positionalArgs[0]));
     } catch (e) {
-      log2('Error dateTimeYear', e);
+      log2('Error dateTimeYear', e, level: const LogLevel.error());
       return DateTime.now();
     }
   },
@@ -137,7 +137,7 @@ Map<String, HTExternalFunction> _externalFunction = {
 
       return DateTime.now().subtract(ago);
     } catch (e) {
-      log2('Error occurred parsing time ago:', e);
+      log2('Error occurred parsing time ago:', e, level: const LogLevel.error());
       //TODO: revise this to use a safe call and not default to datetime now
       return DateTime.now();
     }

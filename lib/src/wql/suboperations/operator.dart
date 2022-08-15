@@ -23,6 +23,7 @@ class Operator {
     final List<OperationName> names = [];
 
     if (tokens.first is List && tokens.first.first is Token) {
+      assert(tokens.first.last is String);
       names.add(OperationName(
         name: tokens.first.last,
         type: OperationType.literal,
@@ -69,10 +70,11 @@ class Operator {
 
       //support for functions
       if (firstIdentifier is List) {
+        assert(firstIdentifier.first is String);
         names.add(OperationName(
-          name: nameList.first,
+          name: firstIdentifier.first,
           type: OperationType.function,
-          value: Operator.fromTokensNoAlias(firstIdentifier.last),
+          value: firstIdentifier.last?.map((value) => Operator.fromTokensNoAlias(value)).toList(),
           listAccess: listAccess,
         ));
       } else {
@@ -126,18 +128,29 @@ class Operator {
       value = [context];
     }
 
+    bool topLevel = true;
+
     for (final operation in names) {
       //this might cause issues or unexpected issues
       if (operation.name == '*') {
+        topLevel = false;
         continue;
       } else {
         //select a value
         value = value.map((e) {
           if (operation.type == OperationType.function) {
             final List values = (operation.value ?? const [])
-                .map((op) => op.getValue(interpreter.values, interpreter, custom: custom))
+                .map((op) => op.getValue(interpreter.values, interpreter, custom: custom).value)
                 .toList();
-            return custom[operation.name]!(e, values);
+
+            if (topLevel) {
+              //if top, then the value should be the first value
+              return custom[operation.name]!(values);
+            } else {
+              //pipe the leading value in
+              return custom[operation.name]!([e, ...values]);
+            }
+
           }
 
           if (e is Map) {
@@ -147,6 +160,8 @@ class Operator {
           }
         }).toList();
       }
+
+      topLevel = false;
 
       //TODO: allow list access to have keywords ex: [first] [last] [all]
 
@@ -158,7 +173,7 @@ class Operator {
         } else if (operation.listAccess!.trim() == '[0]') {
           value = value[0];
         } else {
-          log('Specialized list access is not supported yet');
+          log('Specialized list access is not supported yet', level: const LogLevel.warn());
         }
       }
     }

@@ -3,6 +3,7 @@
 
 import 'package:hetu_script/hetu_script.dart';
 import 'package:hetu_script/shared/util.dart';
+import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'dart:io';
@@ -19,8 +20,8 @@ import 'package:dotenv/dotenv.dart' show load, env;
 void main() {
   group('Utility', () {
     test('Enable log', () {
-      WebContentParser.verbose = true;
-      expect(WebContentParser.verbose, isTrue);
+      WebContentParser.verbose = const LogLevel.debug();
+      expect(WebContentParser.verbose, equals(const LogLevel.debug()));
     });
     test('Passing Result', () {
       Result<String> f = Result<String>.pass('Test');
@@ -232,7 +233,7 @@ void main() {
     });
 
     test('Load yaml file', () {
-      WebContentParser.verbose = true;
+      WebContentParser.verbose = const LogLevel.debug();
 
       List<ScraperSource> scrapers = loadExternalScarperSources(Directory('test/samples/scraper'));
       //have one scraper
@@ -297,7 +298,7 @@ void main() {
       expect(result, isNull);
     });
     test('Load global scraper source and run Hetu entry', () async {
-      WebContentParser.verbose = true;
+      WebContentParser.verbose = const LogLevel.debug();
 
       loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
@@ -323,7 +324,7 @@ void main() {
       expect(response.data, equals(['Some testing text', 'Some testing text']));
     });
     test('Load global scraper source and run WQL entry', () async {
-      WebContentParser.verbose = true;
+      WebContentParser.verbose = const LogLevel.debug();
 
       loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
@@ -686,12 +687,26 @@ void main() {
 
       expect(values.data!['output'], equals('passed'));
     });
-    test('Trim Function', () async {
+    test('Trim Function High Level', () async {
+      WebContentParser.verbose = const LogLevel.debug();
       final code = '''
         SET output TO itself WITH trim(s'   hello world   ');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Trim Function Piped Value', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+      final code = '''
+        DEFINE first STRING '   hello world   ';
+        SET output TO itself WITH first.trim();
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
 
       expect(values.pass, isTrue);
 

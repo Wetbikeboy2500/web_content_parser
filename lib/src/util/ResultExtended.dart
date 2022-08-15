@@ -14,8 +14,8 @@ extension ResultExtended<T> on Result<T> {
     try {
       return Result.pass(unsafeFunction());
     } catch (e, stack) {
-      log2(errorMessage, e);
-      log(stack);
+      log2(errorMessage, e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
       return const Result.fail();
     }
   }
@@ -28,8 +28,8 @@ extension ResultExtended<T> on Result<T> {
     try {
       return Result.pass(await unsafeFunction());
     } catch (e, stack) {
-      log2(errorMessage, e);
-      log(stack);
+      log2(errorMessage, e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
       return const Result.fail();
     }
   }

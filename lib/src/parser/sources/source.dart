@@ -27,11 +27,11 @@ Future<Result<Post>> fetchPost(ID id) async {
     try {
       return await source.fetchPost(id);
     } catch (e, stack) {
-      log2('High level error getting post data:', e);
-      log(stack);
+      log2('High level error getting post data:', e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
     }
   } else {
-    log2('Unable to find source', id.source);
+    log2('Unable to find source', id.source, level: const LogLevel.warn());
   }
   return const Result.fail();
 }
@@ -43,7 +43,7 @@ Future<Result<Post>> fetchPostUrl(String url) async {
   final u = UriResult.parse(url);
 
   if (u.fail) {
-    log2('Error parsing url:', url);
+    log2('Error parsing url:', url, level: const LogLevel.warn());
     return const Result.fail();
   }
 
@@ -63,21 +63,21 @@ Future<Result<Post>> fetchPostUrl(String url) async {
   }
 
   if (!allowedSourcesFound) {
-    log('Found no allowed sources');
+    log('Found no allowed sources', level: const LogLevel.warn());
     return const Result.fail();
   }
 
   //find the source that support the url for the image downloading
   if (source == null) {
-    log2('No series match url:', url);
+    log2('No series match url:', url, level: const LogLevel.warn());
     return const Result.fail();
   }
 
   try {
     return await source.fetchPostUrl(url);
   } catch (e, stack) {
-    log2('High level error fetching post url', e);
-    log(stack);
+    log2('High level error fetching post url', e, level: const LogLevel.error());
+    log(stack, level: const LogLevel.debug());
   }
   return const Result.fail();
 }
@@ -92,7 +92,7 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
       final Result<List<Chapter>> result = await source.fetchChapters(id);
 
       if (result.fail) {
-        log('Failed fetching chapters');
+        log('Failed fetching chapters', level: const LogLevel.warn());
         return const Result.fail();
       }
 
@@ -102,11 +102,11 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
       chapters.sort((a, b) => a.chapterID.index - b.chapterID.index);
       return Result.pass(chapters);
     } catch (e, stack) {
-      log2('Error getting chapter list info:', e);
-      log(stack);
+      log2('Error getting chapter list info:', e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
     }
   } else {
-    log2('Unable to find source', id.source);
+    log2('Unable to find source', id.source, level: const LogLevel.warn());
   }
   return const Result.fail();
 }
@@ -119,7 +119,7 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
   final Uri? u = Uri.tryParse(url);
 
   if (u == null) {
-    log2('Error parsing url:', url);
+    log2('Error parsing url:', url, level: const LogLevel.warn());
     return const Result.fail();
   }
 
@@ -137,21 +137,21 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
   }
 
   if (!allowedSourcesFound) {
-    log('Found no allowed sources');
+    log('Found no allowed sources', level: const LogLevel.warn());
     return const Result.fail();
   }
 
   if (source == null) {
-    log('No sources match chapter image download');
+    log('No sources match chapter image download', level: const LogLevel.warn());
     return const Result.fail();
   }
 
   try {
-    log('Fetching chapter images');
+    log('Fetching chapter images', level: const LogLevel.info());
     return await source.fetchChapterImagesUrl(url);
   } catch (e, stack) {
-    log2('Error in getting chapter images url:', e);
-    log(stack);
+    log2('Error in getting chapter images url:', e, level: const LogLevel.error());
+    log(stack, level: const LogLevel.debug());
   }
   return const Result.fail();
 }
@@ -163,14 +163,14 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
   try {
     final SourceTemplate? s = sources[chapterID.id.source];
     if (s != null && s.supports(RequestType.images)) {
-      log('Fetching chapter images');
+      log('Fetching chapter images', level: const LogLevel.info());
       return await s.fetchChapterImages(chapterID);
     } else {
-      log2('Found no source for chapter images:', chapterID.id.source);
+      log2('Found no source for chapter images:', chapterID.id.source, level: const LogLevel.warn());
     }
   } catch (e, stack) {
-    log2('Error in getting chapter images:', e);
-    log(stack);
+    log2('Error in getting chapter images:', e, level: const LogLevel.error());
+    log(stack, level: const LogLevel.debug());
   }
   return const Result.fail();
 }
@@ -190,14 +190,14 @@ Future<Result<List<CatalogEntry>>> fetchCatalog(String source,
       try {
         return await s.fetchCatalog(page: page, options: options);
       } catch (e, stack) {
-        log2('Error in getting catalog:', e);
-        log(stack);
+        log2('Error in getting catalog:', e, level: const LogLevel.error());
+        log(stack, level: const LogLevel.debug());
       }
     } else {
-      log2('Does not support catalog:', source);
+      log2('Does not support catalog:', source, level: const LogLevel.warn());
     }
   } else {
-    log2('Invalid source: ', source);
+    log2('Invalid source: ', source, level: const LogLevel.warn());
   }
 
   return const Result.fail();
@@ -226,8 +226,8 @@ void loadExternalParseSources(Directory dir) {
       //add the new source
       addSource(source.source, source);
     } catch (e, stack) {
-      log2('Error loading external source:', e);
-      log(stack);
+      log2('Error loading external source:', e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
     }
   }
 }

@@ -5,7 +5,7 @@ import '../suboperations/logicalSelector.dart';
 import '../statements/selectStatement.dart';
 import '../statements/setStatement.dart';
 
-/// Tokenizes a string into a list of tokens.
+/// Tokenized a string into a list of tokens.
 /// This defines the grammar of the language as well.
 List parseAndTokenize(String input) {
   //Do not allow commas or semicolons or colons or periods for value matcher

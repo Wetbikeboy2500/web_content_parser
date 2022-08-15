@@ -44,6 +44,7 @@ class MobileHeadless extends Headless {
     headless?.dispose();
 
     //TODO: allow system to get cookies
+    //TODO: by default, don't load unnecassary files (css, images, fonts, etc)
     headless = HeadlessInAppWebView(
       initialUrlRequest: URLRequest(url: uri),
       onProgressChanged: (controller, number) {
@@ -69,7 +70,7 @@ class MobileHeadless extends Headless {
                     }
                     _cookies[uri.host] = tmpCookies;
                   } catch (e) {
-                    log2('Failed to save cookies', e);
+                    log2('Failed to save cookies', e, level: const LogLevel.error());
                   }
 
                   completer.complete(Result.pass(value));

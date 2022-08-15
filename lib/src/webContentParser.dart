@@ -1,9 +1,10 @@
 import 'scraper/headless/headless.dart';
+import 'util/log.dart';
 
 ///Central class for settings
 class WebContentParser {
   ///Allow verbose logging
-  static bool verbose = false;
+  static LogLevel verbose = const LogLevel.silent();
 
   ///Headless browsers that the scrapers can use
   static List<Headless> headlessBrowsers = [];
