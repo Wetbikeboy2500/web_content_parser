@@ -58,6 +58,46 @@ class SetStatement extends Statement {
         return args[0].trim();
       }
     },
+    'innerHTML': (args) {
+      if (args[0] is List) {
+        return args[0].first.innerHtml;
+      } else {
+        //move this outside of this functions list and check the type
+        return args[0].innerHtml;
+      }
+    },
+    'outerHTML': (args) {
+      if (args[0] is List) {
+        return args[0].first.outerHTML;
+      } else {
+        //move this outside of this functions list and check the type
+        return args[0].outerHTML;
+      }
+    },
+    'attribute': (args) {
+      if (args[0] is List) {
+        return args[0].first.attributes[args[1]];
+      } else {
+        //move this outside of this functions list and check the type
+        return args[0].attributes[args[1]];
+      }
+    },
+    'name': (args) {
+      if (args[0] is List) {
+        return args[0].first.localName;
+      } else {
+        //move this outside of this functions list and check the type
+        return args[0].localName;
+      }
+    },
+    'text': (args) {
+      if (args[0] is List) {
+        return args[0].first.text;
+      } else {
+        //move this outside of this functions list and check the type
+        return args[0].text;
+      }
+    },
     'merge': (args) {
       final List results = [];
       for (List l in args) {

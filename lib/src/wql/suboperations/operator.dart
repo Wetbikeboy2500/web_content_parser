@@ -31,7 +31,8 @@ class Operator {
         listAccess: null,
       ));
     } else {
-      names.addAll(_generateOperatorList(tokens));
+      //.first to remove the alias wrapping
+      names.addAll(_generateOperatorList(tokens.first));
     }
 
     return Operator(names, alias);
@@ -64,7 +65,7 @@ class Operator {
   static List<OperationName> _generateOperatorList(List tokens) {
     final List<OperationName> names = [];
 
-    for (final List nameList in tokens.first) {
+    for (final List nameList in tokens) {
       final dynamic firstIdentifier = nameList.first;
       final dynamic listAccess = nameList.last;
 
@@ -150,7 +151,6 @@ class Operator {
               //pipe the leading value in
               return custom[operation.name]!([e, ...values]);
             }
-
           }
 
           if (e is Map) {

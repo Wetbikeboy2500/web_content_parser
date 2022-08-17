@@ -522,7 +522,7 @@ void main() {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
       final code = '''
-        SELECT name AS random, innerHTML FROM document INTO doc WHERE SELECTOR IS 'body > p';
+        SELECT *.name() AS random, *.innerHTML() FROM document INTO doc WHERE SELECTOR IS 'body > p';
         DEFINE firstname STRING hello;
         SELECT doc[], firstname FROM * into doctwo;
         SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
@@ -787,7 +787,7 @@ void main() {
         SELECT s'hello' as intro, n'25' as number, b'true' as true, l'' as list FROM * INTO return;
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await runWQL(code, throwErrors: true);
 
       expect(values.pass, isTrue);
 

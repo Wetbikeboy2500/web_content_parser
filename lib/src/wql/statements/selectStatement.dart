@@ -1,4 +1,5 @@
 import 'package:petitparser/petitparser.dart';
+import 'package:web_content_parser/src/wql/statements/setStatement.dart';
 import '../suboperations/logicalSelector.dart';
 import '../interpreter/interpreter.dart';
 import '../parserHelper.dart';
@@ -129,26 +130,7 @@ class SelectStatement extends Statement {
         value,
         interpreter,
         //TODO: add a test function to make check if there is a valid object being used
-        custom: {
-          'innerHTML': (dynamic value, List params) {
-            return value.innerHtml;
-          },
-          'name': (dynamic value, List params) {
-            return value.localName;
-          },
-          'outerHTML': (dynamic value, List params) {
-            return value.outerHtml;
-          },
-          'attribute': (dynamic value, List params) {
-            return value.attributes[params[0]];
-          },
-          'text': (dynamic value, List params) {
-            return value.text;
-          },
-          'trim': (dynamic value, List params) {
-            return value.trim();
-          },
-        },
+        custom: SetStatement.functions,
         expand: expand,
       );
 
