@@ -1,10 +1,9 @@
 //Make sure to keep this as the first import
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
+import 'package:web_content_parser/web_content_parser_full.dart';
 import 'package:hetu_script/hetu_script.dart';
 import 'package:hetu_script/shared/util.dart';
-import 'package:web_content_parser/src/util/log.dart';
-import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'dart:io';
 import 'package:test/test.dart';
@@ -518,6 +517,9 @@ void main() {
 
   //Tests the features of the source builder language
   group('Source Builder', () {
+    setUp(() {
+      loadWQLFunctions();
+    });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 

@@ -1,5 +1,5 @@
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/wql/statements/setStatement.dart';
+import 'setStatement.dart';
 import '../suboperations/logicalSelector.dart';
 import '../interpreter/interpreter.dart';
 import '../parserHelper.dart';
