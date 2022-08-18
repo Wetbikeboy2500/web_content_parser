@@ -19,7 +19,7 @@ Parser get input {
   final _literal = (char('l') | char('s') | char('b') | char('n')).token() & rawInputSingleQuote.trim();
 
   final _function = (letter().plus().flatten() &
-      (char('(') & _operator.separatedBy(char(','), includeSeparators: false).optional() & char(')'))
+      (char('(') & _operator.separatedBy(char(',').trim(), includeSeparators: false).optional() & char(')'))
           .pick(1));
 
   final _access = safeChars.plus().flatten().trim();

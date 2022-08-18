@@ -118,6 +118,11 @@ class SetStatement extends Statement {
     'itself': (args) {
       return args[0].first;
     },
+    'print': (args) {
+      // ignore: avoid_print
+      print(args);
+      return null;
+    }
   };
 
   @override

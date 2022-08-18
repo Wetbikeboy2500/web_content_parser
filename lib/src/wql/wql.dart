@@ -10,11 +10,12 @@ Future<Result<Map<String, dynamic>>> runWQL(String code,
   interpreter.setValues(parameters);
   try {
     await interpreter.runStatements(parseStatements(parseAndTokenize(code)));
-  } catch (e) {
+  } catch (e, stack) {
     if (throwErrors) {
       rethrow;
     }
     log(e, level: const LogLevel.error());
+    log(stack, level: const LogLevel.debug());
     return const Result.fail();
   }
   return Result.pass(interpreter.values);

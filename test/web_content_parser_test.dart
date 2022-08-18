@@ -544,6 +544,38 @@ void main() {
             {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
           ]));
     });
+    test('Multiple arguments', () async {
+      final String code = '''
+        SET test TO itself WITH s'hello';
+        SET page TO itself WITH concat(s'?page=', test);
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['page'], equals('?page=hello'));
+    });
+    test('Multiple arguments raw', () async {
+      final String code = '''
+        SET page TO itself WITH concat(s'?page=', s'hello');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['page'], equals('?page=hello'));
+    });
+    test('Multiple arguments nested', () async {
+      final String code = '''
+        SET page TO itself WITH n'0';
+        SET url TO joinUrl WITH s'https://www.example.com/', concat(s'?page=', increment(page));
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['url'], equals('https://www.example.com/?page=1'));
+    });
     //TODO: add tests for set statement functions
     test('Increment', () async {
       final code = '''
