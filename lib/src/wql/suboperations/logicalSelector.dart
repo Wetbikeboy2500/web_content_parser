@@ -1,4 +1,5 @@
 import 'package:petitparser/petitparser.dart';
+import 'package:web_content_parser/src/wql/statements/setStatement.dart';
 import '../interpreter/interpreter.dart';
 import '../parserHelper.dart';
 import 'operator.dart';
@@ -41,8 +42,8 @@ class LogicalSelector {
         final first = Operator.fromTokensNoAlias(value[0]);
         final second = Operator.fromTokensNoAlias(value[2]);
 
-        final firstValue = first.getValue(context, interpreter).value.first;
-        final secondValue = second.getValue(context, interpreter).value.first;
+        final firstValue = first.getValue(context, interpreter, custom: SetStatement.functions).value.first;
+        final secondValue = second.getValue(context, interpreter, custom: SetStatement.functions).value.first;
 
         switch(value[1].toLowerCase()) {
           case 'matches':

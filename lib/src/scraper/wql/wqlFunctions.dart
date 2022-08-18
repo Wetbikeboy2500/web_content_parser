@@ -25,31 +25,36 @@ void loadWQLFunctions() {
       );
     },
     'parse': (args) {
-      return parse(args[0].first);
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      return parse(arg);
     },
     'getstatuscode': (args) {
-      return args[0].first.statusCode;
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      return arg.statusCode;
     },
     'parsebody': (args) {
-      return parse(args[0].first.body);
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      return parse(arg.body);
     },
     'joinurl': (args) {
       return path.url.joinAll(List<String>.from(args.map((e) => e.first)));
     },
     'getlastsegment': (args) {
-      final arg = args[0].first;
-      if (arg is String) {
-        return path.url.split(arg).last;
-      }
-      if (arg is List && arg.isNotEmpty && arg.first is Map) {
-        final List output = [];
-        for (Map item in arg) {
-          output.add(path.url.split(item[args[1].first]).last);
+      final List arg0 = (args[0] is List) ? args[0] : [args[0]];
+      final dynamic? arg1 = (args.length == 1) ? null : (args[1] is List) ? args[1].first : args[1];
+
+      final List output = [];
+      if (arg1 == null) {
+        for (String item in arg0) {
+          output.add(path.url.split(item).last);
         }
-        return output;
       } else {
-        throw Exception('Cannot get last segment of a non string or list');
+        for (Map item in arg0) {
+          output.add(path.url.split(item[arg1]).last);
+        }
       }
+
+      return output;
     },
     'datetimeago': (args) {
       return args[0].map((time) {
@@ -72,7 +77,7 @@ void loadWQLFunctions() {
         }
       }).toList();
     },
-    'innerHTML': (args) {
+    'innerhtml': (args) {
       if (args[0] is List) {
         return args[0].first.innerHtml;
       } else {
@@ -80,7 +85,7 @@ void loadWQLFunctions() {
         return args[0].innerHtml;
       }
     },
-    'outerHTML': (args) {
+    'outerhtml': (args) {
       if (args[0] is List) {
         return args[0].first.outerHTML;
       } else {
@@ -89,12 +94,9 @@ void loadWQLFunctions() {
       }
     },
     'attribute': (args) {
-      if (args[0] is List) {
-        return args[0].first.attributes[args[1]];
-      } else {
-        //move this outside of this functions list and check the type
-        return args[0].attributes[args[1]];
-      }
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      return arg0.attributes[arg1];
     },
     'name': (args) {
       if (args[0] is List) {

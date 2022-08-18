@@ -117,7 +117,7 @@ class Operator {
 
   //TODO: remove custom functions and switch to the wql functions to be allowed
   MapEntry<String, List<dynamic>> getValue(dynamic context, Interpreter interpreter,
-      {Map<String, Function> custom = const {}, bool expand = false}) {
+      {required Map<String, Function> custom, bool expand = false}) {
     if (names.first.type == OperationType.literal) {
       return MapEntry(alias ?? names.first.name, [names.first.value]);
     }
@@ -146,10 +146,10 @@ class Operator {
 
             if (topLevel) {
               //if top, then the value should be the first value
-              return custom[operation.name]!(values);
+              return custom[operation.name.toLowerCase()]!(values);
             } else {
               //pipe the leading value in
-              return custom[operation.name]!([e, ...values]);
+              return custom[operation.name.toLowerCase()]!([e, ...values]);
             }
           }
 
