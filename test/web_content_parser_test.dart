@@ -525,7 +525,7 @@ void main() {
 
       final code = '''
         SELECT *.name() AS random, *.innerHTML() FROM document INTO doc WHERE SELECTOR IS 'body > p';
-        DEFINE firstname STRING hello;
+        SET firstname TO itself WITH s'hello';
         SELECT doc[], firstname FROM * into doctwo;
         SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
       ''';
@@ -547,7 +547,7 @@ void main() {
     //TODO: add tests for set statement functions
     test('Increment', () async {
       final code = '''
-        DEFINE number INT 0;
+        SET number TO itself WITH n'0';
         SET number TO increment WITH number;
       ''';
 
@@ -559,7 +559,7 @@ void main() {
     });
     test('Decrement', () async {
       final code = '''
-        DEFINE number INT 0;
+        SET number TO itself WITH n'0';
         SET number TO decrement WITH number;
       ''';
 
@@ -571,9 +571,7 @@ void main() {
     });
     test('Concat', () async {
       final code = '''
-        DEFINE first STRING hello;
-        DEFINE second STRING ' world';
-        SET output TO concat WITH first, second;
+        SET output TO concat WITH s'hello', s' world';
       ''';
 
       final Result values = await runWQL(code);
@@ -584,8 +582,7 @@ void main() {
     });
     test('Trim', () async {
       final code = '''
-        DEFINE first STRING '   hello world   ';
-        SET output TO trim WITH first;
+        SET output TO trim WITH s'   hello world   ';
       ''';
 
       final Result values = await runWQL(code);
@@ -650,18 +647,20 @@ void main() {
 
       expect(values.pass, isTrue);
 
-      expect(values.data!['output'], equals(<int, dynamic>{
-        0: 0,
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 4,
-        5: 5,
-        6: 6,
-        7: 7,
-        8: 8,
-        9: 9,
-      }));
+      expect(
+          values.data!['output'],
+          equals(<int, dynamic>{
+            0: 0,
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: 6,
+            7: 7,
+            8: 8,
+            9: 9,
+          }));
     });
     test('Merge', () async {
       final code = '''
@@ -704,7 +703,7 @@ void main() {
     test('Trim Function Piped Value', () async {
       WebContentParser.verbose = const LogLevel.debug();
       final code = '''
-        DEFINE first STRING '   hello world   ';
+        SET first TO itself WITH s'   hello world   ';
         SET output TO itself WITH first.trim();
       ''';
 
@@ -716,43 +715,7 @@ void main() {
     });
     test('Select When', () async {
       final code = '''
-        DEFINE first STRING hello;
-        DEFINE match STRING 'ell';
-        DEFINE noMatch STRING 'weird';
-        SELECT first FROM * INTO matchOutput WHEN first contains match;
-        SELECT first FROM * INTO noMatchOutput WHEN first contains noMatch;
-        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
-        SELECT matchOutput, noMatchOutput FROM * INTO outputList;
-      ''';
-
-      final Result values = await runWQL(code);
-
-      expect(values.pass, isTrue);
-
-      expect(
-          values.data!['output'],
-          equals([
-            {
-              'matchOutput': {'first': 'hello'},
-              'noMatchOutput': {'first': []}
-            }
-          ]));
-      expect(
-          values.data!['outputList'],
-          equals([
-            {
-              'matchOutput': [
-                {'first': 'hello'}
-              ],
-              'noMatchOutput': [
-                {'first': []}
-              ]
-            }
-          ]));
-    });
-    test('Raw value operators', () async {
-      final code = '''
-        DEFINE first STRING hello;
+        SET first TO itself WITH s'hello';
         SELECT first FROM * INTO matchOutput WHEN first contains s'ell';
         SELECT first FROM * INTO noMatchOutput WHEN first contains s'weird';
         SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
@@ -768,7 +731,9 @@ void main() {
           equals([
             {
               'matchOutput': {'first': 'hello'},
-              'noMatchOutput': {'first': []}
+              'noMatchOutput': {
+                'first': [],
+              }
             }
           ]));
       expect(
@@ -779,7 +744,9 @@ void main() {
                 {'first': 'hello'}
               ],
               'noMatchOutput': [
-                {'first': []}
+                {
+                  'first': [],
+                }
               ]
             }
           ]));

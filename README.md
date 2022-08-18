@@ -272,3 +272,26 @@ Lastly, I can't find a comparable language. The select statement itself is somet
 ### How to use it
 
 ### Select Statement
+
+### Wanted Syntax
+
+Syntax that I want to have implemented at some point
+
+Array access:
+
+```
+arr[first]
+arr[last]
+arr[spread] (equivalent to arr[])
+
+(optional more. could also support three value ranges)
+arr[even]
+arr[odd]
+```
+
+Function chaining
+
+```
+value|trim (Instead of value.trim())
+value|trim() (also supported)
+```
