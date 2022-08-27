@@ -2,7 +2,7 @@ import 'package:petitparser/petitparser.dart';
 
 //Shared parser options
 
-Parser get name => letter().plus().flatten().trim();
+Parser get name => safeChars.plus().flatten().trim();
 
 Parser get digitInput => (char('[').trim().token() &
         digit().star().flatten().optional() &

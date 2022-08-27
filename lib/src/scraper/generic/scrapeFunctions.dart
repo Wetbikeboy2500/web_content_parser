@@ -3,6 +3,7 @@
 //TODO: build a tmp page cache(build in) and long page cache(developer defined) system. Tmp page cache for when two request need to be made for the same resource
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:web_content_parser/parser.dart';
 import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/src/util/parseUriResult.dart';
@@ -26,7 +27,7 @@ Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, S
     final Response result = await post(
       uri.data!,
       headers: headers,
-      body: body,
+      body: jsonEncode(body),
     );
     return ResultExtended.toJson(Result.pass(result));
   } catch (e, stack) {
