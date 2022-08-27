@@ -23,15 +23,15 @@ Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, S
   }
 
   try {
-    final result = await post(
+    final Response result = await post(
       uri.data!,
       headers: headers,
       body: body,
     );
-
     return ResultExtended.toJson(Result.pass(result));
-  } catch (e) {
+  } catch (e, stack) {
     log2('Post failed: ', e, level: const LogLevel.error());
+    log(stack, level: const LogLevel.debug());
     return ResultExtended.toJson(const Result.fail());
   }
 }

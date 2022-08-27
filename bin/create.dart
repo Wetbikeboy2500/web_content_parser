@@ -1,7 +1,7 @@
 import 'dart:io';
 
-void main() {
-  createPackage('testing', Directory('bin'));
+void main(List<String> args) {
+  createPackage(args.first, Directory.current);
 }
 
 ///Create a web scraping package
@@ -80,21 +80,12 @@ void createPackage(String name, Directory dir) {
   String optional = '';
 
   if (createParser) {
-    optional = '''
-    baseUrl: $baseUrl
-    subdomain: $subdomain
-    contentType: $contentType
-    ''';
+    optional = '''\nbaseUrl: $baseUrl\nsubdomain: $subdomain\ncontentType: $contentType''';
   }
 
   //create the base yaml file
-  File('${projectDir.path}/$name.yaml').writeAsStringSync('''
-  source: $name
-  $optional
-  version: $version
-  programType: $programType
-  requests:
-  ''');
+  File('${projectDir.path}/$name.yaml')
+      .writeAsStringSync('''source: $name$optional\nversion: $version\nprogramType: $programType\nrequests:''');
 }
 
 void createRequest(String name, Directory dir) {

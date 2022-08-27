@@ -36,12 +36,20 @@ void loadWQLFunctions() {
       final dynamic arg = (args[0] is List) ? args[0].first : args[0];
       return parse(arg.body);
     },
+    'body': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      return arg.body;
+    },
     'joinurl': (args) {
       return path.url.joinAll(List<String>.from(args.map((e) => e.first)));
     },
     'getlastsegment': (args) {
       final List arg0 = (args[0] is List) ? args[0] : [args[0]];
-      final dynamic? arg1 = (args.length == 1) ? null : (args[1] is List) ? args[1].first : args[1];
+      final dynamic? arg1 = (args.length == 1)
+          ? null
+          : (args[1] is List)
+              ? args[1].first
+              : args[1];
 
       final List output = [];
       if (arg1 == null) {

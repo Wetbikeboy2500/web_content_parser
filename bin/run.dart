@@ -5,10 +5,12 @@ import 'package:web_content_parser/scraper.dart';
 import 'package:web_content_parser/src/scraper/scraper.dart';
 
 import 'package:path/path.dart' as path;
+import 'package:web_content_parser/src/util/log.dart';
 
 ///Example: dart bin/run.dart ./test/samples/wql google text
 ///TODO: add a verbose option
 void main(List<String> args) {
+  WebContentParser.verbose = const LogLevel.debug();
   late final List<MapEntry<String, dynamic>> entries;
 
   if (args.length > 3) {
