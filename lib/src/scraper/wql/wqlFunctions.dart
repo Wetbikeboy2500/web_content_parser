@@ -21,7 +21,7 @@ void loadWQLFunctions() {
       return await postRequest(
         args[0].first,
         args[1].first,
-        (args.length > 2) ? args[2].first : const <String, String>{},
+        (args.length > 2) ? Map<String, String>.from(args[2].first) : const <String, String>{},
       );
     },
     'parse': (args) {
