@@ -1,5 +1,6 @@
 
 import 'package:petitparser/petitparser.dart';
+import 'package:web_content_parser/src/wql/statements/runStatement.dart';
 
 import '../suboperations/logicalSelector.dart';
 import '../statements/selectStatement.dart';
@@ -29,6 +30,7 @@ List parseAndTokenize(String input) {
   final allQueries = ((SelectStatement.getParser() |
               queryDefine |
               SetStatement.getParser() |
+              RunStatement.getParser() |
               conditional) &
           char(';').token().trim())
       .pick(0)

@@ -2,6 +2,7 @@
 import 'package:petitparser/petitparser.dart';
 
 import '../statements/conditionalStatement.dart';
+import '../statements/runStatement.dart';
 import '../statements/selectStatement.dart';
 import '../statements/setStatement.dart';
 import '../statements/statement.dart';
@@ -37,6 +38,8 @@ Statement parseStatement(List tokens) {
           return SetStatement.fromTokens(tokens);
         case 'if':
           return ConditionalStatement.fromTokens(tokens);
+        case 'run':
+          return RunStatement.fromTokens(tokens);
       }
     }
   }

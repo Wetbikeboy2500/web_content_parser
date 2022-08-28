@@ -645,6 +645,19 @@ void main() {
 
       expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
     });
+    test('Run print', () async {
+      SetStatement.functions['print'] = (args) {
+        // ignore: avoid_print
+        print(args);
+      };
+      final code = '''
+        RUN print WITH n'0', n'10';
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+    });
     test('Reverse', () async {
       final code = '''
         SET range TO createRange WITH n'0', n'10';

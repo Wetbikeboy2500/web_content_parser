@@ -1,5 +1,7 @@
 import 'package:yaml/yaml.dart';
 
+typedef DynamicFunction = dynamic Function(dynamic);
+
 ///Parses a yaml file into a standard formatted map
 ///This allows for easier predictability of the data conversions
 Map<String, dynamic> parseYaml(String input) {
@@ -9,7 +11,7 @@ Map<String, dynamic> parseYaml(String input) {
     throw Exception('Yaml is not a map');
   }
 
-  late final convertMapList;
+  late final DynamicFunction convertMapList;
 
   convertMapList = (dynamic value) {
     if (value is YamlList) {
