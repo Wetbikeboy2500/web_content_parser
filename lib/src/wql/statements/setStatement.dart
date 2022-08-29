@@ -8,55 +8,40 @@ import 'statement.dart';
 
 class SetStatement extends Statement {
   final String target;
-  final String function;
-  final List<Operator> arguments;
+  final Operator operation;
 
-  const SetStatement(this.target, this.function, this.arguments);
+  const SetStatement(this.target, this.operation);
 
   factory SetStatement.fromTokens(List tokens) {
     final String target = tokens[1];
-    final String function = tokens[3].toLowerCase();
 
-    final List<Operator> arguments = [];
+    final Operator operation = Operator.fromTokensNoAlias(tokens[3]);
 
-    for (final List operatorTokens in tokens[5]) {
-      arguments.add(Operator.fromTokens(operatorTokens));
-    }
-
-    return SetStatement(target, function, arguments);
+    return SetStatement(target, operation);
   }
 
   static Parser getParser() {
-    return stringIgnoreCase('set').trim().token() &
-        name &
-        stringIgnoreCase('to').trim().token() &
-        name &
-        stringIgnoreCase('with') &
-        inputs;
+    return stringIgnoreCase('set').trim().token() & name & stringIgnoreCase('to').trim().token() & input;
   }
 
   static Map<String, Function> functions = {
     'increment': (args) {
-      dynamic value = args[0].first;
-      if (value is String) {
-        value = num.parse(value);
+      dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 is String) {
+        arg0 = num.parse(arg0);
       }
-      return value + 1;
+      return arg0 + 1;
     },
     'decrement': (args) {
-      dynamic value = args[0].first;
-      if (value is String) {
-        value = num.parse(value);
+      dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 is String) {
+        arg0 = num.parse(arg0);
       }
-      return value - 1;
+      return arg0 - 1;
     },
     'trim': (args) {
-      if (args[0] is List) {
-        return args[0].first.trim();
-      } else if (args[0] is String) {
-        //need to support raw values
-        return args[0].trim();
-      }
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      return arg0.trim();
     },
     'merge': (args) {
       final List results = [];
@@ -103,20 +88,24 @@ class SetStatement extends Statement {
       return results.join('');
     },
     'count': (args) {
-      return args[0].first.length;
+      final dynamic arg0 = (args[0] is List && args[0].isNotEmpty && args[0].first is List) ? args[0].first : args[0];
+      return arg0.length;
     },
     'createrange': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
       final List<int> output = [];
-      for (int i = args[0].first; i < args[1].first; i++) {
+      for (int i = arg0; i < arg1; i++) {
         output.add(i);
       }
       return output;
     },
     'reverse': (args) {
-      return args[0].first.reversed.toList();
+      final dynamic arg0 = (args[0] is List && args[0].isNotEmpty && args[0].first is List) ? args[0].first : args[0];
+      return arg0.reversed.toList();
     },
     'itself': (args) {
-      return args[0].first;
+      return (args[0] is List) ? args[0].first : args[0];
     },
     'print': (args) {
       // ignore: avoid_print
@@ -127,22 +116,9 @@ class SetStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter) async {
-    //gets the args to pass along
-    final List args = [];
-    for (final arg in arguments) {
-      args.add(arg.getValue(interpreter.values, interpreter, custom: functions).value);
-    }
-
-    final Function? func = functions[function];
-
-    if (func == null) {
-      throw UnsupportedError('Unsupported function: $function');
-    }
-
-    //runs the function
-    final dynamic value = await func(args);
+    final value = (await operation.getValue(interpreter.values, interpreter, custom: functions)).value;
 
     //set the value
-    interpreter.setValue(target, value);
+    interpreter.setValue(target, value.first);
   }
 }

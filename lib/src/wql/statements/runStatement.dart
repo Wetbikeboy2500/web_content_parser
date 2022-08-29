@@ -37,7 +37,7 @@ class RunStatement extends Statement {
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
-      args.add(arg.getValue(interpreter.values, interpreter, custom: SetStatement.functions).value);
+      args.add((await arg.getValue(interpreter.values, interpreter, custom: SetStatement.functions)).value);
     }
 
     final Function? func = SetStatement.functions[function];
@@ -47,6 +47,6 @@ class RunStatement extends Statement {
     }
 
     //runs the function
-    await func(args);
+    await await func(args);
   }
 }

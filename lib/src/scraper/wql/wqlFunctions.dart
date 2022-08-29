@@ -1,3 +1,5 @@
+import 'package:html/dom.dart';
+
 import '../../wql/statements/setStatement.dart';
 import '../generic/scrapeFunctions.dart';
 
@@ -110,7 +112,6 @@ void loadWQLFunctions() {
       if (args[0] is List) {
         return args[0].first.localName;
       } else {
-        //move this outside of this functions list and check the type
         return args[0].localName;
       }
     },

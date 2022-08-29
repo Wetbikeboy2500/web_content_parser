@@ -26,7 +26,7 @@ class ConditionalStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter) async {
-    if (conditional.evaluate(interpreter.values, interpreter)) {
+    if (await conditional.evaluate(interpreter.values, interpreter)) {
       for (final Statement statement in truthful) {
         await statement.execute(interpreter);
       }

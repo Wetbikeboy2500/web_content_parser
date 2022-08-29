@@ -34,16 +34,16 @@ class LogicalSelector {
     return term;
   }
 
-  bool evaluate(dynamic context, Interpreter interpreter) {
-    bool _eval(List value) {
+  Future<bool> evaluate(dynamic context, Interpreter interpreter) async {
+    Future<bool> _eval(List value) async {
       value[1] = (value[1] is Token) ? (value[1] as Token).value : value[1];
 
       if (value[1] != 'or' && value[1] != 'and') {
         final first = Operator.fromTokensNoAlias(value[0]);
         final second = Operator.fromTokensNoAlias(value[2]);
 
-        final firstValue = first.getValue(context, interpreter, custom: SetStatement.functions).value.first;
-        final secondValue = second.getValue(context, interpreter, custom: SetStatement.functions).value.first;
+        final firstValue = (await first.getValue(context, interpreter, custom: SetStatement.functions)).value.first;
+        final secondValue = (await second.getValue(context, interpreter, custom: SetStatement.functions)).value.first;
 
         switch(value[1].toLowerCase()) {
           case 'matches':
@@ -60,20 +60,20 @@ class LogicalSelector {
       }
 
       if (value[1] == 'or') {
-        final bool first = _eval(value[0]);
+        final bool first = await _eval(value[0]);
         if (first) {
           return true;
         }
-        final bool second = _eval(value[2]);
+        final bool second = await _eval(value[2]);
         return first || second;
       }
 
       if (value[1] == 'and') {
-        final bool first = _eval(value[0]);
+        final bool first = await _eval(value[0]);
         if (!first) {
           return false;
         }
-        final bool second = _eval(value[2]);
+        final bool second = await _eval(value[2]);
         return first && second;
       }
 

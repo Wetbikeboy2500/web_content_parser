@@ -116,17 +116,17 @@ class Operator {
   }
 
   //TODO: remove custom functions and switch to the wql functions to be allowed
-  MapEntry<String, List<dynamic>> getValue(dynamic context, Interpreter interpreter,
-      {required Map<String, Function> custom, bool expand = false}) {
+  Future<MapEntry<String, List>> getValue(dynamic context, Interpreter interpreter,
+      {required Map<String, Function> custom, bool expand = false}) async {
     if (names.first.type == OperationType.literal) {
       return MapEntry(alias ?? names.first.name, [names.first.value]);
     }
 
-    late List value;
+    late List<dynamic> value;
     if (expand) {
-      value = context;
+      value = List<dynamic>.from(context);
     } else {
-      value = [context];
+      value = List<dynamic>.from([context]);
     }
 
     bool topLevel = true;
@@ -138,27 +138,39 @@ class Operator {
         continue;
       } else {
         //select a value
-        value = value.map((e) {
+        final List<dynamic> newValues = List.generate(value.length, (index) => index);
+        for (final index in newValues) {
+          final e = value[index];
+
           if (operation.type == OperationType.function) {
-            final List values = (operation.value ?? const [])
-                .map((op) => op.getValue(interpreter.values, interpreter, custom: custom).value)
-                .toList();
+            final operationLength = operation.value?.length ?? 0;
+            //map values
+            final List<dynamic> values = List.generate(operationLength, (index) => index);
+            for (final index2 in values) {
+              values[index2] =
+                  (await operation.value[index2].getValue(interpreter.values, interpreter, custom: custom)).value;
+            }
 
             if (topLevel) {
               //if top, then the value should be the first value
-              return custom[operation.name.toLowerCase()]!(values);
+              newValues[index] = await custom[operation.name.toLowerCase()]!(values);
+              continue;
             } else {
-              //pipe the leading value in
-              return custom[operation.name.toLowerCase()]!([e, ...values]);
+              newValues[index] = await custom[operation.name.toLowerCase()]!([e, ...values]);
+              continue;
+            }
+          } else {
+            if (e is Map) {
+              newValues[index] = e[operation.name];
+              continue;
+            } else {
+              newValues[index] = e;
+              continue;
             }
           }
+        }
 
-          if (e is Map) {
-            return e[operation.name];
-          } else {
-            return e;
-          }
-        }).toList();
+        value = newValues;
       }
 
       topLevel = false;

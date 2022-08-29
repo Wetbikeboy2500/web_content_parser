@@ -525,12 +525,12 @@ void main() {
 
       final code = '''
         SELECT *.name() AS random, *.innerHTML() FROM document INTO doc WHERE SELECTOR IS 'body > p';
-        SET firstname TO itself WITH s'hello';
+        SET firstname TO s'hello';
         SELECT doc[], firstname FROM * into doctwo;
         SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
       ''';
 
-      final Result values = await runWQL(code, parameters: {'document': document});
+      final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
 
       expect(values.pass, isTrue);
 
@@ -544,10 +544,32 @@ void main() {
             {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
           ]));
     });
+    test('Get basic information 2', () async {
+      Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
+
+      final code = '''
+        SELECT *.name() AS random, *.innerHTML() FROM document INTO doc WHERE SELECTOR IS 'body > p';
+        SET firstname TO s'hello';
+        SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
+      ''';
+
+      final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data!['docthree'],
+          equals([
+            {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 3 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
+          ]));
+    });
     test('Multiple arguments', () async {
       final String code = '''
-        SET test TO itself WITH s'hello';
-        SET page TO itself WITH concat(s'?page=', test);
+        SET test TO s'hello';
+        SET page TO concat(s'?page=', test);
       ''';
 
       final Result values = await runWQL(code);
@@ -557,7 +579,7 @@ void main() {
     });
     test('Multiple arguments raw', () async {
       final String code = '''
-        SET page TO itself WITH concat(s'?page=', s'hello');
+        SET page TO concat(s'?page=', s'hello');
       ''';
 
       final Result values = await runWQL(code);
@@ -567,11 +589,11 @@ void main() {
     });
     test('Multiple arguments nested', () async {
       final String code = '''
-        SET page TO itself WITH n'0';
-        SET url TO joinUrl WITH s'https://www.example.com/', concat(s'?page=', increment(page));
+        SET page TO n'0';
+        SET url TO joinUrl(s'https://www.example.com/', concat(s'?page=', increment(page)));
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await runWQL(code, throwErrors: true);
 
       expect(values.pass, isTrue);
       expect(values.data!['url'], equals('https://www.example.com/?page=1'));
@@ -579,8 +601,8 @@ void main() {
     //TODO: add tests for set statement functions
     test('Increment', () async {
       final code = '''
-        SET number TO itself WITH n'0';
-        SET number TO increment WITH number;
+        SET number TO n'0';
+        SET number TO number.increment();
       ''';
 
       final Result values = await runWQL(code);
@@ -591,11 +613,11 @@ void main() {
     });
     test('Decrement', () async {
       final code = '''
-        SET number TO itself WITH n'0';
-        SET number TO decrement WITH number;
+        SET number TO n'0';
+        SET number TO number.decrement();
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await runWQL(code, throwErrors: true);
 
       expect(values.pass, isTrue);
 
@@ -603,7 +625,7 @@ void main() {
     });
     test('Concat', () async {
       final code = '''
-        SET output TO concat WITH s'hello', s' world';
+        SET output TO concat(s'hello', s' world');
       ''';
 
       final Result values = await runWQL(code);
@@ -614,7 +636,7 @@ void main() {
     });
     test('Trim', () async {
       final code = '''
-        SET output TO trim WITH s'   hello world   ';
+        SET output TO trim(s'   hello world   ');
       ''';
 
       final Result values = await runWQL(code);
@@ -625,7 +647,7 @@ void main() {
     });
     test('Itself', () async {
       final code = '''
-        SET output TO itself WITH s'hello world';
+        SET output TO s'hello world';
       ''';
 
       final Result values = await runWQL(code);
@@ -636,7 +658,7 @@ void main() {
     });
     test('Create Range', () async {
       final code = '''
-        SET output TO createRange WITH n'0', n'10';
+        SET output TO createRange(n'0', n'10');
       ''';
 
       final Result values = await runWQL(code);
@@ -660,11 +682,11 @@ void main() {
     });
     test('Reverse', () async {
       final code = '''
-        SET range TO createRange WITH n'0', n'10';
-        SET output TO reverse WITH range;
+        SET range TO createRange(n'0', n'10');
+        SET output TO range.reverse();
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await runWQL(code, throwErrors: true);
 
       expect(values.pass, isTrue);
 
@@ -672,8 +694,8 @@ void main() {
     });
     test('Count', () async {
       final code = '''
-        SET range TO createRange WITH n'0', n'10';
-        SET output TO count WITH range;
+        SET range TO createRange(n'0', n'10');
+        SET output TO range.count();
       ''';
 
       final Result values = await runWQL(code);
@@ -684,8 +706,8 @@ void main() {
     });
     test('Merge Key Value', () async {
       final code = '''
-        SET range TO createRange WITH n'0', n'10';
-        SET output TO mergeKeyValue WITH range[], range[];
+        SET range TO createRange(n'0', n'10');
+        SET output TO mergeKeyValue(range[], range[]);
       ''';
 
       final Result values = await runWQL(code);
@@ -709,9 +731,9 @@ void main() {
     });
     test('Merge', () async {
       final code = '''
-        SET rangeOne TO createRange WITH n'0', n'6';
-        SET rangeTwo TO createRange WITH n'6', n'10';
-        SET output TO merge WITH rangeOne[], rangeTwo[];
+        SET rangeOne TO createRange(n'0', n'6');
+        SET rangeTwo TO createRange(n'6', n'10');
+        SET output TO merge(rangeOne[], rangeTwo[]);
       ''';
 
       final Result values = await runWQL(code);
@@ -723,7 +745,7 @@ void main() {
     test('If Statement', () async {
       final code = '''
         IF b'true' equals b'true':
-          SET output TO itself WITH s'passed';
+          SET output TO s'passed';
         ENDIF;
       ''';
 
@@ -736,7 +758,7 @@ void main() {
     test('Trim Function High Level', () async {
       WebContentParser.verbose = const LogLevel.debug();
       final code = '''
-        SET output TO itself WITH trim(s'   hello world   ');
+        SET output TO trim(s'   hello world   ');
       ''';
 
       final Result values = await runWQL(code, throwErrors: true);
@@ -748,8 +770,8 @@ void main() {
     test('Trim Function Piped Value', () async {
       WebContentParser.verbose = const LogLevel.debug();
       final code = '''
-        SET first TO itself WITH s'   hello world   ';
-        SET output TO itself WITH first.trim();
+        SET first TO s'   hello world   ';
+        SET output TO first.trim();
       ''';
 
       final Result values = await runWQL(code, throwErrors: true);
@@ -760,7 +782,7 @@ void main() {
     });
     test('Select When', () async {
       final code = '''
-        SET first TO itself WITH s'hello';
+        SET first TO s'hello';
         SELECT first FROM * INTO matchOutput WHEN first contains s'ell';
         SELECT first FROM * INTO noMatchOutput WHEN first contains s'weird';
         SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;

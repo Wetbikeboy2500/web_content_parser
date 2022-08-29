@@ -76,7 +76,7 @@ class SelectStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter) async {
-    dynamic value = from.getValue(interpreter.values, interpreter, custom: SetStatement.functions).value;
+    dynamic value = (await from.getValue(interpreter.values, interpreter, custom: SetStatement.functions)).value;
 
     //this is relevant for the getValue on the operators to know if it is being passed a list to modify or a elements within a list to modify
     bool expand = false;
@@ -113,8 +113,15 @@ class SelectStatement extends Statement {
     if (when != null) {
       if (value is List) {
         //filter by the when condition per element
-        value = value.where((e) => when!.evaluate(e, interpreter)).toList();
-      } else if (!when!.evaluate(value, interpreter)) {
+        int index = 0;
+        while (index < value.length) {
+          if (!(await when!.evaluate(value[index], interpreter))) {
+            value.removeAt(index);
+            index--;
+          }
+          index++;
+        }
+      } else if (!(await when!.evaluate(value, interpreter))) {
         //clear value if it doesn't meet the when condition
         value = [];
       }
@@ -126,7 +133,7 @@ class SelectStatement extends Statement {
     final List<MapEntry> values = [];
 
     for (final op in operators) {
-      final MapEntry entry = op.getValue(
+      final MapEntry entry = await op.getValue(
         value,
         interpreter,
         //TODO: add a test function to make check if there is a valid object being used
