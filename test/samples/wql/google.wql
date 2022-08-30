@@ -1,11 +1,10 @@
-DEFINE url STRING 'https://google.com';
-SET document TO getRequest WITH url;
+SET document TO getRequest(s'https://google.com');
 SET status TO getStatusCode WITH document;
 DEFINE passing INT 200;
 IF value.status IS value.passing:
-    SET html TO parseBody WITH document;
+    SET html TO parseBody(document);
     SELECT * as element FROM html INTO model WHERE SELECTOR IS 'div';
-    SELECT attribute.style as style, attribute.id as id FROM model[].element INTO model;
+    SELECT *.attribute(s'style') as style, *.attribute(s'id') as id FROM model[].element INTO model;
     SELECT url FROM * INTO urlObject;
     SELECT url FROM * INTO urlObjectTwo;
     SELECT model[], url, urlObject, urlObjectTwo[0] as realUrlObject FROM * INTO return;

@@ -479,7 +479,7 @@ void main() {
       test('Get post', () async {
         Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
         expect(p.pass, isTrue);
-      });
+      }, skip: true);
 
       test('Get post url', () async {
         //load env
@@ -492,26 +492,26 @@ void main() {
         addSource('heroku', TestSource(env['BASE']!, env['SUB']!));
         Result<Post> p = await fetchPostUrl('https://${env["SOURCE"]}/manga/get/1');
         expect(p.pass, isTrue);
-      });
+      }, skip: true);
 
       test('Post to json', () async {
         Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
         expect(p.data?.toJson(), isMap);
-      });
+      }, skip: true);
 
       test('Fail post', () async {
         Result<Post> p = await fetchPost(ID(id: '0', source: 'test'));
         expect(p.fail, isTrue);
-      });
+      }, skip: true);
 
       test('Get chapter list', () async {
         Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
         expect(chapters.pass, isTrue);
-      });
+      }, skip: true);
       test('Get chapter list not empty', () async {
         Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
         expect(chapters.data, isNotEmpty);
-      });
+      }, skip: true);
     });
   });
 
@@ -524,10 +524,27 @@ void main() {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
       final code = '''
-        SELECT *.name() AS random, *.innerHTML() FROM document INTO doc WHERE SELECTOR IS 'body > p';
+        SELECT
+          *.name() AS random,
+          *.innerHTML()
+        FROM document
+        INTO doc
+        WHERE SELECTOR IS 'body > p';
+
         SET firstname TO s'hello';
-        SELECT doc[], firstname FROM * into doctwo;
-        SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
+
+        SELECT
+          doc[],
+          firstname
+        FROM *
+        INTO doctwo;
+
+        SELECT
+          doc[].random,
+          doc[].innerHTML,
+          firstname
+        FROM *
+        INTO docthree;
       ''';
 
       final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
