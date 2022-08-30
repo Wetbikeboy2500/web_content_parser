@@ -1,5 +1,3 @@
-import 'package:html/dom.dart';
-
 import '../../wql/statements/setStatement.dart';
 import '../generic/scrapeFunctions.dart';
 
@@ -122,6 +120,16 @@ void loadWQLFunctions() {
         //move this outside of this functions list and check the type
         return args[0].text;
       }
+    },
+    'queryselector': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      return arg0.querySelector(arg1);
+    },
+    'queryselectorall': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      return arg0.querySelectorAll(arg1);
     },
   };
   SetStatement.functions = {

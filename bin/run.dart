@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:web_content_parser/scraper.dart';
-import 'package:web_content_parser/src/scraper/scraper.dart';
 
 import 'package:path/path.dart' as path;
 import 'package:web_content_parser/src/util/log.dart';
