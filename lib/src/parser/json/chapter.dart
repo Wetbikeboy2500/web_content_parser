@@ -29,6 +29,10 @@ class Chapter {
   Map<String, dynamic> toJson() => _$ChapterToJson(this);
 
   static DateTime _dateTime(dynamic time) {
+    if (time == null) {
+      return DateTime.now();
+    }
+
     if (time is DateTime) {
       return time;
     } else {

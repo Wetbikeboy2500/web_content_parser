@@ -82,7 +82,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapterImagesUrl(url);
     }
 
-    final result = await scraper.makeRequest<Map<int, String>>(RequestType.imagesUrl.string, [MapEntry('url', url)]);
+    final result = await scraper.makeRequest(RequestType.imagesUrl.string, [MapEntry('url', url)]);
 
     if (result.fail || result.data == null) {
       log('Fetch chapter images url request failed', level: const LogLevel.warn());

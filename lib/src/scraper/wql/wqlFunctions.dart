@@ -65,70 +65,78 @@ void loadWQLFunctions() {
       return output;
     },
     'datetimeago': (args) {
-      return args[0].map((time) {
-        try {
-          Duration ago;
-          if (time.contains('mins ago') || time.contains('min ago')) {
-            ago = Duration(minutes: int.parse(time.substring(0, time.indexOf('min'))));
-          } else if (time.contains('hour ago') || time.contains('hours ago')) {
-            ago = Duration(hours: int.parse(time.substring(0, time.indexOf('hour'))));
-          } else if (time.contains('day ago') || time.contains('days ago')) {
-            ago = Duration(days: int.parse(time.substring(0, time.indexOf('day'))));
-          } else {
-            return DateFormat('MMMM dd, yyyy', 'en_US').parse(time);
-          }
-
-          return DateTime.now().subtract(ago);
-        } catch (e) {
-          //TODO: revise this to use a safe call and not default to datetime now
-          return DateTime.now();
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 == null) {
+        return DateTime.now();
+      }
+      try {
+        Duration ago;
+        if (arg0.contains('mins ago') || arg0.contains('min ago')) {
+          ago = Duration(minutes: int.parse(arg0.substring(0, arg0.indexOf('min'))));
+        } else if (arg0.contains('hour ago') || arg0.contains('hours ago')) {
+          ago = Duration(hours: int.parse(arg0.substring(0, arg0.indexOf('hour'))));
+        } else if (arg0.contains('day ago') || arg0.contains('days ago')) {
+          ago = Duration(days: int.parse(arg0.substring(0, arg0.indexOf('day'))));
+        } else {
+          return DateFormat('MMMM dd, yyyy', 'en_US').parse(arg0);
         }
-      }).toList();
+
+        return DateTime.now().subtract(ago);
+      } catch (e) {
+        //TODO: revise this to use a safe call and not default to datetime now
+        return DateTime.now();
+      }
     },
     'innerhtml': (args) {
-      if (args[0] is List) {
-        return args[0].first.innerHtml;
-      } else {
-        //move this outside of this functions list and check the type
-        return args[0].innerHtml;
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 == null) {
+        return null;
       }
+      return arg0.innerHtml;
     },
     'outerhtml': (args) {
-      if (args[0] is List) {
-        return args[0].first.outerHTML;
-      } else {
-        //move this outside of this functions list and check the type
-        return args[0].outerHTML;
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 == null) {
+        return null;
       }
+      return arg0.outerHtml;
     },
     'attribute': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      if (arg0 == null) {
+        return null;
+      }
       return arg0.attributes[arg1];
     },
     'name': (args) {
-      if (args[0] is List) {
-        return args[0].first.localName;
-      } else {
-        return args[0].localName;
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 == null) {
+        return null;
       }
+      return arg0.localName;
     },
     'text': (args) {
-      if (args[0] is List) {
-        return args[0].first.text;
-      } else {
-        //move this outside of this functions list and check the type
-        return args[0].text;
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 == null) {
+        return null;
       }
+      return arg0.text;
     },
     'queryselector': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      if (arg0 == null) {
+        return null;
+      }
       return arg0.querySelector(arg1);
     },
     'queryselectorall': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      if (arg0 == null) {
+        return null;
+      }
       return arg0.querySelectorAll(arg1);
     },
   };

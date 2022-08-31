@@ -1,17 +1,12 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:puppeteer/protocol/network.dart';
-import 'package:puppeteer/puppeteer.dart';
-import '../../util/log.dart';
-import 'headless.dart';
-import '../../util/firstWhereResult.dart';
-import '../../util/ResultExtended.dart';
-import '../../util/parseUriResult.dart';
-
 import 'dart:io' show Platform;
 
-import '../../util/Result.dart';
+import 'package:puppeteer/protocol/network.dart';
+import 'package:puppeteer/puppeteer.dart';
+import 'package:web_content_parser/headless.dart';
+import 'package:web_content_parser/web_content_parser_full.dart';
 
 class DesktopHeadless extends Headless {
   @override

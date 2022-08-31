@@ -111,7 +111,11 @@ class SetStatement extends Statement {
       // ignore: avoid_print
       print(args);
       return null;
-    }
+    },
+    'isnull': (args) {
+      final dynamic arg0 = (args[0] is List && args[0].isNotEmpty && args[0].first is List) ? args[0].first : args[0];
+      return args == null;
+    },
   };
 
   @override
