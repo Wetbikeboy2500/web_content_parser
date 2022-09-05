@@ -1,4 +1,4 @@
-name: web_content_parser_webviews
+name: web_content_headless
 description: A parser for online content. This package defines a base design for the relation of data and parsing of it.
 version: 1.0.0
 
@@ -11,3 +11,4 @@ dependencies:
   web_content_parser:
     path: ../..
   flutter_inappwebview: ^5.4.1
+  puppeteer: ^2.4.0
