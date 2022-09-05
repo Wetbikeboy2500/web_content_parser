@@ -9,6 +9,8 @@ environment:
 
 dependencies:
   web_content_parser:
-    path: ../..
+    git:
+      url: https://github.com/Wetbikeboy2500/web_content_parser.git
+      ref: a8a52b625e49693fda5fcb0ce51637ae166f0fb3
   flutter_inappwebview: ^5.4.1
   puppeteer: ^2.4.0
