@@ -67,7 +67,7 @@ Future<Result<Post>> fetchPostUrl(String url) async {
     return const Result.fail();
   }
 
-  //find the source that support the url for the image downloading
+  //find the source that support the url for the images
   if (source == null) {
     log2('No series match url:', url, level: const LogLevel.warn());
     return const Result.fail();
@@ -123,7 +123,7 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
     return const Result.fail();
   }
 
-  //compile list of all allowed sources for chapter image downloading
+  //compile list of all allowed sources for chapter images
   SourceTemplate? source;
   bool allowedSourcesFound = false;
   for (SourceTemplate a in sources.values) {
@@ -142,7 +142,7 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
   }
 
   if (source == null) {
-    log('No sources match chapter image download', level: const LogLevel.warn());
+    log2('No sources match chapter image url', url, level: const LogLevel.warn());
     return const Result.fail();
   }
 
