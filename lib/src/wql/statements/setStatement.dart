@@ -81,11 +81,15 @@ class SetStatement extends Statement {
       }
     },
     'concat': (args) {
-      final List results = [];
-      for (List l in args) {
-        results.addAll(l);
+      final List result = [];
+      for (final item in args) {
+        if (item is List) {
+          result.addAll(item);
+        } else {
+          result.add(item);
+        }
       }
-      return results.join('');
+      return result.join('');
     },
     'count': (args) {
       final dynamic arg0 = (args[0] is List && args[0].isNotEmpty && args[0].first is List) ? args[0].first : args[0];

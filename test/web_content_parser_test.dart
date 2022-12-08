@@ -651,6 +651,21 @@ void main() {
 
       expect(values.data!['output'], equals('hello world'));
     });
+    test('Concat list', () async {
+      final code = '''
+        SET first TO s'he';
+        SET second TO s'llo';
+        SELECT concat(first, second) as out FROM * INTO output;
+        SELECT out.concat(s' world') as final FROM output[] INTO output;
+        SET output TO output[0].final;
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
     test('Trim', () async {
       final code = '''
         SET output TO trim(s'   hello world   ');
