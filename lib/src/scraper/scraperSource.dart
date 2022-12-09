@@ -10,7 +10,6 @@ import '../util/Result.dart';
 
 import '../util/log.dart';
 
-import 'hetu/eval.dart';
 import 'package:path/path.dart' as p;
 
 import '../util/RequestType.dart';
@@ -20,7 +19,7 @@ class ScraperSource {
   static final Map<String, ScraperSource> _globalSources = {};
 
   ///Supported programs that can be run
-  static final Set<String> supportedProgramTypes = {'hetu0.3', 'wql'};
+  static final Set<String> supportedProgramTypes = {'wql'};
 
   ///Scraping requests that this object can run
   final Map<String, Request> requests = {};
@@ -143,17 +142,6 @@ class ScraperSource {
             throw Exception('Fail state was no re-thrown');
           },
           errorMessage: 'Error running WQL',
-        );
-      } else {
-        return await ResultExtended.unsafeAsync<T>(
-          () async => await eval(
-            r.file,
-            functionName: r.entry,
-            args: arguments.map((e) => e.value).toList(),
-            workingDirectory: r.file.parent.path,
-            compiled: r.compiled,
-          ),
-          errorMessage: 'Error running eval',
         );
       }
     }

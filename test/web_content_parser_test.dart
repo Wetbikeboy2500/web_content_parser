@@ -2,8 +2,6 @@
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
 import 'package:web_content_parser/web_content_parser_full.dart';
-import 'package:hetu_script/hetu_script.dart';
-import 'package:hetu_script/shared/util.dart';
 
 import 'dart:io';
 import 'package:test/test.dart';
@@ -13,8 +11,6 @@ import 'package:html/parser.dart';
 
 import 'blank.dart';
 import 'heroku.dart';
-
-import 'package:dotenv/dotenv.dart' show load, env;
 
 void main() {
   group('Utility', () {
@@ -238,14 +234,14 @@ void main() {
       //have one scraper
       expect(scrapers.length, equals(1));
       //scraper has 8 requests
-      expect(scrapers[0].requests.length, equals(8));
+      expect(scrapers[0].requests.length, equals(7));
       //info is correct
       expect(
         scrapers[0].info,
         equals(<String, dynamic>{
           'source': 'testSource',
           'version': 1,
-          'programType': 'hetu0.3',
+          'programType': 'wql',
           'requests': [
             {
               'type': 'post',
@@ -279,11 +275,6 @@ void main() {
               'entry': 'main',
             },
             {
-              'type': 'test',
-              'file': 'test.ht',
-              'entry': 'main',
-            },
-            {
               'type': 'test2',
               'file': 'test.wql',
               'programType': 'wql',
@@ -295,32 +286,6 @@ void main() {
     test('Invalid global load', () {
       ScraperSource? result = ScraperSource.scrapper('invalid');
       expect(result, isNull);
-    });
-    test('Load global scraper source and run Hetu entry', () async {
-      WebContentParser.verbose = const LogLevel.debug();
-
-      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
-
-      ScraperSource? result = ScraperSource.scrapper('testSource');
-
-      expect(result, isNotNull);
-
-      //override current fetchhtml so it can work with local files
-      insertFunction('fetchHtml', (
-        HTEntity entity, {
-        List<dynamic> positionalArgs = const [],
-        Map<String, dynamic> namedArgs = const {},
-        List<HTType> typeArgs = const <HTType>[],
-      }) async {
-        return await File(positionalArgs[0]).readAsString();
-      });
-
-      Result<List> response =
-          await result!.makeRequest<List>('test', [MapEntry('path', 'test/samples/scraper/test.html')]);
-
-      expect(response.pass, isTrue);
-
-      expect(response.data, equals(['Some testing text', 'Some testing text']));
     });
     test('Load global scraper source and run WQL entry', () async {
       WebContentParser.verbose = const LogLevel.debug();
@@ -439,13 +404,7 @@ void main() {
 
     group('Basic source info', () {
       //load env
-      load();
-
-      if (env['BASE'] == null && env['SUB'] == null) {
-        throw 'Source needs to be defined in .env';
-      }
-
-      addSource('test', TestSource(env['BASE']!, env['SUB']!));
+      addSource('test', TestSource('example.test', 'test'));
 
       test('Source exists', () {
         expect(sources, contains('test'));
@@ -482,15 +441,8 @@ void main() {
       }, skip: true);
 
       test('Get post url', () async {
-        //load env
-        load();
-
-        if (env['BASE'] == null && env['SUB'] == null) {
-          throw 'Source needs to be defined in .env';
-        }
-
-        addSource('heroku', TestSource(env['BASE']!, env['SUB']!));
-        Result<Post> p = await fetchPostUrl('https://${env["SOURCE"]}/manga/get/1');
+        addSource('heroku', TestSource('test.example', 'test'));
+        Result<Post> p = await fetchPostUrl('https://test.example.test/manga/get/1');
         expect(p.pass, isTrue);
       }, skip: true);
 

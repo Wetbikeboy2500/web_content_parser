@@ -1,6 +1,6 @@
 source: testSource
 version: 1
-programType: hetu0.3
+programType: wql
 requests:
   - type: post
     file: fetch.ht
@@ -20,9 +20,6 @@ requests:
     entry: url
   - type: catalogMulti
     file: catalog.ht
-    entry: main
-  - type: test
-    file: test.ht
     entry: main
   - type: test2
     file: test.wql
