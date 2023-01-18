@@ -24,3 +24,9 @@ requests:
   - type: test2
     file: test.wql
     programType: wql
+  - type: test3
+    file: test2.wql
+    programType: wql
+  - type: test3_alt
+    file: test2_alt.wql
+    programType: wql

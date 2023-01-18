@@ -1,7 +1,7 @@
-SET html TO getRequest(path);
-SET html TO parse(html);
+SET html TO getRequest(^.path);
+SET html TO parse(^.html);
 SELECT *.text() FROM html INTO first WHERE SELECTOR IS '#main-tag';
-SELECT *.text() FROM html INTO second WHERE SELECTOR IS 'body p';
-SET first TO trim(first[0].text);
-SET second TO trim(second[0].text);
-SET return TO merge(first, second);
+SELECT *.text() FROM html INTO second WHERE SELECTOR IS 'body > p';
+SET first TO trim(^.first[0].text);
+SET second TO trim(^.second[0].text);
+SET return TO merge(^.first, ^.second);

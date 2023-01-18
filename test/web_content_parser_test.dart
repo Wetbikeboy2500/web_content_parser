@@ -234,7 +234,7 @@ void main() {
       //have one scraper
       expect(scrapers.length, equals(1));
       //scraper has 8 requests
-      expect(scrapers[0].requests.length, equals(7));
+      expect(scrapers[0].requests.length, equals(9));
       //info is correct
       expect(
         scrapers[0].info,
@@ -279,6 +279,16 @@ void main() {
               'file': 'test.wql',
               'programType': 'wql',
             },
+            {
+              'type': 'test3',
+              'file': 'test2.wql',
+              'programType': 'wql',
+            },
+            {
+              'type': 'test3_alt',
+              'file': 'test2_alt.wql',
+              'programType': 'wql',
+            }
           ],
         }),
       );
@@ -307,6 +317,32 @@ void main() {
       expect(response.pass, isTrue);
 
       expect(response.data, equals(['Some testing text', 'Some testing text']));
+    });
+    test('Load global scraper source and run WQL entry 2', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+
+      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
+
+      ScraperSource? result = ScraperSource.scrapper('testSource');
+
+      expect(result, isNotNull);
+
+      //override setstatement function to work with loading a file
+      SetStatement.functions['getrequest'] = (args) async {
+        return await File(args[0].first).readAsString();
+      };
+
+      Result<List> response =
+          await result!.makeRequest<List>('test3', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
+      Result<List> response_alt =
+          await result.makeRequest<List>('test3_alt', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
+      expect(response.pass, isTrue);
+      expect(response_alt.pass, isTrue);
+
+      expect(response.data, equals(['Description 1', 'Description 2', 'Description 3']));
+      expect(response_alt.data, equals(['Description 1', 'Description 2', 'Description 3']));
     });
   });
 
@@ -538,7 +574,7 @@ void main() {
     test('Multiple arguments', () async {
       final String code = '''
         SET test TO s'hello';
-        SET page TO concat(s'?page=', test);
+        SET page TO concat(s'?page=', ^.test);
       ''';
 
       final Result values = await runWQL(code);
@@ -559,7 +595,7 @@ void main() {
     test('Multiple arguments nested', () async {
       final String code = '''
         SET page TO n'0';
-        SET url TO joinUrl(s'https://www.example.com/', concat(s'?page=', increment(page)));
+        SET url TO joinUrl(s'https://www.example.com/', concat(s'?page=', increment(^.page)));
       ''';
 
       final Result values = await runWQL(code, throwErrors: true);
@@ -607,7 +643,7 @@ void main() {
       final code = '''
         SET first TO s'he';
         SET second TO s'llo';
-        SELECT concat(first, second) as out FROM * INTO output;
+        SELECT concat(^.first, ^.second) as out FROM * INTO output;
         SELECT out.concat(s' world') as final FROM output[] INTO output;
         SET output TO output[0].final;
       ''';
@@ -691,7 +727,7 @@ void main() {
     test('Merge Key Value', () async {
       final code = '''
         SET range TO createRange(n'0', n'10');
-        SET output TO mergeKeyValue(range[], range[]);
+        SET output TO mergeKeyValue(^.range[], ^.range[]);
       ''';
 
       final Result values = await runWQL(code);
@@ -717,7 +753,7 @@ void main() {
       final code = '''
         SET rangeOne TO createRange(n'0', n'6');
         SET rangeTwo TO createRange(n'6', n'10');
-        SET output TO merge(rangeOne[], rangeTwo[]);
+        SET output TO merge(^.rangeOne[], ^.rangeTwo[]);
       ''';
 
       final Result values = await runWQL(code);

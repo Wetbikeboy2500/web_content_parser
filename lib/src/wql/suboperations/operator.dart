@@ -133,7 +133,11 @@ class Operator {
 
     for (final operation in names) {
       //this might cause issues or unexpected issues
-      if (operation.name == '*') {
+      if (operation.name == '^') {
+        value = [interpreter.values];
+        topLevel = false;
+        continue;
+      } else if (operation.name == '*') {
         topLevel = false;
         continue;
       } else {
@@ -148,7 +152,7 @@ class Operator {
             final List<dynamic> values = List.generate(operationLength, (index) => index);
             for (final index2 in values) {
               values[index2] =
-                  (await operation.value[index2].getValue(interpreter.values, interpreter, custom: custom)).value;
+                  (await operation.value[index2].getValue(values, interpreter, custom: custom)).value;
             }
 
             if (topLevel) {

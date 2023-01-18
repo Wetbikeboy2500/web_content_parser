@@ -136,6 +136,10 @@ class ScraperSource {
             final parameters = Map.fromEntries(arguments);
             final result = await runWQL(code, parameters: parameters, throwErrors: true);
             if (result.pass) {
+              if (result.data!['return'] is! T) {
+                throw Exception('Return type is not correct');
+              }
+
               return result.data!['return'];
             }
 

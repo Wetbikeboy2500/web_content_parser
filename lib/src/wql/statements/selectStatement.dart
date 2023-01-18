@@ -113,14 +113,13 @@ class SelectStatement extends Statement {
     if (when != null) {
       if (value is List) {
         //filter by the when condition per element
-        int index = 0;
-        while (index < value.length) {
-          if (!(await when!.evaluate(value[index], interpreter))) {
-            value.removeAt(index);
-            index--;
+        final newValue = [];
+        for (final element in value) {
+          if (await when!.evaluate(element, interpreter)) {
+            newValue.add(element);
           }
-          index++;
         }
+        value = newValue;
       } else if (!(await when!.evaluate(value, interpreter))) {
         //clear value if it doesn't meet the when condition
         value = [];
