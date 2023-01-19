@@ -749,6 +749,22 @@ void main() {
             9: 9,
           }));
     });
+    test('Merge and Select', () async {
+      final code = '''
+        SET range TO createRange(n'0', n'3');
+        SELECT mergeKeyValue(*, *) as output, merge(*, *) as output1 FROM range[] INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([
+        {'output': {0: 0}, 'output1': [0, 0]},
+        {'output': {1: 1}, 'output1': [1, 1]},
+        {'output': {2: 2}, 'output1': [2, 2]}
+      ]));
+    });
     test('Merge', () async {
       final code = '''
         SET rangeOne TO createRange(n'0', n'6');

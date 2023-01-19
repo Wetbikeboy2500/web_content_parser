@@ -152,7 +152,7 @@ class Operator {
             final List<dynamic> values = List.generate(operationLength, (index) => index);
             for (final index2 in values) {
               values[index2] =
-                  (await operation.value[index2].getValue(values, interpreter, custom: custom)).value;
+                  (await operation.value[index2].getValue(e, interpreter, custom: custom)).value;
             }
 
             if (topLevel) {
