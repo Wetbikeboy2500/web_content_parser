@@ -603,6 +603,18 @@ void main() {
       expect(values.pass, isTrue);
       expect(values.data!['url'], equals('https://www.example.com/?page=1'));
     });
+    test('Multiple arguments nested with select', () async {
+      final String code = '''
+        SET page TO n'0';
+        SELECT concat(s'https://www.example.com/', concat(s'?page=', increment(*))) as url FROM page into url;
+        SET url TO url[0].url;
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['url'], equals('https://www.example.com/?page=1'));
+    });
     //TODO: add tests for set statement functions
     test('Increment', () async {
       final code = '''
