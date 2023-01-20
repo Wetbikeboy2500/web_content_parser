@@ -761,6 +761,22 @@ void main() {
             9: 9,
           }));
     });
+    test('Merge key value object', () async {
+      final code = '''
+        SET output TO mergeKeyValue(merge(s'first', s'second')[], merge(n'1', s'third')[]);
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data!['output'],
+          equals(<String, dynamic>{
+            'first': 1,
+            'second': 'third',
+          }));
+    });
     test('Merge and Select', () async {
       final code = '''
         SET range TO createRange(n'0', n'3');
@@ -789,6 +805,42 @@ void main() {
       expect(values.pass, isTrue);
 
       expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+    });
+    test('toString', () async {
+      final code = '''
+        SET output TO toString(n'10');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('10'));
+    });
+    test('decode', () async {
+      final code = '''
+        SET output TO decode(s'{"hello": "world"}');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals({'hello': 'world'}));
+    });
+    test('encode', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+
+      final code = '''
+        SET object TO mergeKeyValue(s'hello', s'world');
+        SET output TO object.encode();
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('{"hello":"world"}'));
     });
     test('If Statement', () async {
       final code = '''

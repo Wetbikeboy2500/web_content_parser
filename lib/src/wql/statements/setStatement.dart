@@ -120,6 +120,10 @@ class SetStatement extends Statement {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       return arg0 == null;
     },
+    'tostring': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      return arg0.toString();
+    },
   };
 
   @override

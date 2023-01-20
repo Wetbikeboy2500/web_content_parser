@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../wql/statements/setStatement.dart';
 import '../generic/scrapeFunctions.dart';
 
@@ -122,6 +124,17 @@ void loadWQLFunctions() {
         return null;
       }
       return arg0.text;
+    },
+    'decode': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      if (arg0 == null) {
+        return null;
+      }
+      return jsonDecode(arg0);
+    },
+    'encode': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      return jsonEncode(arg0);
     },
     'queryselector': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
