@@ -89,6 +89,9 @@ void loadWQLFunctions() {
         return DateTime.now();
       }
     },
+    'datetimenow': (args) {
+      return DateTime.now();
+    },
     'innerhtml': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       if (arg0 == null) {

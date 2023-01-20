@@ -120,9 +120,21 @@ class SetStatement extends Statement {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       return arg0 == null;
     },
+    'isempty': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      return arg0.isEmpty;
+    },
     'tostring': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       return arg0.toString();
+    },
+    'lowercase': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      return arg0.toLowerCase();
+    },
+    'uppercase': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      return arg0.toUpperCase();
     },
   };
 

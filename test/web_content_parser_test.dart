@@ -842,6 +842,39 @@ void main() {
 
       expect(values.data!['output'], equals('{"hello":"world"}'));
     });
+    test('Is Empty', () async {
+      final code = '''
+        SET output TO isEmpty(l'');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals(true));
+    });
+    test('Uppercase', () async {
+      final code = '''
+        SET output TO uppercase(s'hello world');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('HELLO WORLD'));
+    });
+    test('Lowercase', () async {
+      final code = '''
+        SET output TO lowercase(s'HELLO WORLD');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
     test('If Statement', () async {
       final code = '''
         IF b'true' equals b'true':
