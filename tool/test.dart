@@ -46,7 +46,7 @@ void main(List<String> args) {
   Process.runSync('dart', [
     'run',
     'coverage:format_coverage',
-    '--packages=.packages',
+    '--packages=.dart_tool/package_config.json',
     '-i',
     './test/tmp.dart.vm.json',
     '-l',
