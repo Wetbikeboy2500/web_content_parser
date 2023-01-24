@@ -132,55 +132,103 @@ void main() {
   });
 
   group('Generic data', () {
-    test('Create ID', () {
-      ID id = ID(id: 'test', source: 'testing');
-      expect(id.uid, equals('testing:test'));
-    });
-
-    test('Create ID from JSON', () {
-      ID id = ID.fromJson({
-        'id': 'test',
-        'source': 'testing',
+    group('ID', () {
+      test('Create ID', () {
+        ID id = ID(id: 'test', source: 'testing');
+        expect(id.uid, equals('testing:test'));
       });
-      expect(id.uid, equals('testing:test'));
-    });
 
-    test('Convert ID to JSON', () {
-      ID id = ID(id: 'test', source: 'testing');
-      expect(id.toJson(), equals({'id': 'test', 'source': 'testing', 'uid': 'testing:test'}));
-    });
-
-    test('IDs equal', () {
-      ID id = ID(id: 'test', source: 'testing');
-      ID id1 = ID(id: 'test', source: 'testing');
-      expect(id, equals(id1));
-    });
-    test('IDs not equal', () {
-      ID id = ID(id: 'test', source: 'testing');
-      ID id1 = ID(id: 'test3', source: 'testing');
-      expect(id, isNot(equals(id1)));
-    });
-    test('Create ChapterID', () {
-      ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
-      expect(id.uid, equals('testing:test:0'));
-    });
-    test('Create ChapterID from json', () {
-      ChapterID id = ChapterID.fromJson({
-        'url': '',
-        'index': '0',
-        'id': ID(id: 'test', source: 'testing'),
+      test('Create ID from JSON', () {
+        ID id = ID.fromJson({
+          'id': 'test',
+          'source': 'testing',
+        });
+        expect(id.uid, equals('testing:test'));
       });
-      expect(id.uid, equals('testing:test:0'));
+
+      test('Convert ID to JSON', () {
+        ID id = ID(id: 'test', source: 'testing');
+        expect(id.toJson(), equals({'id': 'test', 'source': 'testing', 'uid': 'testing:test'}));
+      });
+
+      test('IDs equal', () {
+        ID id = ID(id: 'test', source: 'testing');
+        ID id1 = ID(id: 'test', source: 'testing');
+        expect(id, equals(id1));
+      });
+      test('IDs not equal', () {
+        ID id = ID(id: 'test', source: 'testing');
+        ID id1 = ID(id: 'test3', source: 'testing');
+        expect(id, isNot(equals(id1)));
+      });
     });
-    test('ChapterID equals', () {
-      ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
-      ChapterID id1 = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
-      expect(id, equals(id1));
+    group('ChapterID', () {
+      test('Create ChapterID', () {
+        ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+        expect(id.uid, equals('testing:test:0'));
+      });
+      test('Create ChapterID from json', () {
+        ChapterID id = ChapterID.fromJson({
+          'url': '',
+          'index': '0',
+          'id': ID(id: 'test', source: 'testing'),
+        });
+        expect(id.uid, equals('testing:test:0'));
+      });
+      test('Create ChapterID from json with json id', () {
+        ChapterID id = ChapterID.fromJson({
+          'url': '',
+          'index': '0',
+          'id': {
+            'id': 'test',
+            'source': 'testing',
+          },
+        });
+        expect(id.uid, equals('testing:test:0'));
+      });
+      test('ChapterID to json', () {
+        ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+        expect(
+            id.toJson(),
+            equals({
+              'url': '',
+              'index': 0,
+              'id': {'source': 'testing', 'id': 'test', 'uid': 'testing:test'},
+              'uid': 'testing:test:0',
+            }));
+      });
+      test('ChapterID equals', () {
+        ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+        ChapterID id1 = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+        expect(id, equals(id1));
+      });
+      test('ChapterID not equals', () {
+        ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
+        ChapterID id1 = ChapterID(url: '', index: 1, id: ID(id: 'test', source: 'testing'));
+        expect(id, isNot(equals(id1)));
+      });
     });
-    test('ChapterID not equals', () {
-      ChapterID id = ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'));
-      ChapterID id1 = ChapterID(url: '', index: 1, id: ID(id: 'test', source: 'testing'));
-      expect(id, isNot(equals(id1)));
+    group('Author', () {
+      test('Create Author', () {
+        Author author = Author(name: 'test', roles: '', first: false);
+        expect(author.name, equals('test'));
+        expect(author.roles, equals(''));
+        expect(author.first, isFalse);
+      });
+      test('Create Author from json', () {
+        Author author = Author.fromJson({
+          'name': 'test',
+          'roles': '',
+          'first': false,
+        });
+        expect(author.name, equals('test'));
+        expect(author.roles, equals(''));
+        expect(author.first, isFalse);
+      });
+      test('Author to json', () {
+        Author author = Author(name: 'test', roles: '', first: false);
+        expect(author.toJson(), equals({'name': 'test', 'roles': '', 'first': false}));
+      });
     });
   });
 
