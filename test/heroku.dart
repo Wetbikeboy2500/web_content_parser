@@ -1,10 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
-
-import 'package:logging/logging.dart';
-import 'package:web_content_parser/web_content_parser.dart';
-
-import 'package:http/http.dart' as http;
+import 'package:web_content_parser/web_content_parser_full.dart';
 
 class TestSource extends SourceTemplate {
   TestSource(String base, String subdomain)
@@ -17,42 +12,39 @@ class TestSource extends SourceTemplate {
 
   @override
   Future<Result<Post>> fetchPost(ID id) async {
-    return await fetchPostUrl('https://$host/manga/get/${id.id}');
+    if (id.id == '0') {
+      throw 'Invalid ID';
+    }
+
+    return await fetchPostUrl('https://test.example.test/get/${id.id}');
   }
 
   @override
   Future<Result<Post>> fetchPostUrl(String url) async {
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      var j = jsonDecode(response.body);
-      j['id'] = ID(id: j['id'], source: 'heroku').toJson();
-      return Result.pass(Post.fromJson(j));
-    } else {
-      Logger.root.warning('Status Error: ${response.statusCode.toString()}, $url');
-      return const Result.fail();
-    }
+    return Result.pass(Post(id: ID(id: '1', source: 'test'), name: 'test'));
   }
 
   @override
   Future<Result<List<Chapter>>> fetchChapters(ID id) async {
-    final url = Uri.parse('https://$host/manga/chapters/${id.id}');
-
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final chapters = List<dynamic>.from(jsonDecode(response.body)).map((obj) {
-        obj['chapterID'] = {
-          'url': obj['url'],
-          'index': obj['chapterindex'],
-          'id': id,
-        };
-        return Chapter.fromJson(obj);
-      }).toList();
-      return Result.pass(chapters);
-    } else {
-      Logger.root.warning('Failed to load ${id.uid}');
-      return const Result.fail();
-    }
+    return Result.pass([
+      Chapter(
+        name: 'test 1',
+        date: DateTime.now(),
+        chapterID: ChapterID(
+          url: 'test.example.test',
+          index: 0,
+          id: ID(id: '1', source: 'test'),
+        ),
+      ),
+      Chapter(
+        name: 'test 2',
+        date: DateTime.now(),
+        chapterID: ChapterID(
+          url: 'test.example.test',
+          index: 1,
+          id: ID(id: '1', source: 'test'),
+        ),
+      ),
+    ]);
   }
 }

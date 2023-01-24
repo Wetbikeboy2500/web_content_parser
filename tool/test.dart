@@ -1,3 +1,6 @@
+///Generates the test coverage for the project
+///This works by replacing the all input in the tests dart file and adding all the files to be included in the coverage
+
 // ignore_for_file: avoid_print
 
 import 'dart:io';
@@ -13,6 +16,7 @@ void main(List<String> args) {
     if (!element.endsWith('.dart') ||
         element.endsWith('g.dart') ||
         element.endsWith('lib/web_content_parser.dart') ||
+        element.endsWith('lib/web_content_parser_full.dart') ||
         element.endsWith('lib/util.dart') ||
         element.endsWith('lib/scraper.dart') ||
         element.endsWith('lib/parser.dart') ||
@@ -42,7 +46,7 @@ void main(List<String> args) {
   Process.runSync('dart', [
     'run',
     'coverage:format_coverage',
-    '--packages=.packages',
+    '--packages=.dart_tool/package_config.json',
     '-i',
     './test/tmp.dart.vm.json',
     '-l',

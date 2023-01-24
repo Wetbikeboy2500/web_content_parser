@@ -11,7 +11,7 @@ class ID extends Equatable {
   final String uid;
 
   ID({required this.source, required this.id, String? uid})
-      : uid = (uid != null && uid.isNotEmpty) ? uid : source + ':' + id;
+      : uid = (uid != null && uid.isNotEmpty) ? uid : '$source:$id';
 
   factory ID.fromJson(Map<String, dynamic> json) => _$IDFromJson(json);
 

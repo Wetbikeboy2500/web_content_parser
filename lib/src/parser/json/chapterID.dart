@@ -19,7 +19,7 @@ class ChapterID extends Equatable {
     required this.index,
     required this.id,
     String? uid,
-  }) : uid = (uid != null && uid.isNotEmpty) ? uid : id.uid + ':' + index.toString();
+  }) : uid = (uid != null && uid.isNotEmpty) ? uid : '${id.uid}:$index';
 
   factory ChapterID.fromJson(Map<String, dynamic> json) => _$ChapterIDFromJson(json);
 

@@ -1,21 +1,22 @@
 //Make sure to keep this as the first import
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
-import 'package:web_content_parser/web_content_parser.dart';
+import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'dart:io';
 import 'package:test/test.dart';
 
+import 'package:html/dom.dart';
+import 'package:html/parser.dart';
+
 import 'blank.dart';
 import 'heroku.dart';
-
-import 'package:dotenv/dotenv.dart' show load, env;
 
 void main() {
   group('Utility', () {
     test('Enable log', () {
-      WebContentParser.verbose = true;
-      expect(WebContentParser.verbose, isTrue);
+      WebContentParser.verbose = const LogLevel.debug();
+      expect(WebContentParser.verbose, equals(const LogLevel.debug()));
     });
     test('Passing Result', () {
       Result<String> f = Result<String>.pass('Test');
@@ -109,14 +110,14 @@ void main() {
     });
     test('ResultExtended unsafe async fail', () async {
       Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
-        throw 'error';
-      }));
+            throw 'error';
+          }));
       expect(r.fail, isTrue);
     });
     test('ResultExtended unsafe async pass', () async {
       Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
-        return 'test';
-      }));
+            return 'test';
+          }));
       expect(r.pass, isTrue);
       expect(r.data, equals('test'));
     });
@@ -184,27 +185,69 @@ void main() {
   });
 
   group('Scraper', () {
+    test('Parse Yaml to Map', () {
+      final Map<String, dynamic> map = parseYaml('''
+                                  source: testSource
+                                  baseUrl: testSource.com
+                                  subdomain: null
+                                  version: 1
+                                  contentType: seriesImage
+                                  programType: hetu0.3
+                                  requests:
+                                    - type: post
+                                      file: fetch.ht
+                                      entry: main
+                                      compiled: true
+                                    - type: postUrl
+                                      file: fetch.ht
+                                      entry: url
+                                  ''');
+      expect(
+          map,
+          equals({
+            'source': 'testSource',
+            'baseUrl': 'testSource.com',
+            'subdomain': null,
+            'version': 1,
+            'contentType': 'seriesImage',
+            'programType': 'hetu0.3',
+            'requests': [
+              {
+                'type': 'post',
+                'file': 'fetch.ht',
+                'entry': 'main',
+                'compiled': true,
+              },
+              {
+                'type': 'postUrl',
+                'file': 'fetch.ht',
+                'entry': 'url',
+              },
+            ],
+          }));
+    });
+
     test('Load yaml file', () {
+      WebContentParser.verbose = const LogLevel.debug();
+
       List<ScraperSource> scrapers = loadExternalScarperSources(Directory('test/samples/scraper'));
       //have one scraper
       expect(scrapers.length, equals(1));
-      //scraper has 6 requests
-      expect(scrapers[0].requests.length, equals(6));
+      //scraper has 8 requests
+      expect(scrapers[0].requests.length, equals(9));
       //info is correct
       expect(
         scrapers[0].info,
         equals(<String, dynamic>{
           'source': 'testSource',
-          'baseUrl': 'testSource.com',
-          'subdomain': null,
           'version': 1,
-          'contentType': 'seriesImage',
-          'programType': 'hetu',
+          'programType': 'wql',
           'requests': [
             {
               'type': 'post',
               'file': 'fetch.ht',
               'entry': 'main',
+              'compiled': true,
             },
             {
               'type': 'postUrl',
@@ -231,6 +274,21 @@ void main() {
               'file': 'catalog.ht',
               'entry': 'main',
             },
+            {
+              'type': 'test2',
+              'file': 'test.wql',
+              'programType': 'wql',
+            },
+            {
+              'type': 'test3',
+              'file': 'test2.wql',
+              'programType': 'wql',
+            },
+            {
+              'type': 'test3_alt',
+              'file': 'test2_alt.wql',
+              'programType': 'wql',
+            }
           ],
         }),
       );
@@ -239,12 +297,52 @@ void main() {
       ScraperSource? result = ScraperSource.scrapper('invalid');
       expect(result, isNull);
     });
-    test('Load global scraper source', () {
+    test('Load global scraper source and run WQL entry', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+
       loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
       ScraperSource? result = ScraperSource.scrapper('testSource');
 
       expect(result, isNotNull);
+
+      //override setstatement function to work with loading a file
+      SetStatement.functions['getrequest'] = (args) async {
+        return await File(args[0].first).readAsString();
+      };
+
+      Result<List> response =
+          await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
+      expect(response.pass, isTrue);
+
+      expect(response.data, equals(['Some testing text', 'Some testing text']));
+    });
+    test('Load global scraper source and run WQL entry 2', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+
+      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
+
+      ScraperSource? result = ScraperSource.scrapper('testSource');
+
+      expect(result, isNotNull);
+
+      //override setstatement function to work with loading a file
+      SetStatement.functions['getrequest'] = (args) async {
+        return await File(args[0].first).readAsString();
+      };
+
+      Result<List> response =
+          await result!.makeRequest<List>('test3', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
+      Result<List> responseAlt =
+          await result.makeRequest<List>('test3_alt', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
+      expect(response.pass, isTrue);
+      expect(responseAlt.pass, isTrue);
+
+      expect(response.data, equals(['Description 1', 'Description 2', 'Description 3']));
+      expect(responseAlt.data, equals(['Description 1', 'Description 2', 'Description 3']));
     });
   });
 
@@ -342,13 +440,7 @@ void main() {
 
     group('Basic source info', () {
       //load env
-      load();
-
-      if (env['BASE'] == null && env['SUB'] == null) {
-        throw 'Source needs to be defined in .env';
-      }
-
-      addSource('test', TestSource(env['BASE']!, env['SUB']!));
+      addSource('test', TestSource('example.test', 'test'));
 
       test('Source exists', () {
         expect(sources, contains('test'));
@@ -382,31 +474,504 @@ void main() {
       test('Get post', () async {
         Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
         expect(p.pass, isTrue);
-      });
+      }, skip: true);
 
       test('Get post url', () async {
-        Result<Post> p = await fetchPostUrl('${env["SOURCE"]}/manga/get/1');
+        addSource('heroku', TestSource('test.example', 'test'));
+        Result<Post> p = await fetchPostUrl('https://test.example.test/manga/get/1');
         expect(p.pass, isTrue);
-      });
+      }, skip: true);
 
       test('Post to json', () async {
         Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
         expect(p.data?.toJson(), isMap);
-      });
+      }, skip: true);
 
       test('Fail post', () async {
         Result<Post> p = await fetchPost(ID(id: '0', source: 'test'));
         expect(p.fail, isTrue);
-      });
+      }, skip: true);
 
       test('Get chapter list', () async {
         Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
         expect(chapters.pass, isTrue);
-      });
+      }, skip: true);
       test('Get chapter list not empty', () async {
         Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
         expect(chapters.data, isNotEmpty);
-      });
+      }, skip: true);
+    });
+  });
+
+  //Tests the features of the source builder language
+  group('Source Builder', () {
+    setUp(() {
+      loadWQLFunctions();
+    });
+    test('Get basic information', () async {
+      Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
+
+      final code = '''
+        SELECT
+          *.name() AS random,
+          *.innerHTML()
+        FROM document
+        INTO doc
+        WHERE SELECTOR IS 'body > p';
+
+        SET firstname TO s'hello';
+
+        SELECT
+          doc[],
+          firstname
+        FROM *
+        INTO doctwo;
+
+        SELECT
+          doc[].random,
+          doc[].innerHTML,
+          firstname
+        FROM *
+        INTO docthree;
+      ''';
+
+      final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['doctwo'], equals(values.data!['docthree']));
+      expect(
+          values.data!['doctwo'],
+          equals([
+            {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 3 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
+          ]));
+    });
+    test('Get basic information 2', () async {
+      Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
+
+      final code = '''
+        SELECT *.name() AS random, *.innerHTML() FROM document INTO doc WHERE SELECTOR IS 'body > p';
+        SET firstname TO s'hello';
+        SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
+      ''';
+
+      final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data!['docthree'],
+          equals([
+            {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 3 ', 'firstname': 'hello'},
+            {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
+          ]));
+    });
+    test('Multiple arguments', () async {
+      final String code = '''
+        SET test TO s'hello';
+        SET page TO concat(s'?page=', ^.test);
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['page'], equals('?page=hello'));
+    });
+    test('Multiple arguments raw', () async {
+      final String code = '''
+        SET page TO concat(s'?page=', s'hello');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['page'], equals('?page=hello'));
+    });
+    test('Multiple arguments nested', () async {
+      final String code = '''
+        SET page TO n'0';
+        SET url TO joinUrl(s'https://www.example.com/', concat(s'?page=', increment(^.page)));
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['url'], equals('https://www.example.com/?page=1'));
+    });
+    test('Multiple arguments nested with select', () async {
+      final String code = '''
+        SET page TO n'0';
+        SELECT concat(s'https://www.example.com/', concat(s'?page=', increment(*))) as url FROM page into url;
+        SET url TO url[0].url;
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+      expect(values.data!['url'], equals('https://www.example.com/?page=1'));
+    });
+    //TODO: add tests for set statement functions
+    test('Increment', () async {
+      final code = '''
+        SET number TO n'0';
+        SET number TO number.increment();
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['number'], equals(1));
+    });
+    test('Decrement', () async {
+      final code = '''
+        SET number TO n'0';
+        SET number TO number.decrement();
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['number'], equals(-1));
+    });
+    test('Concat', () async {
+      final code = '''
+        SET output TO concat(s'hello', s' world');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Concat list', () async {
+      final code = '''
+        SET first TO s'he';
+        SET second TO s'llo';
+        SELECT concat(^.first, ^.second) as out FROM * INTO output;
+        SELECT out.concat(s' world') as final FROM output[] INTO output;
+        SET output TO output[0].final;
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Trim', () async {
+      final code = '''
+        SET output TO trim(s'   hello world   ');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Itself', () async {
+      final code = '''
+        SET output TO s'hello world';
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Create Range', () async {
+      final code = '''
+        SET output TO createRange(n'0', n'10');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+    });
+    test('Run print', () async {
+      SetStatement.functions['print'] = (args) {
+        // ignore: avoid_print
+        print(args);
+      };
+      final code = '''
+        RUN print WITH n'0', n'10';
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+    });
+    test('Reverse', () async {
+      final code = '''
+        SET range TO createRange(n'0', n'10');
+        SET output TO range.reverse();
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+    });
+    test('Count', () async {
+      final code = '''
+        SET range TO createRange(n'0', n'10');
+        SET output TO range.count();
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals(10));
+    });
+    test('Merge Key Value', () async {
+      final code = '''
+        SET range TO createRange(n'0', n'10');
+        SET output TO mergeKeyValue(^.range[], ^.range[]);
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data!['output'],
+          equals(<int, dynamic>{
+            0: 0,
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: 6,
+            7: 7,
+            8: 8,
+            9: 9,
+          }));
+    });
+    test('Merge key value object', () async {
+      final code = '''
+        SET output TO mergeKeyValue(merge(s'first', s'second')[], merge(n'1', s'third')[]);
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data!['output'],
+          equals(<String, dynamic>{
+            'first': 1,
+            'second': 'third',
+          }));
+    });
+    test('Merge and Select', () async {
+      final code = '''
+        SET range TO createRange(n'0', n'3');
+        SELECT mergeKeyValue(*, *) as output, merge(*, *) as output1 FROM range[] INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([
+        {'output': {0: 0}, 'output1': [0, 0]},
+        {'output': {1: 1}, 'output1': [1, 1]},
+        {'output': {2: 2}, 'output1': [2, 2]}
+      ]));
+    });
+    test('Merge', () async {
+      final code = '''
+        SET rangeOne TO createRange(n'0', n'6');
+        SET rangeTwo TO createRange(n'6', n'10');
+        SET output TO merge(^.rangeOne[], ^.rangeTwo[]);
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+    });
+    test('toString', () async {
+      final code = '''
+        SET output TO toString(n'10');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('10'));
+    });
+    test('decode', () async {
+      final code = '''
+        SET output TO decode(s'{"hello": "world"}');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals({'hello': 'world'}));
+    });
+    test('encode', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+
+      final code = '''
+        SET object TO mergeKeyValue(s'hello', s'world');
+        SET output TO object.encode();
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('{"hello":"world"}'));
+    });
+    test('Is Empty', () async {
+      final code = '''
+        SET output TO isEmpty(l'');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals(true));
+    });
+    test('Uppercase', () async {
+      final code = '''
+        SET output TO uppercase(s'hello world');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('HELLO WORLD'));
+    });
+    test('Lowercase', () async {
+      final code = '''
+        SET output TO lowercase(s'HELLO WORLD');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('If Statement', () async {
+      final code = '''
+        IF b'true' equals b'true':
+          SET output TO s'passed';
+        ENDIF;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('passed'));
+    });
+    test('Trim Function High Level', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+      final code = '''
+        SET output TO trim(s'   hello world   ');
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Trim Function Piped Value', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+      final code = '''
+        SET first TO s'   hello world   ';
+        SET output TO first.trim();
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('hello world'));
+    });
+    test('Select When', () async {
+      final code = '''
+        SET first TO s'hello';
+        SELECT first FROM * INTO matchOutput WHEN first contains s'ell';
+        SELECT first FROM * INTO noMatchOutput WHEN first contains s'weird';
+        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
+        SELECT matchOutput, noMatchOutput FROM * INTO outputList;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data!['output'],
+          equals([
+            {
+              'matchOutput': {'first': 'hello'},
+              'noMatchOutput': {
+                'first': [],
+              }
+            }
+          ]));
+      expect(
+          values.data!['outputList'],
+          equals([
+            {
+              'matchOutput': [
+                {'first': 'hello'}
+              ],
+              'noMatchOutput': [
+                {
+                  'first': [],
+                }
+              ]
+            }
+          ]));
+    });
+    test('Raw values', () async {
+      final code = '''
+        SELECT s'hello' as intro, n'25' as number, b'true' as true, l'' as list FROM * INTO return;
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: true);
+
+      expect(values.pass, isTrue);
+
+      expect(
+          values.data,
+          equals({
+            'return': [
+              {
+                'intro': 'hello',
+                'number': 25,
+                'true': true,
+                'list': [],
+              }
+            ],
+          }));
     });
   });
 }

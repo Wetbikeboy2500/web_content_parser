@@ -22,4 +22,6 @@ coverage
 .vscode
 .env
 doc
-bin/
+bin/main.*
+
+*.js*

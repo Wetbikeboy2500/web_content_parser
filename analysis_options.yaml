@@ -18,5 +18,5 @@ analyzer:
     file_names: false
     constant_identifier_names: false
     omit_local_variable_types: ignore
-#   exclude:
-#     - path/to/excluded/files/**
+  exclude:
+    - packages/**

@@ -21,7 +21,7 @@ class CatalogEntry extends Equatable {
     if (id is ID) {
       return id;
     } else {
-      return ID.fromJson(id);
+      return ID.fromJson(Map<String, dynamic>.from(id));
     }
   }
 

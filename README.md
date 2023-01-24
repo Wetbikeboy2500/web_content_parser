@@ -8,13 +8,11 @@ One goal: unify web content parsing between dart projects.
 
 Parsing, in the context of this project, means scraping and transforming data into an expected output. This package allows for raw scraping returns (Scraping system) or it can try and convert scraping systems to a hard-coded dart format (Parsing system).
 
-The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [hetu-script](https://github.com/hetu-script/hetu-script) and use those to get the raw data returns. This package also adds external functions that make scraping easier. There are also methods to get webpages through headless browsers. If you need a dynamic system to parse websites, this is it.
-
-**Note:** This package uses an exact version of hetu which can be found in the pubspec file. Make sure you write your scripts with that version in mind.
+The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [WQL](#wql-web-query-language), a SQL-like language designed for scraping websites. Custom functions are implemented in WQL to make scripting easier. There are also methods to get webpages through a headless browser for mobile and desktop. These interfaces are available separately in the packages directory. If you need a dynamic system to parse websites, this is it.
 
 This will not support downloading of any content. This simply acts as an interface and a system for standardization.
 
-This project is still in development but does have complete functionality. I am working towards refining function names and the structure of the project. There is also always room to explore what scripts can do and how to define new functionality for them. I would recommend to add this project through git with a hash specified. Once things are to my standard, I will switch to semantic versioning.
+This project is still in development but does have complete functionality. I am working towards refining function names and the structure of the project. There is also always room to explore what scripts can do and how to define new functionality for them. I would recommend to add this project through git with a hash specified. If you want to try out the web_content_headless portion, include a dependency override with the hash to remove dependency errors. Once things are to my standard and stable, I will switch to semantic versioning.
 
 ## Focus
 
@@ -24,7 +22,7 @@ Building a versatile system for many different types of content. This includes p
 
 Import everything:
 ```dart
-import 'package:web_content_parser/web_content_parser.dart';
+import 'package:web_content_parser/web_content_parser_full.dart';
 ```
 
 This project can be thought of in three different code bases based on directory inside src.
@@ -115,7 +113,7 @@ ResultExtended is an extension on result. ResultExtended has static methods that
 
 ## Scraper
 
-The scraper handles the interaction with [hetu-script](https://github.com/hetu-script/hetu-script) and making sure to provide the needed functions and abilities to any scraping system. It implements its own system for async tasks that a script needs to execute.
+The scraper handles the interaction with [WQL](#wql-web-query-language) and making sure to provide the needed functions and abilities to any scraping system. It implements its own system for async tasks that a script needs to execute.
 
 ### Sections
 
@@ -126,11 +124,11 @@ The scraper handles the interaction with [hetu-script](https://github.com/hetu-s
 
 ### Headless Browser Web Scrapers
 
-Headless browsers provide a lot of power to scrape dynamic pages. This project currently uses puppeteer and a forked repo of flutter_inappwebview. These two packages provide the power to scrape on any platform.
+Headless browsers provide a lot of power to scrape dynamic pages. This project currently uses puppeteer and flutter_inappwebview. These two packages provide the power to scrape on any platform.
 
-**Note:** These packages have only been tested on android and windows machines. flutter_inappwebview has not been maintained in a long time with a long list of reported issues on its repo. The stability of using headless browsers can not be guaranteed.
+**Note:** These packages have only been tested on android and windows machines.
 
-The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browser with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
+The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browsers with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
 
 #### Mobile:
 
@@ -145,41 +143,6 @@ WebContentParser.addHeadless(DesktopHeadless());
 ```
 
 Once the headless browsers are added, they can be used through an interface define for them. The standard interface is implemented through `Future<Result<String>> getDynamicPage(String url) async` function. `getDynamicPage` returns all the HTML of a page as a single string wrapped with a `Result` class to indicate if the operation passed or failed. You can pass the function a `url`, and the supported headless browser will be chosen and used to get the requested information. How multiple requests are handled is up to the headless browser implementation. Current implementations have a basic queue system to only allow one request at a time. The `getDynamicPage` function is exposed through `import 'package:web_content_parser/scraper.dart';`
-
-There is also a support function in hetu. It can be imported with `external fun getDynamicPage(a) -> Map<str, any>`. The map represents the Result class that wraps the functions data. The map has two booleans `pass` and `fail` with `data` storing whatever return it has. As the hetu function is async, please refer to [Async Hetu Code](#async-hetu-code) for how to deal with the function.
-
-### Async Hetu Code
-
-For async code, I have a defined return structure that is a map with a target function(callback) and the data(function to be executed asynchronously). The following is an example of making an http get request in hetu:
-
-```
-external fun getStatusCode(a) -> num
-external fun fetchHtml(a) //this returns a future
-
-fun main() {
-    return {
-        "data": [fetchHtml('google.com'), 'special id'],
-        "target": 'parse',
-    }
-}
-
-fun parse(doc, id) {
-    let statusCode = getStatusCode(doc)
-
-    if (statusCode != 200) {
-        return {}
-    }
-
-    //do something with the given document and id for scraping
-}
-```
-
-By returning a map with data and target as keys, it will interpret the return as having async code needing to be run. `data` can be a list of arguments needing to be passed, which can be futures mixed with regular data. `target` refers to the callback function where all the finalized future data will be sent after completing. This is all handled through reinvoking a hetu function.
-
-**Note:** Data can also simply be a future without being inside a list. I am showing the more complex example to display a very handy use case.
-
-
-**Note 2:** I have looked into using callbacks for resolving async code. This works if there is a direct path for the async functions. The issue occurs when there is an async call that calls a hetu function then calls another async function. There is no way to await the internal async call done by the hetu function which causes everything to break.
 
 ### Loading in scraping sources
 
@@ -197,9 +160,9 @@ Scraping sources have the following required attributes:
 
 * **version** version is an int used for tracking what the current source version is. This will help determine if one source is newer than another
 
-* **programType** programType is the current scripting environment you are targeting. The only valid value is currently hetu. This acts to add a way to make sure incompatible sources can't run when new requirements are needed.
+* **programType** programType is the current scripting environment you are targeting. The only valid value is currently wql. This acts to add a way to make sure incompatible sources can't run when new requirements are needed or changed.
 
-* **requests** requests is a list of all possible scripting calls that can be made. They have a `type` which is the name to call the execute the script. They have a `file` which is the script file that sits in the current directory of the yaml file or deeper. They have a `entry` which is the function name which will be called for the specific execution.
+* **requests** requests is a list of all possible scripting calls that can be made. They have a `type` which is the name to call the execute the script. They have a `file` which is the script file that sits in the current directory of the yaml file or deeper. There is also `programType` which is optional as it will inherit its value from the one defined in the parent. This allows for a source to have multiple program types. This is useful for allowing more scripting systems.
 
 All things mentioned can be looked at in the example yaml file at test/samples/scraper/source.yaml
 
@@ -252,3 +215,52 @@ ChapterID(id: ID(id: '', source: ''), index: 0, url: '')
 This also uses a uid like IDs but with an added value added to the end. It adds the index to the end of the uid with a colon so it follows the format of `source:id:index`. This means all info can also be extracted from the uid since it can go off the first and last occurrence of the colon with the id being any value.
 
 When using the fromJson() constructor, the ID can be passed as a map or an object.
+
+### Computing
+
+A ComputeDecorator is a class implementation for allowing different types of computes when converting objects. The decorator currently uses the Computer package which is agnostic to the platform it is run on. This decorator can be changed by setting `ParseSource.computeDecorator` to a different decorator implementation. This can allow for compute, which is available in Flutter, to be used. The ComputeDecorator can be turned off and not used by setting `ParseSource.computeEnabled`. It is enabled by default. Everything will function the same with the compute off, but it may perform worse when processing large amounts of objects.
+
+## WQL: Web Query Language
+
+The WQL is a language built for writing scripts to extract data from web pages. It is designed to use a declarative syntax like SQL. The goal is to simplify web scraping and reduce the common patterns that a more traditional scripting language forms when scraping websites.
+
+### Why use a custom language?
+
+Using a scripting language within another language is overkill. A general purpose language does allow flexibility but leaves design and access patterns up to the developer. These choices end up adding bloat to scripts that also adds more cognitive load. When there are many scripts for web scraping, a developer must be able to understand them and make changes to them quickly: websites are not a stable source.
+
+There is also the problem of finding a stable scripting language that is cross platform.
+
+Websites can also be thought of as a place where structured data is stored. SQL works with a relational database. WQL works with websites.
+
+Lastly, I can't find a comparable language. The select statement itself is something that I would love to have in regular front-end development.
+
+### How to use it
+
+Currently, the best examples are written in the test file. There are examples of making requests directly as well as using the scraper system.
+
+### Wanted Syntax
+
+Syntax that I want to have implemented at some point
+
+Array access:
+
+```
+arr[first]
+arr[last]
+arr[spread] (equivalent to arr[])
+
+(optional more. could also support three value ranges)
+arr[even]
+arr[odd]
+```
+
+Function chaining:
+
+This would allow for functions to not require the parenthesis. This is useful for functions that take a single parameter.
+
+```
+value|trim|lowercase (Instead of value.trim())
+value|trim()|lowercase() (also supported)
+
+value.trim().lowercase() (current)
+```

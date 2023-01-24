@@ -1,5 +1,6 @@
-import 'package:computer/computer.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:web_content_parser/src/parser/sources/computeDecorator.dart';
+import '../../parser/sources/computer.dart';
 import './chapterID.dart';
 
 part 'chapter.g.dart';
@@ -27,6 +28,10 @@ class Chapter {
   Map<String, dynamic> toJson() => _$ChapterToJson(this);
 
   static DateTime _dateTime(dynamic time) {
+    if (time == null) {
+      return DateTime.now();
+    }
+
     if (time is DateTime) {
       return time;
     } else {
@@ -46,25 +51,27 @@ class Chapter {
     }
   }
 
-  static Future<Chapter> computeChapterFromJson(Computer computer, Map<String, dynamic> chapter) async {
-    return computer.compute<Map<String, dynamic>, Chapter>(_$ChapterFromJson, param: chapter);
+  static Future<Chapter> computeChapterFromJson(ComputerDecorator computer, Map<String, dynamic> chapter) {
+    return computer.compute<Chapter, Map<String, dynamic>>(_$ChapterFromJson, chapter);
   }
 
-  static Future<Map<String, dynamic>> computeChapterToJson(Computer computer, Chapter chapter) async {
-    return computer.compute<Chapter, Map<String, dynamic>>(_$ChapterToJson, param: chapter);
+  static Future<Map<String, dynamic>> computeChapterToJson(ComputerDecorator computer, Chapter chapter) {
+    return computer.compute<Map<String, dynamic>, Chapter>(_$ChapterToJson, chapter);
   }
 
-  static Future<List<Chapter>> computeChaptersFromJson(Computer computer, List<Map<String, dynamic>> chapters) async {
-    return computer.compute<List<Map<String, dynamic>>, List<Chapter>>(chaptersFromJson, param: chapters);
+  static Future<List<Chapter>> computeChaptersFromJson(ComputeDecorator computer, List<Map<String, dynamic>> chapters) {
+    return computer.compute<List<Chapter>, List<Map<String, dynamic>>>(chaptersFromJson, chapters);
   }
 
   static List<Chapter> chaptersFromJson(List<Map<String, dynamic>> chapters) {
     return chapters.map((e) => _$ChapterFromJson(e)).toList();
   }
 
-  static Future<List<Map<String, dynamic>>> computeChaptersToJson(Computer computer, List<Chapter> chapters) async {
-    return computer.compute((List<Chapter> chapters) => chapters.map((e) => _$ChapterToJson(e)).toList(),
-        param: chapters);
+  static Future<List<Map<String, dynamic>>> computeChaptersToJson(ComputeDecorator computer, List<Chapter> chapters) {
+    return computer.compute<List<Map<String, dynamic>>, List<Chapter>>(
+      (List<Chapter> chapters) => chapters.map((e) => _$ChapterToJson(e)).toList(),
+      chapters,
+    );
   }
 }
 

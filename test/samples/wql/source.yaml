@@ -1,0 +1,6 @@
+source: google
+version: 1
+programType: wql
+requests:
+  - type: text
+    file: google.wql

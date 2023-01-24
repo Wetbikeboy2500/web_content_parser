@@ -19,8 +19,8 @@ void loadExternalScraperSourcesGlobal(Directory dir) {
       //load scraper
       ScraperSource.global(file.readAsStringSync(), file.parent);
     } catch (e, stack) {
-      log('Error loading external global source: $e');
-      log(stack);
+      log2('Error loading external global source:', e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
     }
   }
 }
@@ -38,12 +38,12 @@ List<ScraperSource> loadExternalScarperSources(Directory dir) {
       //get file contents
       final file = File(fileEntity.path);
       //load scraper
-      ScraperSource scraper = ScraperSource(file.readAsStringSync(), file.parent);
+      final ScraperSource scraper = ScraperSource(file.readAsStringSync(), file.parent);
       //add for return
       scrapers.add(scraper);
     } catch (e, stack) {
-      log('Error loading external source: $e');
-      log(stack);
+      log2('Error loading external source:', e, level: const LogLevel.error());
+      log(stack, level: const LogLevel.debug());
     }
   }
 

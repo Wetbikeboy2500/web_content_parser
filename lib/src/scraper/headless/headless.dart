@@ -1,4 +1,4 @@
-import '../util/Result.dart';
+import '../../util/Result.dart';
 
 abstract class Headless {
   bool get isSupported => false;

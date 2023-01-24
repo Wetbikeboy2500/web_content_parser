@@ -1,13 +1,11 @@
 source: testSource
-baseUrl: testSource.com
-subdomain: null
 version: 1
-contentType: seriesImage
-programType: hetu
+programType: wql
 requests:
   - type: post
     file: fetch.ht
     entry: main
+    compiled: true
   - type: postUrl
     file: fetch.ht
     entry: url
@@ -23,3 +21,12 @@ requests:
   - type: catalogMulti
     file: catalog.ht
     entry: main
+  - type: test2
+    file: test.wql
+    programType: wql
+  - type: test3
+    file: test2.wql
+    programType: wql
+  - type: test3_alt
+    file: test2_alt.wql
+    programType: wql
