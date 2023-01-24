@@ -508,6 +508,25 @@ void main() {
     setUp(() {
       loadWQLFunctions();
     });
+    test('Do not rethrow error', () async {
+      final Result values = await runWQL('SET return TO value[0];', throwErrors: false);
+
+      expect(values.pass, isFalse);
+    });
+    test('Custom list access not supported', () async {
+      final code = '''
+        SET value TO l'';
+        SET return TO value[0:1];
+      ''';
+
+      final Result values = await runWQL(code, throwErrors: false);
+
+      expect(values.pass, isTrue);
+    });
+    test('Statement unimplemented', () async {
+      final statement = Statement();
+      expect(() => statement.execute(Interpreter()), throwsA(isA<UnimplementedError>()));
+    });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
@@ -787,11 +806,22 @@ void main() {
 
       expect(values.pass, isTrue);
 
-      expect(values.data!['output'], equals([
-        {'output': {0: 0}, 'output1': [0, 0]},
-        {'output': {1: 1}, 'output1': [1, 1]},
-        {'output': {2: 2}, 'output1': [2, 2]}
-      ]));
+      expect(
+          values.data!['output'],
+          equals([
+            {
+              'output': {0: 0},
+              'output1': [0, 0]
+            },
+            {
+              'output': {1: 1},
+              'output1': [1, 1]
+            },
+            {
+              'output': {2: 2},
+              'output1': [2, 2]
+            }
+          ]));
     });
     test('Merge', () async {
       final code = '''
@@ -913,7 +943,7 @@ void main() {
 
       expect(values.data!['output'], equals('hello world'));
     });
-    test('Select When', () async {
+    test('Select When Contains', () async {
       final code = '''
         SET first TO s'hello';
         SELECT first FROM * INTO matchOutput WHEN first contains s'ell';
@@ -950,6 +980,54 @@ void main() {
               ]
             }
           ]));
+    });
+    test('Select When StartsWith', () async {
+      final code = '''
+        SET first TO s'hello';
+        SELECT first FROM * INTO matchOutput WHEN first startsWith s'he';
+        SELECT first FROM * INTO noMatchOutput WHEN first startsWith s'weird';
+        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'matchOutput': {'first': 'hello'},
+            'noMatchOutput': {
+              'first': [],
+            }
+          }
+        ]),
+      );
+    });
+    test('Select When EndsWith', () async {
+      final code = '''
+        SET first TO s'hello';
+        SELECT first FROM * INTO matchOutput WHEN first endsWith s'lo';
+        SELECT first FROM * INTO noMatchOutput WHEN first endsWith s'weird';
+        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'matchOutput': {'first': 'hello'},
+            'noMatchOutput': {
+              'first': [],
+            }
+          }
+        ]),
+      );
     });
     test('Raw values', () async {
       final code = '''
