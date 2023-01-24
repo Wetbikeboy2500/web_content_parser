@@ -174,7 +174,7 @@ class SelectStatement extends Statement {
     for (final entry in values) {
       //match value length
       while (returns.length < entry.value.length) {
-        returns.add(Map<String, dynamic>());
+        returns.add(<String, dynamic>{});
       }
       //if a single value, duplicate
       if (entry.value.length > 1) {

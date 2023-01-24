@@ -63,5 +63,5 @@ abstract class SourceTemplate {
     return requestTypes.contains(type);
   }
 
-  String get host => subdomain != null ? subdomain! + '.' + baseurl : baseurl;
+  String get host => subdomain != null ? '${subdomain!}.$baseurl' : baseurl;
 }

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:html';
 import 'dart:js';
 
@@ -8,17 +7,17 @@ void main() async {
   context['runWQL'] = runWQL;
 
   //create a modaL
-  var modal = Element.div();
+  final modal = Element.div();
   modal.style.display = 'none';
   //create a button
-  var button = ButtonElement();
+  final button = ButtonElement();
   button.text = 'Click Me';
   button.onClick.listen((event) {
     modal.style.display = 'block';
   });
 
   //create a span element
-  var span = SpanElement();
+  final span = SpanElement();
   span.text = 'x';
   span.style.color = 'red';
   span.style.float = 'right';
@@ -28,7 +27,7 @@ void main() async {
   });
 
   //create a div element
-  var div = DivElement();
+  final div = DivElement();
   div.style.backgroundColor = 'white';
   div.style.padding = '20px';
   div.style.border = '1px solid #888';
@@ -38,16 +37,16 @@ void main() async {
 
 
   //text input
-  var input = TextAreaElement();
+  final input = TextAreaElement();
   input.style.height = '100px';
   input.style.width = '100%';
 
 
   //create p element
-  var p = ParagraphElement();
+  final p = ParagraphElement();
 
   //button to run wql
-  var button1 = ButtonElement();
+  final button1 = ButtonElement();
   button1.text = 'Run WQL';
   button1.onClick.listen((event) {
     runWQL(input.value ?? '').then((value) {
@@ -58,7 +57,7 @@ void main() async {
   });
 
   //create a button element
-  var button2 = ButtonElement();
+  final button2 = ButtonElement();
   button2.text = 'Close';
   button2.onClick.listen((event) {
     modal.style.display = 'none';

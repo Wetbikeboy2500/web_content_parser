@@ -14,20 +14,20 @@ Parser get inputs => (input.trim() & (stringIgnoreCase('as').trim() & name).pick
     .separatedBy(char(','), includeSeparators: false);
 
 Parser get input {
-  final _operator = undefined();
+  final operator = undefined();
 
-  final _literal = (char('l') | char('s') | char('b') | char('n')).token() & rawInputSingleQuote.trim();
+  final literal = (char('l') | char('s') | char('b') | char('n')).token() & rawInputSingleQuote.trim();
 
-  final _function = (letter().plus().flatten() &
-      (char('(') & _operator.separatedBy(char(',').trim(), includeSeparators: false).optional() & char(')'))
+  final function = (letter().plus().flatten() &
+      (char('(') & operator.separatedBy(char(',').trim(), includeSeparators: false).optional() & char(')'))
           .pick(1));
 
-  final _access = safeChars.plus().flatten().trim();
+  final access = safeChars.plus().flatten().trim();
 
-  _operator
-      .set(_literal | ((_function | _access) & digitInput.optional()).separatedBy(char('.'), includeSeparators: false));
+  operator
+      .set(literal | ((function | access) & digitInput.optional()).separatedBy(char('.'), includeSeparators: false));
 
-  return _operator;
+  return operator;
 }
 
 //don't allow square brackets, round brackets, semi-colon, colon, and comma

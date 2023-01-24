@@ -1,4 +1,3 @@
-import 'package:petitparser/core.dart';
 import 'package:petitparser/parser.dart';
 
 import '../interpreter/interpreter.dart';

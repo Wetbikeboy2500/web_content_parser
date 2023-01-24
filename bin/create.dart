@@ -89,12 +89,11 @@ void createPackage(String name, Directory dir) {
 }
 
 void createRequest(String name, Directory dir) {
-  final projectDir = Directory('${dir.path}/$name');
   //type, file, entry, compiled, programType
   //get program type
   String? programType;
-  while (programType != 'hetu0.3' && programType != 'wql') {
-    stdout.write('programType: [hetu0.3/wql] ');
+  while (programType != 'wql') {
+    stdout.write('programType: [wql] ');
     programType = stdin.readLineSync();
   }
   //get required file
@@ -104,8 +103,4 @@ void createRequest(String name, Directory dir) {
     final String? value = stdin.readLineSync();
     file = (value ?? '').isEmpty ? null : value;
   }
-
-  //get entry if program type is hetu0.3
-
-  //get compiled if program type is hetu0.3. default false
 }

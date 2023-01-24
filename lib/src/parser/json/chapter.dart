@@ -1,4 +1,3 @@
-import 'package:computer/computer.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:web_content_parser/src/parser/sources/computeDecorator.dart';
 import '../../parser/sources/computer.dart';

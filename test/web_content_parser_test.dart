@@ -335,14 +335,14 @@ void main() {
       Result<List> response =
           await result!.makeRequest<List>('test3', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
-      Result<List> response_alt =
+      Result<List> responseAlt =
           await result.makeRequest<List>('test3_alt', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
       expect(response.pass, isTrue);
-      expect(response_alt.pass, isTrue);
+      expect(responseAlt.pass, isTrue);
 
       expect(response.data, equals(['Description 1', 'Description 2', 'Description 3']));
-      expect(response_alt.data, equals(['Description 1', 'Description 2', 'Description 3']));
+      expect(responseAlt.data, equals(['Description 1', 'Description 2', 'Description 3']));
     });
   });
 
