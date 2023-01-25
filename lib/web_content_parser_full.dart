@@ -31,3 +31,5 @@ export 'src/util/log.dart';
 //WQL
 export 'src/wql/wql.dart';
 export 'src/wql/statements/setStatement.dart';
+export 'src/wql/statements/statement.dart';
+export 'src/wql/interpreter/interpreter.dart';

@@ -50,9 +50,9 @@ class LogicalSelector {
             return firstValue.querySelector(secondValue) != null;
           case 'contains':
             return firstValue.contains(secondValue);
-          case 'startsWith':
+          case 'startswith':
             return firstValue.startsWith(secondValue);
-          case 'endsWith':
+          case 'endswith':
             return firstValue.endsWith(secondValue);
           case 'equals':
             return firstValue == secondValue;
