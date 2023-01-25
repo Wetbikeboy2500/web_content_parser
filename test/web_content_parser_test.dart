@@ -1,6 +1,7 @@
 //Make sure to keep this as the first import
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
+import 'package:web_content_parser/src/parser/sources/computer.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'dart:io';
@@ -228,6 +229,260 @@ void main() {
       test('Author to json', () {
         Author author = Author(name: 'test', roles: '', first: false);
         expect(author.toJson(), equals({'name': 'test', 'roles': '', 'first': false}));
+      });
+    });
+    group('Catalog entry', () {
+      test('Create catalog entry', () {
+        final entry = CatalogEntry(
+          id: ID(source: 'testing', id: 'test'),
+          coverurl: '',
+          name: 'Title',
+        );
+
+        expect(entry.id, equals(ID(source: 'testing', id: 'test')));
+        expect(entry.coverurl, equals(''));
+        expect(entry.name, equals('Title'));
+      });
+      test('Create catalog entry from json', () {
+        final entry = CatalogEntry.fromJson({
+          'id': ID(source: 'testing', id: 'test'),
+          'coverurl': '',
+          'name': 'Title',
+        });
+
+        expect(entry.id, equals(ID(source: 'testing', id: 'test')));
+        expect(entry.coverurl, equals(''));
+        expect(entry.name, equals('Title'));
+      });
+      test('Create catalog entry from json with json id', () {
+        final entry = CatalogEntry.fromJson({
+          'id': {
+            'source': 'testing',
+            'id': 'test',
+          },
+          'coverurl': '',
+          'name': 'Title',
+        });
+
+        expect(entry.id, equals(ID(source: 'testing', id: 'test')));
+        expect(entry.coverurl, equals(''));
+        expect(entry.name, equals('Title'));
+      });
+      test('Convert catalog entry to json', () {
+        final entry = CatalogEntry(
+          id: ID(source: 'testing', id: 'test'),
+          coverurl: '',
+          name: 'Title',
+        );
+
+        expect(
+          entry.toJson(),
+          equals({
+            'id': {'source': 'testing', 'id': 'test', 'uid': 'testing:test'},
+            'coverurl': '',
+            'name': 'Title',
+          }),
+        );
+      });
+      test('Catalog entry equals', () {
+        final entry = CatalogEntry(
+          id: ID(source: 'testing', id: 'test'),
+          coverurl: '',
+          name: 'Title',
+        );
+        final entry1 = CatalogEntry(
+          id: ID(source: 'testing', id: 'test'),
+          coverurl: '',
+          name: 'Title',
+        );
+
+        expect(entry, equals(entry1));
+      });
+      test('Catalog entry not equals', () {
+        final entry = CatalogEntry(
+          id: ID(source: 'testing', id: 'test'),
+          coverurl: '',
+          name: 'Title',
+        );
+        final entry1 = CatalogEntry(
+          id: ID(source: 'testing', id: 'test1'),
+          coverurl: '',
+          name: 'Title',
+        );
+
+        expect(entry, isNot(equals(entry1)));
+      });
+    });
+    group('Chapter', () {
+      test('Create chapter', () {
+        final chapter = Chapter(
+          name: 'Title',
+          date: DateTime.now(),
+          chapterID: ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')),
+        );
+
+        expect(chapter.name, equals('Title'));
+        expect(chapter.date, isNotNull);
+        expect(chapter.chapterID, equals(ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'))));
+      });
+      test('Create chapter from json', () {
+        final chapter = Chapter.fromJson({
+          'name': 'Title',
+          'date': DateTime.now().toIso8601String(),
+          'chapterID': ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')),
+        });
+
+        expect(chapter.name, equals('Title'));
+        expect(chapter.date, isNotNull);
+        expect(chapter.chapterID, equals(ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'))));
+      });
+      test('Create chapter from json with json chapterID', () {
+        final chapter = Chapter.fromJson({
+          'name': 'Title',
+          'date': DateTime.now().toIso8601String(),
+          'chapterID': {
+            'url': '',
+            'index': 0,
+            'id': ID(id: 'test', source: 'testing'),
+          },
+        });
+
+        expect(chapter.name, equals('Title'));
+        expect(chapter.date, isNotNull);
+        expect(chapter.chapterID, equals(ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'))));
+      });
+      test('Create chapter from json with no date', () {
+        final chapter = Chapter.fromJson({
+          'name': 'Title',
+          'chapterID': ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')),
+        });
+
+        expect(chapter.name, equals('Title'));
+        expect(chapter.date, isNotNull);
+        expect(chapter.chapterID, equals(ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'))));
+      });
+      test('Create chapter from json with DateTime object', () {
+        final chapter = Chapter.fromJson({
+          'name': 'Title',
+          'date': DateTime.now(),
+          'chapterID': ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')),
+        });
+
+        expect(chapter.name, equals('Title'));
+        expect(chapter.date, isNotNull);
+        expect(chapter.chapterID, equals(ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'))));
+      });
+      test('Compute chapter to json', () async {
+        final computer = ComputerDecorator();
+        final chapter = Chapter(
+          name: 'Title',
+          date: DateTime.now(),
+          chapterID: ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')),
+        );
+        computer.start();
+        final json = await Chapter.computeChapterToJson(computer, chapter);
+        computer.end();
+        expect(json, equals(chapter.toJson()));
+      });
+      test('Compute chapter from json', () async {
+        final computer = ComputerDecorator();
+        final json = {
+          'name': 'Title',
+          'date': DateTime.now().toIso8601String(),
+          'chapterID': ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')).toJson(),
+          'images': <String, dynamic>{},
+          'chapterUpdateState': 'Same',
+        };
+        computer.start();
+        final chapter = await Chapter.computeChapterFromJson(computer, json);
+        computer.end();
+        expect(chapter.toJson(), equals(json));
+      });
+      test('Chapters from json', () async {
+        final json = [
+          {
+            'name': 'Title',
+            'date': DateTime.now().toIso8601String(),
+            'chapterID': ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')).toJson(),
+            'images': <String, dynamic>{},
+            'chapterUpdateState': 'Same',
+          },
+          {
+            'name': 'Title',
+            'date': DateTime.now().toIso8601String(),
+            'chapterID': ChapterID(url: '', index: 1, id: ID(id: 'test', source: 'testing')).toJson(),
+            'images': <String, dynamic>{},
+            'chapterUpdateState': 'Same',
+          },
+        ];
+
+        final chapters = Chapter.chaptersFromJson(json);
+
+        expect(
+          chapters.map((e) => e.toJson()).toList(),
+          equals([
+            json[0],
+            json[1],
+          ]),
+        );
+      });
+      test('Compute chapters from json', () async {
+        final computer = ComputerDecorator();
+        final json = [
+          {
+            'name': 'Title',
+            'date': DateTime.now().toIso8601String(),
+            'chapterID': ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')).toJson(),
+            'images': <String, dynamic>{},
+            'chapterUpdateState': 'Same',
+          },
+          {
+            'name': 'Title',
+            'date': DateTime.now().toIso8601String(),
+            'chapterID': ChapterID(url: '', index: 1, id: ID(id: 'test', source: 'testing')).toJson(),
+            'images': <String, dynamic>{},
+            'chapterUpdateState': 'Same',
+          },
+        ];
+
+        computer.start();
+        final chapters = await Chapter.computeChaptersFromJson(computer, json);
+        computer.end();
+
+        expect(
+          chapters.map((e) => e.toJson()).toList(),
+          equals([
+            json[0],
+            json[1],
+          ]),
+        );
+      });
+      test('Computer chapters to json', () async {
+        final computer = ComputerDecorator();
+        final chapters = [
+          Chapter(
+            name: 'Title',
+            date: DateTime.now(),
+            chapterID: ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing')),
+          ),
+          Chapter(
+            name: 'Title',
+            date: DateTime.now(),
+            chapterID: ChapterID(url: '', index: 1, id: ID(id: 'test', source: 'testing')),
+          ),
+        ];
+
+        computer.start();
+        final json = await Chapter.computeChaptersToJson(computer, chapters);
+        computer.end();
+
+        expect(
+          json,
+          equals([
+            chapters[0].toJson(),
+            chapters[1].toJson(),
+          ]),
+        );
       });
     });
   });
