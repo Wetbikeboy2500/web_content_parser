@@ -50,7 +50,7 @@ void loadWQLFunctions() {
       return path.url.split(arg);
     },
     'last': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg = (args[0] is List && args[0].first is List) ? args[0].first : args[0];
       return arg.last;
     },
     'getlastsegment': (args) {
