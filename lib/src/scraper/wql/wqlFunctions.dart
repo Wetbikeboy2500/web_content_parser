@@ -45,6 +45,14 @@ void loadWQLFunctions() {
     'joinurl': (args) {
       return path.url.joinAll(List<String>.from(args.map((e) => e.first)));
     },
+    'spliturl': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      return path.url.split(arg);
+    },
+    'last': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      return arg.last;
+    },
     'getlastsegment': (args) {
       final List arg0 = (args[0] is List) ? args[0] : [args[0]];
       final dynamic? arg1 = (args.length == 1)
