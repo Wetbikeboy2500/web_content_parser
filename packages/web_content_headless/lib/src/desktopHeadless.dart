@@ -138,7 +138,7 @@ class DesktopHeadless extends Headless {
   }
 
   @override
-  Future<Result<String>> getHtml(String url, {String? id}) {
+  Future<Result<String>> getHtml(String url, String? id) {
     final Completer<Result<String>> completer = Completer();
 
     runQueue(completer, url, id: id);
@@ -146,6 +146,7 @@ class DesktopHeadless extends Headless {
     return completer.future;
   }
 
+  @override
   Future<Result<Map<String, String>>> getCookiesForUrl(String url) {
     final Result<List<Cookie>> cookies = getCookies(url);
     final Map<String, String> convertedCookies = {};
@@ -160,6 +161,7 @@ class DesktopHeadless extends Headless {
     }
   }
 
+  @override
   Future<Result<Map<String, String>>> getCookiesForId(String id) {
     final String? host = _idToHost[id];
 

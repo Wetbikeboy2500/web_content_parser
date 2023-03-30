@@ -121,7 +121,7 @@ class MobileHeadless extends Headless {
   }
 
   @override
-  Future<Result<String>> getHtml(String url, {String? id}) {
+  Future<Result<String>> getHtml(String url, String? id) {
     final Uri? uri = Uri.tryParse(url);
 
     if (uri == null) {
