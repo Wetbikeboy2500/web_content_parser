@@ -90,9 +90,41 @@ class SetStatement extends Statement {
       }
       return result.join('');
     },
+    'last': (args) {
+      final dynamic arg = (args[0] is List && args[0].first is List) ? args[0].first : args[0];
+      return arg.last;
+    },
     'count': (args) {
       final dynamic arg0 = (args[0] is List && args[0].isNotEmpty && args[0].first is List) ? args[0].first : args[0];
       return arg0.length;
+    },
+    'split': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      return arg.split(arg1);
+    },
+    'indexof': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      return arg.indexOf(arg1);
+    },
+    'indexofstartingat': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      final dynamic arg2 = (args[2] is List) ? args[2].first : args[2];
+      return arg.indexOf(arg1, arg2);
+    },
+    'substring': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      final dynamic arg2 = (args[2] is List) ? args[2].first : args[2];
+      return arg.substring(arg1, arg2);
+    },
+    'replaceall': (args) {
+      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      final dynamic arg2 = (args[2] is List) ? args[2].first : args[2];
+      return arg.replaceAll(arg1, arg2);
     },
     'createrange': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
