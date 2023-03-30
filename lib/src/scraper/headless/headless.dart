@@ -11,5 +11,5 @@ abstract class Headless {
   Future<Result<Map<String, String>>> getCookiesForUrl(String url);
 
   /// Returns the cookies for the page with the given [id].
-  Future<Result<String>> getCookiesForId(String id);
+  Future<Result<Map<String, String>>> getCookiesForId(String id);
 }
