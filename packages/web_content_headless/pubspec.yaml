@@ -1,5 +1,5 @@
 name: web_content_headless
-description: A parser for online content. This package defines a base design for the relation of data and parsing of it.
+description: Provides implementations for a headless web browser for mobile and desktop.
 version: 1.0.0
 
 publish_to: none
