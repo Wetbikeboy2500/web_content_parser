@@ -31,7 +31,8 @@ class DesktopHeadless extends Headless {
     context = null;
   }
 
-  final Map<Uri, List<Cookie>> cookies = {};
+  final Map<String, List<Cookie>> _cookies = {};
+  final Map<String, String> _idToHost = {};
 
   Result<List<Cookie>> getCookies(String url) {
     final Uri? uri = Uri.tryParse(url);
@@ -41,15 +42,14 @@ class DesktopHeadless extends Headless {
       return const Result.fail();
     }
 
-    final Result<MapEntry<Uri, List<Cookie>>> r =
-        cookies.entries.firstWhereResult((element) => element.key.host == uri.host);
+    final List<Cookie>? cookies = _cookies[uri.host];
 
-    if (r.fail) {
+    if (cookies == null) {
       log2('Failed to find cookies for url given:', url, level: const LogLevel.warn());
       return const Result.fail();
     }
 
-    return Result.pass(r.data!.value);
+    return Result.pass(cookies);
   }
 
   final Queue<Function> requests = Queue();
@@ -64,9 +64,9 @@ class DesktopHeadless extends Headless {
     }
   }
 
-  void runQueue(Completer<Result<String>> completer, String url) {
+  void runQueue(Completer<Result<String>> completer, String url, {String? id}) {
     if (running) {
-      requests.add(() => runQueue(completer, url));
+      requests.add(() => runQueue(completer, url, id: id));
       return;
     }
 
@@ -91,8 +91,11 @@ class DesktopHeadless extends Headless {
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36');
 
         final uri = UriResult.parse(url);
-        if (uri.pass && cookies.containsKey(uri.data)) {
-          await page.setCookies(cookies[uri.data]!.map((e) => CookieParam.fromJson(e.toJson())).toList());
+        if (uri.pass && _cookies.containsKey(uri.data!.host)) {
+          if (id != null) {
+            _idToHost[id] = uri.data!.host;
+          }
+          await page.setCookies(_cookies[uri.data!.host]!.map((e) => CookieParam.fromJson(e.toJson())).toList());
         }
 
         await page.setJavaScriptEnabled(true);
@@ -100,7 +103,7 @@ class DesktopHeadless extends Headless {
 
         //get cookies for update
         if (uri.pass) {
-          cookies[uri.data!] = await page.cookies();
+          _cookies[uri.data!.host] = await page.cookies();
         }
 
         final String? html = await page.content;
@@ -135,11 +138,35 @@ class DesktopHeadless extends Headless {
   }
 
   @override
-  Future<Result<String>> getHtml(String url) {
+  Future<Result<String>> getHtml(String url, {String? id}) {
     final Completer<Result<String>> completer = Completer();
 
-    runQueue(completer, url);
+    runQueue(completer, url, id: id);
 
     return completer.future;
+  }
+
+  Future<Result<Map<String, String>>> getCookiesForUrl(String url) {
+    final Result<List<Cookie>> cookies = getCookies(url);
+    final Map<String, String> convertedCookies = {};
+
+    if (cookies.pass) {
+      for (final Cookie cookie in cookies.data!) {
+        convertedCookies[cookie.name] = cookie.value;
+      }
+      return Future.value(Result.pass(convertedCookies));
+    } else {
+      return Future.value(const Result.fail());
+    }
+  }
+
+  Future<Result<Map<String, String>>> getCookiesForId(String id) {
+    final String? host = _idToHost[id];
+
+    if (host == null) {
+      return Future.value(const Result.fail());
+    }
+
+    return getCookiesForUrl(host);
   }
 }

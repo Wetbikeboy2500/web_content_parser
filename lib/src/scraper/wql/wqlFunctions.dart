@@ -17,7 +17,11 @@ void loadWQLFunctions() {
       );
     },
     'getdynamicrequest': (args) async {
-      return await getDynamicPage(args[0].first);
+      if (args[0].length == 2) {
+        return await getDynamicPage(args[0].first, id: args[0].last);
+      } else {
+        return await getDynamicPage(args[0].first);
+      }
     },
     'postrequest': (args) async {
       return await postRequest(

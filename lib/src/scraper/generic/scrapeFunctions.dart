@@ -69,7 +69,7 @@ Future<Response?> getRequest(String url, Map<String, String>? headers) async {
 final Map<String, Completer<Result<String>>> _getDynamicCache = {};
 
 ///Provides a standard interface for dynamic requests along with request caching
-Future<Result<String>> getDynamicPage(String url) async {
+Future<Result<String>> getDynamicPage(String url, {String? id}) async {
   final Result<Headless> headless =
       WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
   //means headless exists for the current platform
@@ -84,7 +84,7 @@ Future<Result<String>> getDynamicPage(String url) async {
     final Completer<Result<String>> task = Completer<Result<String>>();
     _getDynamicCache[url] = task;
 
-    final result = await headless.data!.getHtml(url);
+    final result = await headless.data!.getHtml(url, id);
 
     //completes the futures
     task.complete(result);

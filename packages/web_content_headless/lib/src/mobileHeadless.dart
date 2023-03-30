@@ -18,6 +18,7 @@ class MobileHeadless extends Headless {
   final Queue<Function> requests = Queue();
 
   final Map<String, Map<String, String>> _cookies = {};
+  final Map<String, String> _idToHost = {};
 
   void startShutdown() {
     if (headless != null && running == false) {
@@ -120,11 +121,15 @@ class MobileHeadless extends Headless {
   }
 
   @override
-  Future<Result<String>> getHtml(String url) {
+  Future<Result<String>> getHtml(String url, {String? id}) {
     final Uri? uri = Uri.tryParse(url);
 
     if (uri == null) {
       return Future.value(const Result.fail());
+    }
+
+    if (id != null) {
+      _idToHost[id] = uri.host;
     }
 
     final Completer<Result<String>> completer = Completer();
@@ -148,5 +153,21 @@ class MobileHeadless extends Headless {
     }
 
     return const Result.fail();
+  }
+
+  @override
+  Future<Result<Map<String, String>>> getCookiesForUrl(String url) {
+    return getCookies(url);
+  }
+
+  @override
+  Future<Result<Map<String, String>>> getCookiesForId(String id) {
+    final String? host = _idToHost[id];
+
+    if (host == null) {
+      return Future.value(const Result.fail());
+    }
+
+    return getCookies(host);
   }
 }
