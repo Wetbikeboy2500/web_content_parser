@@ -264,3 +264,37 @@ value|trim()|lowercase() (also supported)
 
 value.trim().lowercase() (current)
 ```
+
+Here is another idea that could potentially be much better based on test/samples/scraper/test2_alt.wql:
+```
+SET html TO getRequest(^.path);
+SET html TO parse(^.html);
+SET items TO
+[...html.querySelectorAll(s'.item')]
+(
+    *.text() as text,
+    *.querySelector(s'.description').text() as description,
+    name: s'testing',
+    [d'normal list']
+);
+SET first TO [...items](description) WHEN text contains s'Title 1';
+SET second TO [...items](description) WHEN text contains s'Title 2';
+SET third TO [...items](description) WHEN text contains s'Title 3';
+SET return TO merge(^.first[0], ^.second[0], ^.third[0]);
+```
+
+Or:
+```
+SET html TO getRequest(^.path);
+SET html TO parse(^.html);
+RUN
+[...html.querySelectorAll(s'.item')]
+(
+    *.text() as _text,
+    *.querySelector(s'.description').text() as _description,
+    SET first TO _description WHEN _text contains s'Title 1';
+    SET second TO _description WHEN _text contains s'Title 2';
+    SET third TO _description WHEN _text contains s'Title 3';
+);
+SET return TO [](^.first[0], ^.second[0], ^.third[0]);
+```
