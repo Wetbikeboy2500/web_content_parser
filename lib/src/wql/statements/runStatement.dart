@@ -32,11 +32,11 @@ class RunStatement extends Statement {
   }
 
   @override
-  Future<void> execute(Interpreter interpreter) async {
+  Future<void> execute(Interpreter interpreter, dynamic context) async {
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
-      args.add((await arg.getValue(interpreter.values, interpreter, custom: SetStatement.functions)).value);
+      args.add((await arg.getValue(context, interpreter, custom: SetStatement.functions)).value);
     }
 
     final Function? func = SetStatement.functions[function];

@@ -2,6 +2,7 @@
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
 import 'package:web_content_parser/src/parser/sources/computer.dart';
+import 'package:web_content_parser/src/wql/statements/loopStatement.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'dart:io';
@@ -580,17 +581,18 @@ void main() {
             {
               'type': 'test2',
               'file': 'test.wql',
-              'programType': 'wql',
             },
             {
               'type': 'test3',
               'file': 'test2.wql',
-              'programType': 'wql',
             },
             {
               'type': 'test3_alt',
               'file': 'test2_alt.wql',
-              'programType': 'wql',
+            },
+            {
+              'type': 'test3_new',
+              'file': 'test2_new.wql',
             }
           ],
         }),
@@ -641,11 +643,16 @@ void main() {
       Result<List> responseAlt =
           await result.makeRequest<List>('test3_alt', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
+      Result<List> responseNew =
+          await result.makeRequest<List>('test3_new', [MapEntry('path', 'test/samples/scraper/test.html')]);
+
       expect(response.pass, isTrue);
       expect(responseAlt.pass, isTrue);
+      expect(responseNew.pass, isTrue);
 
       expect(response.data, equals(['Description 1', 'Description 2', 'Description 3']));
       expect(responseAlt.data, equals(['Description 1', 'Description 2', 'Description 3']));
+      expect(responseNew.data, equals(['Description 1', 'Description 2', 'Description 3']));
     });
   });
 
@@ -828,7 +835,7 @@ void main() {
     });
     test('Statement unimplemented', () async {
       final statement = Statement();
-      expect(() => statement.execute(Interpreter()), throwsA(isA<UnimplementedError>()));
+      expect(() => statement.execute(Interpreter(), null), throwsA(isA<UnimplementedError>()));
     });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
@@ -937,7 +944,6 @@ void main() {
       expect(values.pass, isTrue);
       expect(values.data!['url'], equals('https://www.example.com/?page=1'));
     });
-    //TODO: add tests for set statement functions
     test('Increment', () async {
       final code = '''
         SET number TO n'0';

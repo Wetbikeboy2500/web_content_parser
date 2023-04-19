@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:petitparser/parser.dart';
 
 import '../interpreter/interpreter.dart';
+import '../suboperations/logicalSelector.dart';
 import '../suboperations/operator.dart';
 import '../parserHelper.dart';
 import 'statement.dart';
@@ -8,19 +11,31 @@ import 'statement.dart';
 class SetStatement extends Statement {
   final String target;
   final Operator operation;
+  final LogicalSelector? when;
 
-  const SetStatement(this.target, this.operation);
+  const SetStatement(this.target, this.operation, {this.when});
 
-  factory SetStatement.fromTokens(List tokens) {
+  factory SetStatement.fromTokens(List tokens){
     final String target = tokens[1];
 
     final Operator operation = Operator.fromTokensNoAlias(tokens[3]);
 
-    return SetStatement(target, operation);
+    //get when conditions
+    late final LogicalSelector? when;
+
+    if (tokens[4] != null) {
+      when = LogicalSelector(tokens[4].last);
+    } else {
+      when = null;
+    }
+
+    return SetStatement(target, operation, when: when);
   }
 
   static Parser getParser() {
-    return stringIgnoreCase('set').trim().token() & name & stringIgnoreCase('to').trim().token() & input;
+    return stringIgnoreCase('set').trim().token() & name &
+      stringIgnoreCase('to').trim().token() & input &
+      (stringIgnoreCase('when').trim().token() & LogicalSelector.getParser()).optional();
   }
 
   static Map<String, Function> functions = {
@@ -167,11 +182,45 @@ class SetStatement extends Statement {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
       return arg0.toUpperCase();
     },
+    'json': (args) {
+      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+
+      late final String result;
+
+      if (args.length > 1) {
+        final List<String> parts = arg0.split('?');
+        final List<String> output = [];
+        int index = 1;
+        for (final part in parts) {
+          output.add(part);
+          output.add(args[index].toString());
+          index++;
+
+          if (index == args.length) {
+            index = 1;
+          }
+        }
+        output.removeLast();
+
+        result = output.join('');
+      } else {
+        result = arg0 as String;
+      }
+
+      return json.decode(result);
+    }
   };
 
   @override
-  Future<void> execute(Interpreter interpreter) async {
-    final value = (await operation.getValue(interpreter.values, interpreter, custom: functions)).value;
+  Future<void> execute(Interpreter interpreter, dynamic context) async {
+    if (when != null) {
+      final whenResult = await when!.evaluate(context, interpreter);
+      if (whenResult == false) {
+        return;
+      }
+    }
+
+    final value = (await operation.getValue(context, interpreter, custom: functions)).value;
 
     //set the value
     interpreter.setValue(target, value.first);

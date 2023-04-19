@@ -2,6 +2,7 @@
 import 'package:petitparser/petitparser.dart';
 
 import '../statements/conditionalStatement.dart';
+import '../statements/loopStatement.dart';
 import '../statements/runStatement.dart';
 import '../statements/selectStatement.dart';
 import '../statements/setStatement.dart';
@@ -32,10 +33,12 @@ Statement parseStatement(List tokens) {
       final String op = (data.value as String).toLowerCase();
 
       switch (op) {
-        case 'select':
-          return SelectStatement.fromTokens(tokens);
         case 'set':
           return SetStatement.fromTokens(tokens);
+        case 'select':
+          return SelectStatement.fromTokens(tokens);
+        case 'loop':
+          return LoopStatement.fromTokens(tokens);
         case 'if':
           return ConditionalStatement.fromTokens(tokens);
         case 'run':

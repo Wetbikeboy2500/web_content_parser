@@ -75,8 +75,8 @@ class SelectStatement extends Statement {
   }
 
   @override
-  Future<void> execute(Interpreter interpreter) async {
-    dynamic value = (await from.getValue(interpreter.values, interpreter, custom: SetStatement.functions)).value;
+  Future<void> execute(Interpreter interpreter, dynamic context) async {
+    dynamic value = (await from.getValue(context, interpreter, custom: SetStatement.functions)).value;
 
     //this is relevant for the getValue on the operators to know if it is being passed a list to modify or a elements within a list to modify
     bool expand = false;

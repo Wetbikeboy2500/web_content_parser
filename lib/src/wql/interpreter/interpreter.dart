@@ -19,7 +19,7 @@ class Interpreter {
 
   Future<void> runStatements(List<Statement> statements) async {
     for (var statement in statements) {
-      await statement.execute(this);
+      await statement.execute(this, values);
     }
   }
 }

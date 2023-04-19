@@ -25,14 +25,14 @@ class ConditionalStatement extends Statement {
   }
 
   @override
-  Future<void> execute(Interpreter interpreter) async {
-    if (await conditional.evaluate(interpreter.values, interpreter)) {
+  Future<void> execute(Interpreter interpreter, dynamic context) async {
+    if (await conditional.evaluate(context, interpreter)) {
       for (final Statement statement in truthful) {
-        await statement.execute(interpreter);
+        await statement.execute(interpreter, context);
       }
     } else if (falsy != null) {
       for (final Statement statement in falsy!) {
-        await statement.execute(interpreter);
+        await statement.execute(interpreter, context);
       }
     }
   }
