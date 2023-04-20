@@ -1227,6 +1227,39 @@ void main() {
 
       expect(values.data!['output'], equals('passed'));
     });
+    test('Json', () async {
+      final code = '''
+        SET output TO json(s'{"hello": "world"}');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals({'hello': 'world'}));
+    });
+    test('Json Insert', () async {
+      final code = '''
+        SET output TO json(s'{"hello": "world"}', s'hello', s'Unknown');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals({'hello': 'Unknown'}));
+    });
+    test('Json Insert Nested', () async {
+      final code = '''
+        SET output TO json(s'{"hello": {"world": null}}', s'hello.world', s'Unknown');
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals({'hello': {'world': 'Unknown'}}));
+    });
     test('Trim Function High Level', () async {
       WebContentParser.verbose = const LogLevel.debug();
       final code = '''
