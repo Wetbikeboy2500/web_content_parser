@@ -22,6 +22,8 @@ class LoopStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
+    interpreter.pushLocal();
+
     late final List<dynamic> items;
 
     items = (await item.getValue(context, interpreter, custom: SetStatement.functions)).value;
@@ -31,5 +33,7 @@ class LoopStatement extends Statement {
           await statement.execute(interpreter, item);
       }
     }
+
+    interpreter.popLocal();
   }
 }

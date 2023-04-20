@@ -3,8 +3,8 @@ SET html TO parse(^.html);
 LOOP html.querySelectorAll(s'.item')[]:
     SET _text TO *.text();
     SET _description TO *.querySelector(s'.description').text();
-    SET first TO ^._description WHEN ^._text contains s'Title 1';
-    SET second TO ^._description WHEN ^._text contains s'Title 2';
-    SET third TO ^._description WHEN ^._text contains s'Title 3';
+    SET first TO _description WHEN _text contains s'Title 1';
+    SET second TO _description WHEN _text contains s'Title 2';
+    SET third TO _description WHEN _text contains s'Title 3';
 ENDLOOP;
 SET return TO merge(^.first, ^.second, ^.third);

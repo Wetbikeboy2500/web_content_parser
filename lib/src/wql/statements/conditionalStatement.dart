@@ -26,6 +26,8 @@ class ConditionalStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
+    interpreter.pushLocal();
+
     if (await conditional.evaluate(context, interpreter)) {
       for (final Statement statement in truthful) {
         await statement.execute(interpreter, context);
@@ -35,5 +37,7 @@ class ConditionalStatement extends Statement {
         await statement.execute(interpreter, context);
       }
     }
+
+    interpreter.popLocal();
   }
 }
