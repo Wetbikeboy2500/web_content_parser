@@ -15,7 +15,7 @@ class SetStatement extends Statement {
 
   const SetStatement(this.target, this.operation, {this.when});
 
-  factory SetStatement.fromTokens(List tokens){
+  factory SetStatement.fromTokens(List tokens) {
     final String target = tokens[1];
 
     final Operator operation = Operator.fromTokensNoAlias(tokens[3]);
@@ -33,9 +33,11 @@ class SetStatement extends Statement {
   }
 
   static Parser getParser() {
-    return stringIgnoreCase('set').trim().token() & name &
-      stringIgnoreCase('to').trim().token() & input &
-      (stringIgnoreCase('when').trim().token() & LogicalSelector.getParser()).optional();
+    return stringIgnoreCase('set').trim().token() &
+        name &
+        stringIgnoreCase('to').trim().token() &
+        input &
+        (stringIgnoreCase('when').trim().token() & LogicalSelector.getParser()).optional();
   }
 
   static Map<String, Function> functions = {
@@ -185,29 +187,32 @@ class SetStatement extends Statement {
     'json': (args) {
       final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
 
-      late final String result;
+      dynamic localJson;
 
-      if (args.length > 1) {
-        final List<String> parts = arg0.split('?');
-        final List<String> output = [];
-        int index = 1;
-        for (final part in parts) {
-          output.add(part);
-          output.add(args[index].toString());
-          index++;
-
-          if (index == args.length) {
-            index = 1;
-          }
-        }
-        output.removeLast();
-
-        result = output.join('');
+      if (arg0 is String) {
+        localJson = json.decode(arg0);
       } else {
-        result = arg0 as String;
+        localJson = arg0;
       }
 
-      return json.decode(result);
+      if (args.length > 1) {
+        for (var i = 1; i < args.length - 1; i += 2) {
+          final dynamic selector = args[i];
+          final dynamic value = args[i + 1];
+
+          final split = selector.split('.');
+          var current = localJson;
+          for (var i = 0; i < split.length; i++) {
+            if (i == split.length - 1) {
+              current[split[i]] = value;
+            } else {
+              current = current[split[i]];
+            }
+          }
+        }
+      }
+
+      return localJson;
     }
   };
 
