@@ -1,0 +1,2 @@
+SET document TO getDocument();
+SET return TO document.querySelector(s'title').text();

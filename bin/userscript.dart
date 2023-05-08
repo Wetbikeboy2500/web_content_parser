@@ -1,8 +1,9 @@
 import 'dart:io';
+import 'package:path/path.dart' as path;
 
 void main() {
   //build js
-  Process.runSync('dart compile js -o wql.js --no-source-maps wql.dart', [], runInShell: true);
+  Process.runSync('dart compile js -o wql.js wql.dart', [], runInShell: true);
   //append the userscript header
   final input = File('wql.js');
   final output = File('wql.user.js');
@@ -11,8 +12,7 @@ void main() {
     output.deleteSync();
   }
 
-  output.writeAsStringSync(
-    '''
+  output.writeAsStringSync('''
 // ==UserScript==
 // @name         WQL Scraper
 // @namespace    http://tampermonkey.net/
@@ -24,7 +24,11 @@ void main() {
 // @grant        none
 // @run-at       document-start
 // ==/UserScript==
-    ''');
+
+''');
 
   output.writeAsStringSync(input.readAsStringSync(), mode: FileMode.append);
+
+  //convert to forward slashes
+  print("file:///${File('wql.user.js').absolute.path.toString().replaceAll('\\', '/')}");
 }

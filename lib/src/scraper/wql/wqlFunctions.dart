@@ -59,20 +59,20 @@ void loadWQLFunctions() {
     },
     'getlastsegment': (args) {
       final List arg0 = (args[0] is List) ? args[0] : [args[0]];
-      final dynamic? arg1 = (args.length == 1)
+      final String? arg1 = (args.length == 1)
           ? null
           : (args[1] is List)
               ? args[1].first
               : args[1];
 
-      final List output = [];
+      final List<String> output = [];
       if (arg1 == null) {
         for (String item in arg0) {
-          output.add(path.url.split(item).last);
+          output.add(Uri.parse(item).pathSegments.lastWhere((element) => element.isNotEmpty, orElse: () => ''));
         }
       } else {
         for (Map item in arg0) {
-          output.add(path.url.split(item[arg1]).last);
+          output.add(Uri.parse(item[arg1]).pathSegments.lastWhere((element) => element.isNotEmpty, orElse: () => ''));
         }
       }
 

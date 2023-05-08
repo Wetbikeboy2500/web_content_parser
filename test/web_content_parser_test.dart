@@ -1227,6 +1227,18 @@ void main() {
 
       expect(values.data!['output'], equals('passed'));
     });
+    test('Get last segment', () async {
+      final code = '''
+        SET url TO s'https://www.example.com/home/testing/';
+        SET output TO url.getLastSegment()[0];
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('testing'));
+    });
     test('Json', () async {
       final code = '''
         SET output TO json(s'{"hello": "world"}');
