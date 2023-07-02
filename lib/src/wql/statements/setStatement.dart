@@ -195,7 +195,6 @@ class SetStatement extends Statement {
         localJson = arg0;
       }
 
-      print(args);
       if (args.length > 1) {
         for (var i = 1; i < args.length - 1; i += 2) {
           final dynamic selector = (args[i] is List) ? args[i].first : args[i];
