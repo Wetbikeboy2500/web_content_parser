@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:json2yaml/json2yaml.dart';
+import 'package:web_content_parser/web_content_parser_full.dart';
+import 'package:path/path.dart' as p;
 
 void main(List<String> args) {
   createPackage(args.first, Directory.current);
@@ -25,7 +28,7 @@ void createPackage(String name, Directory dir) {
   //continue to read line until answer is y or n
   while (answer != 'y' && answer != 'n') {
     stdout.write('Do you want to create a parser (Additional information needed)? [y/n] ');
-    answer = stdin.readLineSync();
+    answer = stdin.readLineSync()?.toLowerCase();
   }
 
   final bool createParser = answer == 'y';
@@ -72,8 +75,8 @@ void createPackage(String name, Directory dir) {
   }
 
   String? programType;
-  while (programType != 'hetu0.3' && programType != 'wql') {
-    stdout.write('programType: [hetu0.3/wql] ');
+  while (programType != 'wql') {
+    stdout.write('programType: [wql] ');
     programType = stdin.readLineSync();
   }
 
@@ -89,7 +92,37 @@ void createPackage(String name, Directory dir) {
 }
 
 void createRequest(String name, Directory dir) {
-  //type, file, entry, compiled, programType
+  final files = dir.listSync();
+
+  final List<File> yamlFiles = [];
+
+  for (final file in files) {
+    if (file is File) {
+      final ext = p.extension(file.path);
+      if (ext == '.yaml' || ext == '.yml') {}
+    }
+  }
+
+  //output all the yaml files paths with a number
+  for (final file in yamlFiles) {
+    stdout.writeln('${yamlFiles.indexOf(file)}: ${file.path}');
+  }
+
+  //promt user to select a file by number
+  int index = -1;
+  while (index < 0 || index >= yamlFiles.length) {
+    stdout.write('Select a file: [0-${yamlFiles.length - 1}] ');
+    try {
+      final String? value = stdin.readLineSync();
+      index = int.parse((value ?? '').isEmpty ? '-1' : value!);
+    } catch (e) {
+      stdout.writeln('Invalid number');
+    }
+  }
+
+  final File selectedFile = yamlFiles[index];
+  yamlFiles.clear();
+
   //get program type
   String? programType;
   while (programType != 'wql') {
@@ -99,8 +132,28 @@ void createRequest(String name, Directory dir) {
   //get required file
   String? file;
   while (file == null) {
-    stdout.write('baseUrl: [required] ');
+    stdout.write('fileName: [required] ');
     final String? value = stdin.readLineSync();
     file = (value ?? '').isEmpty ? null : value;
   }
+  //get type
+  RequestType? type;
+  while (type == null || type == RequestType.unknown) {
+    stdout.write('type: [required] ');
+    final String? value = stdin.readLineSync();
+    type = requestMap(value ?? '');
+  }
+
+  final Map<String, dynamic> yaml = parseYaml(selectedFile.readAsStringSync());
+
+  //add requets to the parsed yaml item
+  yaml['requests'] ??= [];
+  yaml['requests'].add({
+    'programType': programType,
+    'fileName': file,
+    'type': type.toString().split('.').last,
+  });
+
+  //write the yaml file
+  selectedFile.writeAsStringSync(json2yaml(yaml));
 }
