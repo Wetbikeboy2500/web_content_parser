@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:web_content_parser/util.dart';
+
 Future<void> main(List<String> args) async {
   if (args.isEmpty) {
     stdout.writeln('Usage: server.dart <port>');
@@ -88,32 +90,16 @@ Future<void> main(List<String> args) async {
       'Press q to exit. Press r to run code. Press s to see socket status. Press f to filter errors. Press p to connect to external client.');
 }
 
-enum EventType {
-  execute,
-  error,
-  result,
-  ready,
-  close,
-  connect,
-  disconnect,
-  message,
-  ping,
-  pong,
-  unknown,
-}
-
 class Request {
-  final EventType event;
+  final String uid;
   final String code;
   final Map<String, dynamic> params;
 
-  Request(this.event, this.code, this.params);
+  Request(this.uid, this.code, this.params);
 
   factory Request.fromJson(Map<String, dynamic> json) {
     return Request(
-      EventType.values.firstWhere(
-        (element) => element.toString() == 'EventType.${json['event']}',
-      ),
+      json['uid'] as String,
       json['code'] as String,
       json['params'] as Map<String, dynamic>,
     );
@@ -121,9 +107,30 @@ class Request {
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
-      'event': event.toString().split('.').last,
+      'uid': uid,
       'code': code,
       'params': params,
+    };
+  }
+}
+
+class Response {
+  final String uid;
+  final Result<Map<String, dynamic>> data;
+
+  Response(this.uid, this.data);
+
+  factory Response.fromJson(Map<String, dynamic> json) {
+    return Response(
+      json['uid'] as String,
+      ResultExtended.fromJson(json['data'] as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'uid': uid,
+      'data': ResultExtended.toJson(data),
     };
   }
 }
@@ -248,7 +255,7 @@ class ClientInterface {
   }
 
   Future runWQL(String wql) {
-    final Request request = Request(EventType.execute, wql, <String, dynamic>{});
+    final Request request = Request('', wql, <String, dynamic>{});
 
     return server.run(request);
   }

@@ -9,12 +9,12 @@ import 'package:web_content_parser/src/wql/wql.dart';
 import 'package:web_content_parser/util.dart';
 
 // ignore: non_constant_identifier_names
-@JS()
-external void GM_setValue(String key, String value);
+@JS('GM_setValue')
+external void setValue(String key, String value);
 
 // ignore: non_constant_identifier_names
-@JS()
-external String? GM_getValue(String key);
+@JS('GM_getValue')
+external String? getValue(String key);
 
 // enum State {
 //   unknown,
@@ -99,6 +99,8 @@ void main2() {
 
     ws.addEventListener('open', (event) {
       //send current queue and results
+      getValue('queue');
+      getValue('results');
     });
 
     ws.addEventListener('message', (event) {
@@ -162,3 +164,6 @@ bool onScrapePage() {
 
   return false;
 }
+
+// uid, request object
+// uid, result object

@@ -41,4 +41,12 @@ extension ResultExtended<T> on Result<T> {
       'fail': result.fail,
     };
   }
+
+  static Result<T> fromJson<T>(Map<String, dynamic> json) {
+    if (json['pass'] == true) {
+      return Result.pass(json['data'] as T);
+    } else {
+      return const Result.fail();
+    }
+  }
 }

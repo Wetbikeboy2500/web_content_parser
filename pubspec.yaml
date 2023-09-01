@@ -12,7 +12,7 @@ dependencies:
   yaml: ^3.1.0
   path: ^1.8.0
   html: ^0.15.0
-  http: ^0.13.4
+  http: ^1.0.0
   json_annotation: ^4.4.0
   equatable: ^2.0.0
   convert: ^3.0.0
