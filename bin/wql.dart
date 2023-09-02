@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:js/js.dart';
@@ -94,21 +95,37 @@ const websocketUrl = 'ws://localhost:4040/ws';
 
 void main2() {
   if (onReadyPage()) {
+    setIsReady(true);
+
     //establish connection
     final WebSocket ws = WebSocket(websocketUrl);
 
     ws.addEventListener('open', (event) {
-      //send current queue and results
-      getValue('queue');
-      getValue('results');
+      ws.send(jsonEncode(
+        {
+          'event': 'status',
+          'queue': getQueue(),
+          'results': getResults(),
+        }
+      ));
+      setIsReady(false);
     });
 
     ws.addEventListener('message', (event) {
       try {
         final message = decodeEvent(event);
-        //check to see if result already exists
+        final results = jsonDecode(getValue('results') ?? '{}');
+
+        if (results.containsKey(message['uid'])) {
+          //TODO: send response for the result
+          return;
+        }
 
         //or save message to queue
+        final queue = getQueue();
+        queue.add(message['uid']);
+        setIsReady(true);
+
 
         //redirect to the target page
       } catch (e, stack) {
@@ -116,8 +133,8 @@ void main2() {
         window.console.error(stack);
       }
     });
-  } else if (onScrapePage()) {
-    initalizeWQL();
+  } else if (getReady() && onScrapePage()) {
+    initializeWQL();
 
     //get request to run
 
@@ -129,7 +146,7 @@ void main2() {
   }
 }
 
-void initalizeWQL() {
+void initializeWQL() {
   loadWQLFunctions();
   SetStatement.functions['getdocument'] = (args) => window.document;
 }
@@ -139,11 +156,11 @@ Map<String, dynamic> decodeEvent(Event event) {
 }
 
 List<String> getQueue() {
-  return [];
+  return jsonDecode(getValue('queue') ?? '[]');
 }
 
 List<(String, String)> getResults() {
-  return [];
+  return jsonDecode(getValue('results') ?? '{}');
 }
 
 bool saveQueue() {
@@ -159,10 +176,22 @@ bool onReadyPage() {
 }
 
 bool onScrapePage() {
-  //get queue urls
-  //check if current url is in queue
+  final queue = getQueue();
+
+  for (final item in queue) {
+    //check if current url is in queue
+
+  }
 
   return false;
+}
+
+bool getReady() {
+  return getValue('ready') == 'true';
+}
+
+void setIsReady(bool ready) {
+  setValue('ready', ready.toString());
 }
 
 // uid, request object

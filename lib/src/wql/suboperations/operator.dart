@@ -122,12 +122,7 @@ class Operator {
       return MapEntry(alias ?? names.first.name, [names.first.value]);
     }
 
-    late List<dynamic> value;
-    if (expand) {
-      value = List<dynamic>.from(context);
-    } else {
-      value = List<dynamic>.from([context]);
-    }
+    List<dynamic> value = List<dynamic>.from(expand ? context : [context]);
 
     bool topLevel = true;
 

@@ -8,9 +8,10 @@ import 'statement.dart';
 
 class RunStatement extends Statement {
   final String function;
+  final Function? functionReference;
   final List<Operator> arguments;
 
-  const RunStatement(this.function, this.arguments);
+  const RunStatement(this.function, this.functionReference, this.arguments);
 
   factory RunStatement.fromTokens(List tokens) {
     final String function = tokens[1].toLowerCase();
@@ -21,7 +22,11 @@ class RunStatement extends Statement {
       arguments.add(Operator.fromTokens(operatorTokens));
     }
 
-    return RunStatement(function, arguments);
+    if (SetStatement.functions.containsKey(function)) {
+      return RunStatement(function, SetStatement.functions[function], arguments);
+    }
+
+    return RunStatement(function, null, arguments);
   }
 
   static Parser getParser() {
@@ -33,19 +38,17 @@ class RunStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
+    if (functionReference == null) {
+      throw UnsupportedError('Unsupported function: $function');
+    }
+
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
       args.add((await arg.getValue(context, interpreter, custom: SetStatement.functions)).value);
     }
 
-    final Function? func = SetStatement.functions[function];
-
-    if (func == null) {
-      throw UnsupportedError('Unsupported function: $function');
-    }
-
     //runs the function
-    await await func(args);
+    await await functionReference!(args);
   }
 }

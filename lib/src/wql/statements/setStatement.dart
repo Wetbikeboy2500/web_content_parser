@@ -40,6 +40,27 @@ class SetStatement extends Statement {
         (stringIgnoreCase('when').trim().token() & LogicalSelector.getParser()).optional();
   }
 
+  //TODO: Look into how this could affect performance for small operations
+  //One idea would be to also sort the keys and then use binary search to find the index for the initial index
+  //Objects could also share their function definitions when the objects are built rather than at runtime
+  //From this, there could be a 'compiled' version which requires all functions to be defined before hand
+  static List<String> keys = [];
+  static List<Function> values = [];
+  static Function? getFunctionByIndex(int index) {
+    return values[index];
+  }
+  static (Function?, int) getFunction(String key) {
+    final index = keys.indexOf(key);
+    if (index == -1) {
+      return (null, -1);
+    }
+    return (values[index], index);
+  }
+  static void convertFunctionsMapToSplitArray() {
+    keys = functions.keys.toList();
+    values = functions.values.toList();
+  }
+
   static Map<String, Function> functions = {
     'increment': (args) {
       dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
