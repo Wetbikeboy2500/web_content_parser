@@ -4,13 +4,19 @@
 
 # Web Content Parser
 
-One goal: unify web content parsing between dart projects.
+One goal: Unify web content parsing between projects.
 
-Parsing, in the context of this project, means scraping and transforming data into an expected output. This package allows for raw scraping returns (Scraping system) or it can try and convert scraping systems to a hard-coded dart format (Parsing system).
+Parsing, in the context of this project, means scraping and transforming data into an expected output.
 
-The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [WQL](#wql-web-query-language), a SQL-like language designed for scraping websites. Custom functions are implemented in WQL to make scripting easier. There are also methods to get webpages through a headless browser for mobile and desktop. These interfaces are available separately in the packages directory. If you need a dynamic system to parse websites, this is it.
+This package is separated into two parts: the scraper and the parser.
 
-This will not support downloading of any content. This simply acts as an interface and a system for standardization.
+The scraper is the basis of retrieving web pages, executing scripts or code, and returning raw data.
+
+The parser is the basis of converting raw data into a known format like structured Dart objects.
+
+The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [WQL](#wql-web-query-language), a SQL-like language designed for scraping websites. Custom functions are also implemented in WQL to make scripting easier. These functions that are exposed can also be used in regular Dart projects. There are also methods to get webpages through a headless browser for mobile and desktop. These interfaces are available separately in the packages directory. If you need a dynamic system to parse websites, this is it.
+
+Web Content Parser will not support downloading of any content. This project isn't a download manager. Web Content Parser's goal, from a functionality standpoint, is to be an interface and a system for standardization.
 
 This project is still in development but does have complete functionality. I am working towards refining function names and the structure of the project. There is also always room to explore what scripts can do and how to define new functionality for them. I would recommend to add this project through git with a hash specified. If you want to try out the web_content_headless portion, include a dependency override with the hash to remove dependency errors. Once things are to my standard and stable, I will switch to semantic versioning.
 
@@ -25,7 +31,7 @@ Import everything:
 import 'package:web_content_parser/web_content_parser_full.dart';
 ```
 
-This project can be thought of in three different code bases based on directory inside src.
+This project can be thought of in three different code bases based on the directories inside lib/src.
 
 * [Util](#util)
 
@@ -38,7 +44,7 @@ This project can be thought of in three different code bases based on directory 
 
 * [Scraper](#scraper)
 
-    This handles custom sources which are written in [hetu-script](https://github.com/hetu-script/hetu-script). It is used to return raw data to the parser to be formatted in a known format. This is flexible and can be used without the parser part of the project to do web scraping while staying away from predefined data structures. It is designed this way to allow developers to completely ignore the opinionated nature of how this project process and builds data. It is also my focus to create a more fluent API for scraping and to address things like dynamic data through webviews and/or sites that require javascript to function.
+    This handles custom sources which are written in [WQL](#wql-web-query-language). It is used to retrieve raw data that is passed to the parser so it can be formatted in a standard format. This is flexible and can be used without the parser part of the project to do web scraping. It is designed to allow developers to completely ignore the opinionated nature of how this project process and builds data in the parser portion. It is also my focus to create a more fluent API for scraping and to address things like dynamic data through webviews and/or sites that require javascript to function.
 
     Individual import:
     ```dart
@@ -47,7 +53,7 @@ This project can be thought of in three different code bases based on directory 
 
 * [Parser](#parser)
 
-    The parser is what takes the raw data from the scraper and converts it into dart classes to be used. This also reinforces data cleaning and validation. This will not be useful for most using this project since much more can be done with the scraper. One important thing it defines is [IDs](#ids) which are very important for making sure sources don't collide. Everything else is a subset for dealing with the data. There is currently only one defined structure for data which is designed for series that have chapters of images. More formats or source types are welcome to be implemented. This is the part of the project with the most room for exploration of what should be done. If you have any suggestions, create an issue for discussion. I would like this to also include implementations for various APIs so data can be standardized.
+    The parser is what takes the raw data from the scraper and converts it into dart classes to be used. This also reinforces data cleaning and validation. This will not be useful for most using this project since much more can be done with the scraper. One important thing it defines is [IDs](#ids) which are very important for making sure sources don't collide. Everything else is a subset for dealing with the data. There is currently only one defined structure for data which is designed for series that have chapters of images. More formats or source types are welcome to be implemented. This is the part of the project with the most room for exploration of what should be done. If you have any suggestions, feel free to share them. I would like this to also include implementations for various APIs so data can be standardized.
 
     Individual import:
     ```dart
@@ -60,7 +66,7 @@ The util directory has vital code for how things interact with each other.
 
 ### Result
 
-The most important part of the project is how data is moved between methods and functions. Result is a class that defines if data passes or fails which indicated if data can be trusted. This is used in place of exception for this project due to catches having very bad performance. This also enforces a practice of checking if the data is valid.
+The most important part of the project is how data is moved between methods and functions. Result is a class that defines if data passes or fails which indicates if data can be trusted. This is used in place of exceptions for this project due to catches having very bad performance. This also enforces a practice of checking if the data is valid.
 
 The data type annotation for the result can be set like so:
 
@@ -113,12 +119,11 @@ ResultExtended is an extension on result. ResultExtended has static methods that
 
 ## Scraper
 
-The scraper handles the interaction with [WQL](#wql-web-query-language) and making sure to provide the needed functions and abilities to any scraping system. It implements its own system for async tasks that a script needs to execute.
+The scraper handles the interaction with [WQL](#wql-web-query-language) and making sure to provide the nessary functionality to scrape any site.
 
 ### Sections
 
-* [Headless Browser Web Scraping](#headless-browser-web-scraping)
-* [Async Hetu Code](#async-hetu-code)
+* [Headless Browser Web Scrapers](#headless-browser-web-scrapers)
 * [Loading in Scraping Sources](#loading-in-scraping-sources)
     * [Load Functions](#load-functions)
 
@@ -126,7 +131,7 @@ The scraper handles the interaction with [WQL](#wql-web-query-language) and maki
 
 Headless browsers provide a lot of power to scrape dynamic pages. This project currently uses puppeteer and flutter_inappwebview. These two packages provide the power to scrape on any platform.
 
-**Note:** These packages have only been tested on android and windows machines.
+**Note:** These packages have only been tested on Android, Linux, and Windows machines.
 
 The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browsers with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
 
@@ -146,7 +151,7 @@ Once the headless browsers are added, they can be used through an interface defi
 
 ### Loading in scraping sources
 
-Scraping sources are defined through yaml. The reason you need to use a scraping source is to make sure things stay properly formatted and compliant with other sources. Since this package enforces an exact hetu version, things will need to be compliant with the scraper.
+Scraping sources are defined through yaml. The reason you need to use a scraping source is to make sure things stay properly formatted and compliant with other sources.
 
 **Note:** There is a valid version of a scraper source yaml file. It is test/samples/scraper/source.yaml
 
@@ -160,7 +165,7 @@ Scraping sources have the following required attributes:
 
 * **version** version is an int used for tracking what the current source version is. This will help determine if one source is newer than another
 
-* **programType** programType is the current scripting environment you are targeting. The only valid value is currently wql. This acts to add a way to make sure incompatible sources can't run when new requirements are needed or changed.
+* **programType** programType is the current scripting environment you are targeting. The only valid value is currently wql. This ensures incompatible programs can't run when new requirements are needed or changed.
 
 * **requests** requests is a list of all possible scripting calls that can be made. They have a `type` which is the name to call the execute the script. They have a `file` which is the script file that sits in the current directory of the yaml file or deeper. There is also `programType` which is optional as it will inherit its value from the one defined in the parent. This allows for a source to have multiple program types. This is useful for allowing more scripting systems.
 
@@ -168,11 +173,11 @@ All things mentioned can be looked at in the example yaml file at test/samples/s
 
 You can also add your own attributes if you want to bundle additional data. It will all be converted to a map that you can access from the ScraperSource object.
 
-If you have any suggestions for how to improve the current format, file an issue.
+If you have any suggestions for how to improve the current format, feel free to share them.
 
 #### Load Functions
 
-One way and the recommended way to load in scraper sources is to use two of the top level functions. These functions can take a directory and load all .yaml or .yml files it finds. One function will add these sources to a global place you can access by calling `ScraperSource.scrapper('name')` which will return a scraper source object if it exists. This allows you to not have to bother with tracking where you scraper sources are. The other function simply returns all found sources as there objects. It is up to you as the dev to determine what should then be done with those.
+The recommended way to load in scraper sources is to use one of the two top level functions. These functions can take a directory and load all .yaml or .yml files it finds. One function will add these sources to a global place you can access by calling `ScraperSource.scrapper('name')` which will return a scraper source object if it exists. This allows you to not have to bother with tracking where you scraper sources are. The other function simply returns all found sources as there objects. It is up to you as the dev to determine what should then be done with those.
 
 ```dart
 void loadExternalScraperSourcesGlobal(Directory dir)
@@ -191,7 +196,7 @@ The core of any content is how they are identified. This project uses an id/sour
 ID(id: '', source: '');
 ```
 
-IDs should contain all the information a source needs to retrieve any relevant information. Extra data can be embedded into the id string to allow finding the item again. IDs compare and use a unique string called `uid`. `uid` is built from combining `source` and `id` with a colon in-between. Example:
+IDs should contain all the information a source needs to retrieve any relevant information. Extra data can be embedded into the id string to allow finding the item again. IDs are compared using a unique string called `uid`. `uid` is built from combining `source` and `id` with a colon in-between. Example:
 
 ```dart
 ID id1 = ID(id: 'uniqueid', source: 'test');
@@ -200,7 +205,7 @@ assert(id1.uid == 'test:uniqueid');
 assert(id1 == id2);
 ```
 
-This format makes ids readable even when stored by their uid. Sources should also not have their names(`source` property) with colons in them. This allows for extracting the `source` and `id` based on the location of the first colon. `uid` can also be passed as a parameter to set the uid for the id. Being able to set the uid can allow invalid values for the given ID, but it is there for data conversions and reducing the amount of string operations.
+This format makes ids readable even when stored by their uid. Sources should also not have their names(`source` property) contain colons. This allows for extracting the `source` and `id` based on the location of the first colon. `uid` can also be passed as a parameter to set the uid for the id. Being able to set the uid can allow invalid values for the given ID, but it can reduce string operations from data conversions.
 
 IDs are tied to all information returned.
 
@@ -218,15 +223,15 @@ When using the fromJson() constructor, the ID can be passed as a map or an objec
 
 ### Computing
 
-A ComputeDecorator is a class implementation for allowing different types of computes when converting objects. The decorator currently uses the Computer package which is agnostic to the platform it is run on. This decorator can be changed by setting `ParseSource.computeDecorator` to a different decorator implementation. This can allow for compute, which is available in Flutter, to be used. The ComputeDecorator can be turned off and not used by setting `ParseSource.computeEnabled`. It is enabled by default. Everything will function the same with the compute off, but it may perform worse when processing large amounts of objects.
+A ComputeDecorator is a class implementation for allowing different types of computes when converting objects. The decorator currently uses the Computer package which is agnostic to the platform it is run on. This decorator can be changed by setting `ParseSource.computeDecorator` to a different decorator implementation. This can allow for compute, which is available in Flutter, to be used. The ComputeDecorator can be turned off and not used by setting `ParseSource.computeEnabled`. It is enabled by default. Everything will function the same with the compute off, but processing large amounts of objects may perform worse.
 
 ## WQL: Web Query Language
 
-The WQL is a language built for writing scripts to extract data from web pages. It is designed to use a declarative syntax like SQL. The goal is to simplify web scraping and reduce the common patterns that a more traditional scripting language forms when scraping websites.
+WQL is a scripting language built for extracting data from web pages. It is designed to use a declarative syntax like SQL. The goal is to simplify web scraping and reduce the common patterns that a more generic scripting language forms when scraping websites.
 
 ### Why use a custom language?
 
-Using a scripting language within another language is overkill. A general purpose language does allow flexibility but leaves design and access patterns up to the developer. These choices end up adding bloat to scripts that also adds more cognitive load. When there are many scripts for web scraping, a developer must be able to understand them and make changes to them quickly: websites are not a stable source.
+Using a general purpose scripting language within another language is overkill. A general purpose language does allow flexibility but leaves design and access patterns up to the developer. These choices end up adding bloat to scripts that also adds more cognitive load. When there are many scripts for web scraping, a developer must be able to understand them and make changes to them quickly: websites are not a stable source.
 
 There is also the problem of finding a stable scripting language that is cross platform.
 
@@ -236,7 +241,7 @@ Lastly, I can't find a comparable language. The select statement itself is somet
 
 ### How to use it
 
-Currently, the best examples are written in the test file. There are examples of making requests directly as well as using the scraper system.
+Currently, the best examples are written in the test file. There are examples of making requests directly as well as integrating into the scraper system.
 
 ### Wanted Syntax
 
