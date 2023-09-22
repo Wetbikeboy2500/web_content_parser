@@ -3,11 +3,13 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:js/js.dart';
-import 'package:js_bindings/js_bindings.dart';
+import 'package:js_bindings/js_bindings.dart' hide Response, Request;
 import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/wql/statements/setStatement.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
 import 'package:web_content_parser/util.dart';
+
+import 'shared.dart';
 
 // ignore: non_constant_identifier_names
 @JS('GM_setValue')
@@ -17,79 +19,7 @@ external void setValue(String key, String value);
 @JS('GM_getValue')
 external String? getValue(String key);
 
-// enum State {
-//   unknown,
-//   // Ready to accept a request for a URL
-//   ready,
-//   // Redriected back due to a request being resolved for a URL
-//   resolve,
-//   // Executes the given code for a URL
-//   execute,
-// }
-
-// void main() {
-//   //TODO: need to work around some sites preventing ws connection.
-
-//   State readyState = State.unknown;
-
-//   if (window.location.href == 'http://localhost:4040/ready') {
-//     readyState = State.ready;
-//   } else if (window.location.href == 'http://localhost:4040/resolve') {
-//     readyState = State.resolve;
-//   } else {
-//     if (GM_getValue('target_url') == window.location.href) {
-//       readyState = State.execute;
-//     }
-//   }
-
-//   replaceFunctions();
-
-//   final WebSocket ws = WebSocket('ws://localhost:4040/ws');
-
-//   ws.addEventListener('open', (event) {
-//     ws.send(jsonEncode({
-//       'event': 'status',
-//       'state': readyState.name,
-//     }));
-//   });
-
-//   ws.addEventListener('message', (event) async {
-//     event = event as MessageEvent;
-//     final data = event.data;
-//     String message = '';
-//     try {
-//       final json = jsonDecode(data);
-
-//       if (json['event'] == 'execute') {
-//         late final Result response;
-
-//         try {
-//           final result = await runWQL(json['code'], parameters: json['params'], throwErrors: true);
-
-//           if (result.pass) {
-//             response = Result.pass(result.data!['return']);
-//           } else {
-//             response = const Result.fail();
-//             message = 'Failed without throwing';
-//           }
-//         } catch (e, stack) {
-//           window.console.error(e);
-//           window.console.error(stack);
-//           message = '$e $stack';
-//           response = const Result.fail();
-//         }
-
-//         ws.send(jsonEncode({
-//           'event': 'result',
-//           'data': ResultExtended.toJson(response),
-//           'message': message,
-//         }));
-//       }
-//     } catch (e) {
-//       window.console.error(e);
-//     }
-//   });
-// }
+typedef JSON = Map<String, dynamic>;
 
 const websocketUrl = 'ws://localhost:4040/ws';
 
@@ -101,74 +31,144 @@ void main2() {
     final WebSocket ws = WebSocket(websocketUrl);
 
     ws.addEventListener('open', (event) {
-      ws.send(jsonEncode(
-        {
-          'event': 'status',
-          'queue': getQueue(),
-          'results': getResults(),
-        }
-      ));
+      final status = StatusResponse(getQueue().map((e) => e.$1).toList(), getResults());
+      ws.send(status.toJson());
       setIsReady(false);
     });
 
     ws.addEventListener('message', (event) {
       try {
         final message = decodeEvent(event);
-        final results = jsonDecode(getValue('results') ?? '{}');
 
-        if (results.containsKey(message['uid'])) {
-          //TODO: send response for the result
-          return;
+        if (Confirmation.isConfirmation(message)) {
+          processConfirmation(Confirmation.fromJson(message), ws);
+        } else if (Request.isRequest(message)) {
+          processRequest(Request.fromJson(message), ws);
+        } else {
+          window.console.error('Unknown message type');
         }
-
-        //or save message to queue
-        final queue = getQueue();
-        queue.add(message['uid']);
-        setIsReady(true);
-
-
-        //redirect to the target page
       } catch (e, stack) {
         window.console.error(e);
         window.console.error(stack);
       }
     });
   } else if (getReady() && onScrapePage()) {
-    initializeWQL();
-
     //get request to run
+    final urls = getUrlQueue();
+
+    final request = urls.firstWhere((element) => element.$2 == window.location.href, orElse: () => ('', ''));
+
+    if (request.$1 == '') {
+      window.console.error('Failed to find request');
+      return;
+    }
 
     //run request
+    final queue = getQueue();
+    final index = queue.indexWhere((element) => element.$1 == request.$1);
 
-    //save the results
+    if (index == -1) {
+      window.console.error('Failed to find request in queue');
+      return;
+    }
 
-    //return back to the ready page
+    final code = queue[index].$2;
+    final params = queue[index].$3;
+
+    initializeWQL();
+
+    final result = runWQL(code, parameters: params, throwErrors: false).then((value) {
+      final results = getResults();
+      results.add((request.$1, jsonEncode(value)));
+      if (!saveRequests(results)) {
+        window.console.error('Failed to save results');
+        return;
+      }
+      queue.removeAt(index);
+      if (!saveQueue(queue)) {
+        window.console.error('Failed to save queue');
+        return;
+      }
+      setIsReady(true);
+      //redirect to ready page
+      window.location.href = 'http://localhost:4040/ready';
+    });
   }
 }
 
 void initializeWQL() {
   loadWQLFunctions();
   SetStatement.functions['getdocument'] = (args) => window.document;
+  SetStatement.functions['gotopage'] = (args) {
+    final urlString = args[0] as String;
+    final uid = args[1] as String;
+    if (window.location.href == urlString) {
+      return true;
+    }
+    if (!saveToUrlQueue(uid, urlString)) {
+      window.console.error('Failed to save url queue');
+      return false;
+    }
+    window.location.href = urlString;
+    return false;
+  };
 }
 
 Map<String, dynamic> decodeEvent(Event event) {
   return jsonDecode((event as MessageEvent).data);
 }
 
-List<String> getQueue() {
+bool saveToUrlQueue(String uid, String url) {
+  final queue = getUrlQueue();
+  //get index for uid if it exists
+  final index = queue.indexWhere((element) => element.$1 == uid);
+  if (index != -1) {
+    queue.removeAt(index);
+  }
+  queue.add((uid, url));
+  return saveUrlQueue(queue);
+}
+
+bool saveUrlQueue(List<(String, String)> queue) {
+  try {
+    setValue('urlQueue', jsonEncode(queue));
+    return true;
+  } catch (e) {
+    window.console.error(e);
+    return false;
+  }
+}
+
+List<(String, String)> getUrlQueue() {
+  return jsonDecode(getValue('urlQueue') ?? '[]');
+}
+
+List<(String, String, Map<String, dynamic>)> getQueue() {
   return jsonDecode(getValue('queue') ?? '[]');
+}
+
+bool saveQueue(List<(String, String, Map<String, dynamic>)> queue) {
+  try {
+    setValue('queue', jsonEncode(queue));
+    return true;
+  } catch (e) {
+    window.console.error(e);
+    return false;
+  }
 }
 
 List<(String, String)> getResults() {
   return jsonDecode(getValue('results') ?? '{}');
 }
 
-bool saveQueue() {
-  return true;
-}
-
-bool saveRequests() {
-  return true;
+bool saveRequests(List<(String, String)> results) {
+  try {
+    setValue('results', jsonEncode(results));
+    return true;
+  } catch (e) {
+    window.console.error(e);
+    return false;
+  }
 }
 
 bool onReadyPage() {
@@ -194,5 +194,29 @@ void setIsReady(bool ready) {
   setValue('ready', ready.toString());
 }
 
-// uid, request object
-// uid, result object
+void processRequest(Request request, WebSocket ws) {
+  final results = jsonDecode(getValue('results') ?? '{}');
+
+  if (results.containsKey(request.uid)) {
+    final response = Response(request.uid, results[request.uid]);
+    ws.send(response.toJson());
+    return;
+  }
+
+  final queue = getQueue();
+  request.params['uid'] = request.uid;
+  queue.add((request.uid, request.code, request.params));
+  if (!saveQueue(queue)) {
+    window.console.error('Failed to save queue');
+    return;
+  }
+  setIsReady(true);
+
+  initializeWQL();
+
+  runWQL(request.code, parameters: request.params, throwErrors: false);
+}
+
+void processConfirmation(Confirmation confirmation, WebSocket ws) {
+
+}

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:web_content_parser/util.dart';
+import 'shared.dart';
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty) {
@@ -88,51 +88,6 @@ Future<void> main(List<String> args) async {
 
   stdout.writeln(
       'Press q to exit. Press r to run code. Press s to see socket status. Press f to filter errors. Press p to connect to external client.');
-}
-
-class Request {
-  final String uid;
-  final String code;
-  final Map<String, dynamic> params;
-
-  Request(this.uid, this.code, this.params);
-
-  factory Request.fromJson(Map<String, dynamic> json) {
-    return Request(
-      json['uid'] as String,
-      json['code'] as String,
-      json['params'] as Map<String, dynamic>,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'uid': uid,
-      'code': code,
-      'params': params,
-    };
-  }
-}
-
-class Response {
-  final String uid;
-  final Result<Map<String, dynamic>> data;
-
-  Response(this.uid, this.data);
-
-  factory Response.fromJson(Map<String, dynamic> json) {
-    return Response(
-      json['uid'] as String,
-      ResultExtended.fromJson(json['data'] as Map<String, dynamic>),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'uid': uid,
-      'data': ResultExtended.toJson(data),
-    };
-  }
 }
 
 abstract class Server {
