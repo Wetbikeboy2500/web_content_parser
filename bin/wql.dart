@@ -21,9 +21,12 @@ external String? getValue(String key);
 
 typedef JSON = Map<String, dynamic>;
 
+///UID, Code, Params
+typedef QueueItem = (String, String, Map<String, dynamic>);
+
 const websocketUrl = 'ws://localhost:4040/ws';
 
-void main2() {
+void main() {
   if (onReadyPage()) {
     setIsReady(true);
 
@@ -32,11 +35,13 @@ void main2() {
 
     ws.addEventListener('open', (event) {
       final status = StatusResponse(getQueue().map((e) => e.$1).toList(), getResults());
-      ws.send(status.toJson());
+      window.console.log('Opening connection and sending status', status);
+      ws.send(jsonEncode(status.toJson()));
       setIsReady(false);
     });
 
     ws.addEventListener('message', (event) {
+      window.console.log(event);
       try {
         final message = decodeEvent(event);
 
@@ -77,7 +82,7 @@ void main2() {
 
     initializeWQL();
 
-    final result = runWQL(code, parameters: params, throwErrors: false).then((value) {
+    runWQL(code, parameters: params, throwErrors: false).then((value) {
       final results = getResults();
       results.add((request.$1, jsonEncode(value)));
       if (!saveRequests(results)) {
@@ -143,11 +148,11 @@ List<(String, String)> getUrlQueue() {
   return jsonDecode(getValue('urlQueue') ?? '[]');
 }
 
-List<(String, String, Map<String, dynamic>)> getQueue() {
+List<QueueItem> getQueue() {
   return jsonDecode(getValue('queue') ?? '[]');
 }
 
-bool saveQueue(List<(String, String, Map<String, dynamic>)> queue) {
+bool saveQueue(List<QueueItem> queue) {
   try {
     setValue('queue', jsonEncode(queue));
     return true;
@@ -177,10 +182,21 @@ bool onReadyPage() {
 
 bool onScrapePage() {
   final queue = getQueue();
+  final urlToQueue = getUrlQueue();
 
-  for (final item in queue) {
-    //check if current url is in queue
+  for (final item in urlToQueue) {
+    final uid = item.$1;
+    final url = item.$2;
 
+    if (window.location.href == url) {
+      //TODO: can make this more efficent by returning the index
+      final index = queue.indexWhere((element) => element.$1 == uid);
+      if (index == -1) {
+        window.console.error('Failed to find request in queue');
+        return false;
+      }
+      return true;
+    }
   }
 
   return false;
@@ -217,6 +233,36 @@ void processRequest(Request request, WebSocket ws) {
   runWQL(request.code, parameters: request.params, throwErrors: false);
 }
 
+///On confirmation, remove the uid from the queue, results, and url queue if they exist
 void processConfirmation(Confirmation confirmation, WebSocket ws) {
+  //TODO: also need to take into account whether the confirmation is true or false.
+  //if false, still remove everything, but also reply to the server with a rerequest
+  //Maybe alos have a retry limit
 
+  final queue = getQueue();
+  final queueLength = queue.length;
+  queue.removeWhere((element) => element.$1 == confirmation.uid);
+  if (queueLength != queue.length) {
+    if (!saveQueue(queue)) {
+      window.console.error('Failed to save queue');
+    }
+  }
+
+  final urlQueue = getUrlQueue();
+  final urlQueueLength = urlQueue.length;
+  urlQueue.removeWhere((element) => element.$1 == confirmation.uid);
+  if (urlQueueLength != urlQueue.length) {
+    if (!saveUrlQueue(urlQueue)) {
+      window.console.error('Failed to save url queue');
+    }
+  }
+
+  final results = getResults();
+  final resultsLength = results.length;
+  results.removeWhere((element) => element.$1 == confirmation.uid);
+  if (resultsLength != results.length) {
+    if (!saveRequests(results)) {
+      window.console.error('Failed to save results');
+    }
+  }
 }

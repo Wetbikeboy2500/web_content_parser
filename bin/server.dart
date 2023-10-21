@@ -132,6 +132,7 @@ class ClientServer implements Server {
 
         socket.listen((message) {
           //decode request and pass it to the client
+          stdout.writeln('Received message: $message');
         }, onDone: () {
           userscriptServers.remove(socket);
           stdout.writeln('Client disconnected');
@@ -141,6 +142,13 @@ class ClientServer implements Server {
         stdout.writeln('Client connected to external server!');
 
         remoteServer = socket;
+      } else if (request.uri.path == '/ready') {
+        request.response.statusCode = HttpStatus.ok;
+        request.response.write('Ready!');
+        request.response.close();
+      } else {
+        request.response.statusCode = HttpStatus.forbidden;
+        request.response.close();
       }
 
       //parse for various other events that can occur
@@ -154,10 +162,20 @@ class ClientServer implements Server {
   }
 
   @override
-  Future run(Request request) {
+  Future<void> run(Request request) async {
     //Takes WQL given by the remote server and dispatches it to the userscript
     //It then resolve the result and sends it back to the remote server
-    throw UnimplementedError();
+    try {
+      for (final socket in userscriptServers) {
+        if (socket.closeCode == null) {
+          socket.add(jsonEncode(request.toJson()));
+        }
+      }
+    } catch (e, stack) {
+      stdout.writeln('Error running request');
+      stdout.writeln(e);
+      stdout.writeln(stack);
+    }
   }
 
   @override
