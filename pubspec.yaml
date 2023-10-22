@@ -26,5 +26,5 @@ dev_dependencies:
   lints: ^2.0.1
   test: ^1.17.10
   coverage: ^1.0.3
-  js_bindings: ^0.1.2+1
+  typings: ^0.0.4
   js: ^0.6.7

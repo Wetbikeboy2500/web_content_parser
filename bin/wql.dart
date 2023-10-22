@@ -1,14 +1,11 @@
-import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 
 import 'package:js/js.dart';
-import 'package:js_bindings/js_bindings.dart' hide Response, Request;
+import 'package:typings/core.dart' as js;
 import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/wql/statements/setStatement.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
 import 'package:web_content_parser/util.dart';
-
 import 'shared.dart';
 
 // ignore: non_constant_identifier_names
@@ -21,8 +18,7 @@ external String? getValue(String key);
 
 typedef JSON = Map<String, dynamic>;
 
-///UID, Code, Params
-typedef QueueItem = (String, String, Map<String, dynamic>);
+typedef WebSocket = js.WebSocket;
 
 const websocketUrl = 'ws://localhost:4040/ws';
 
@@ -33,15 +29,15 @@ void main() {
     //establish connection
     final WebSocket ws = WebSocket(websocketUrl);
 
-    ws.addEventListener('open', (event) {
-      final status = StatusResponse(getQueue().map((e) => e.$1).toList(), getResults());
-      window.console.log('Opening connection and sending status', status);
+    ws.addEventListener.$1(js.WebSocketEventMap.open, (event) {
+      final status = StatusResponse(getQueue().map((e) => e.uid).toList(), getResults());
+      js.console.log(['Opening connection and sending status', status]);
       ws.send(jsonEncode(status.toJson()));
       setIsReady(false);
     });
 
-    ws.addEventListener('message', (event) {
-      window.console.log(event);
+    ws.addEventListener.$1(js.WebSocketEventMap.message, (event) {
+      js.console.log([event]);
       try {
         final message = decodeEvent(event);
 
@@ -50,106 +46,138 @@ void main() {
         } else if (Request.isRequest(message)) {
           processRequest(Request.fromJson(message), ws);
         } else {
-          window.console.error('Unknown message type');
+          js.console.error(['Unknown message type']);
         }
       } catch (e, stack) {
-        window.console.error(e);
-        window.console.error(stack);
+        js.console.error([e]);
+        js.console.error([stack]);
       }
     });
   } else if (getReady() && onScrapePage()) {
     //get request to run
     final urls = getUrlQueue();
 
-    final request = urls.firstWhere((element) => element.$2 == window.location.href, orElse: () => ('', ''));
+    final request =
+        urls.firstWhere((element) => element.url == js.window.location.href, orElse: () => UrlQueueItem('', ''));
 
-    if (request.$1 == '') {
-      window.console.error('Failed to find request');
+    if (request.uid == '') {
+      js.console.error(['Failed to find request']);
       return;
     }
 
     //run request
     final queue = getQueue();
-    final index = queue.indexWhere((element) => element.$1 == request.$1);
+    final index = queue.indexWhere((element) => element.uid == request.uid);
 
     if (index == -1) {
-      window.console.error('Failed to find request in queue');
+      js.console.error(['Failed to find request in queue']);
       return;
     }
 
-    final code = queue[index].$2;
-    final params = queue[index].$3;
+    final code = queue[index].code;
+    final params = queue[index].params;
 
     initializeWQL();
 
     runWQL(code, parameters: params, throwErrors: false).then((value) {
       final results = getResults();
-      results.add((request.$1, jsonEncode(value)));
+      results[request.uid] = jsonEncode(value);
       if (!saveRequests(results)) {
-        window.console.error('Failed to save results');
+        js.console.error(['Failed to save results']);
         return;
       }
       queue.removeAt(index);
       if (!saveQueue(queue)) {
-        window.console.error('Failed to save queue');
+        js.console.error(['Failed to save queue']);
         return;
       }
       setIsReady(true);
       //redirect to ready page
-      window.location.href = 'http://localhost:4040/ready';
+      js.window.location.href = 'http://localhost:4040/ready';
     });
   }
 }
 
 void initializeWQL() {
   loadWQLFunctions();
-  SetStatement.functions['getdocument'] = (args) => window.document;
+  SetStatement.functions['getdocument'] = (args) => js.window.document;
   SetStatement.functions['gotopage'] = (args) {
     final urlString = args[0] as String;
     final uid = args[1] as String;
-    if (window.location.href == urlString) {
+    if (js.window.location.href == urlString) {
       return true;
     }
     if (!saveToUrlQueue(uid, urlString)) {
-      window.console.error('Failed to save url queue');
+      js.console.error(['Failed to save url queue']);
       return false;
     }
-    window.location.href = urlString;
+    js.window.location.href = urlString;
     return false;
   };
 }
 
-Map<String, dynamic> decodeEvent(Event event) {
-  return jsonDecode((event as MessageEvent).data);
+Map<String, dynamic> decodeEvent(js.Event event) {
+  return jsonDecode((event as js.MessageEvent).data);
 }
 
 bool saveToUrlQueue(String uid, String url) {
   final queue = getUrlQueue();
   //get index for uid if it exists
-  final index = queue.indexWhere((element) => element.$1 == uid);
+  final index = queue.indexWhere((element) => element.uid == uid);
   if (index != -1) {
     queue.removeAt(index);
   }
-  queue.add((uid, url));
+  queue.add(UrlQueueItem(uid, url));
   return saveUrlQueue(queue);
 }
 
-bool saveUrlQueue(List<(String, String)> queue) {
+bool saveUrlQueue(List<UrlQueueItem> queue) {
   try {
     setValue('urlQueue', jsonEncode(queue));
     return true;
   } catch (e) {
-    window.console.error(e);
+    js.console.error([e]);
     return false;
   }
 }
 
-List<(String, String)> getUrlQueue() {
-  return jsonDecode(getValue('urlQueue') ?? '[]');
+class UrlQueueItem {
+  final String uid;
+  final String url;
+
+  UrlQueueItem(this.uid, this.url);
+
+  static UrlQueueItem fromJson(JSON json) {
+    return UrlQueueItem(json['uid'], json['url']);
+  }
+
+  JSON toJson() {
+    return {'uid': uid, 'url': url};
+  }
+}
+
+List<UrlQueueItem> getUrlQueue() {
+  return List.from(jsonDecode(getValue('urlQueue') ?? '[]')).map((e) => UrlQueueItem.fromJson(e)).toList();
 }
 
 List<QueueItem> getQueue() {
-  return jsonDecode(getValue('queue') ?? '[]');
+  return List.from(jsonDecode(getValue('queue') ?? '[]')).map((e) => QueueItem.fromJson(e)).toList();
+}
+
+class QueueItem {
+  final String uid;
+  final String code;
+  final Map<String, dynamic> params;
+
+  QueueItem(this.uid, this.code, this.params);
+
+  static QueueItem fromJson(JSON json) {
+    return QueueItem(json['uid'], json['code'], json['params']);
+  }
+
+  JSON toJson() {
+    return {'uid': uid, 'code': code, 'params': params};
+  }
 }
 
 bool saveQueue(List<QueueItem> queue) {
@@ -157,27 +185,42 @@ bool saveQueue(List<QueueItem> queue) {
     setValue('queue', jsonEncode(queue));
     return true;
   } catch (e) {
-    window.console.error(e);
+    js.console.error([e]);
     return false;
   }
 }
 
-List<(String, String)> getResults() {
-  return jsonDecode(getValue('results') ?? '{}');
+class ResultItem {
+  final String uid;
+  final String result;
+
+  ResultItem(this.uid, this.result);
+
+  static ResultItem fromJson(JSON json) {
+    return ResultItem(json['uid'], json['result']);
+  }
+
+  JSON toJson() {
+    return {'uid': uid, 'result': result};
+  }
 }
 
-bool saveRequests(List<(String, String)> results) {
+Map<String, String> getResults() {
+  return Map.from(jsonDecode(getValue('results') ?? '{}'));
+}
+
+bool saveRequests(Map<String, String> results) {
   try {
     setValue('results', jsonEncode(results));
     return true;
   } catch (e) {
-    window.console.error(e);
+    js.console.error([e]);
     return false;
   }
 }
 
 bool onReadyPage() {
-  return window.location.href == 'http://localhost:4040/ready';
+  return js.window.location.href == 'http://localhost:4040/ready';
 }
 
 bool onScrapePage() {
@@ -185,14 +228,11 @@ bool onScrapePage() {
   final urlToQueue = getUrlQueue();
 
   for (final item in urlToQueue) {
-    final uid = item.$1;
-    final url = item.$2;
-
-    if (window.location.href == url) {
+    if (js.window.location.href == item.url) {
       //TODO: can make this more efficent by returning the index
-      final index = queue.indexWhere((element) => element.$1 == uid);
+      final index = queue.indexWhere((element) => element.uid == item.uid);
       if (index == -1) {
-        window.console.error('Failed to find request in queue');
+        js.console.error(['Failed to find request in queue']);
         return false;
       }
       return true;
@@ -211,19 +251,19 @@ void setIsReady(bool ready) {
 }
 
 void processRequest(Request request, WebSocket ws) {
-  final results = jsonDecode(getValue('results') ?? '{}');
+  final results = getResults();
 
   if (results.containsKey(request.uid)) {
-    final response = Response(request.uid, results[request.uid]);
+    final response = Response(request.uid, ResultExtended.fromJson(jsonDecode(results[request.uid]!)));
     ws.send(response.toJson());
     return;
   }
 
   final queue = getQueue();
   request.params['uid'] = request.uid;
-  queue.add((request.uid, request.code, request.params));
+  queue.add(QueueItem(request.uid, request.code, request.params));
   if (!saveQueue(queue)) {
-    window.console.error('Failed to save queue');
+    js.console.error(['Failed to save queue']);
     return;
   }
   setIsReady(true);
@@ -241,28 +281,28 @@ void processConfirmation(Confirmation confirmation, WebSocket ws) {
 
   final queue = getQueue();
   final queueLength = queue.length;
-  queue.removeWhere((element) => element.$1 == confirmation.uid);
+  queue.removeWhere((element) => element.uid == confirmation.uid);
   if (queueLength != queue.length) {
     if (!saveQueue(queue)) {
-      window.console.error('Failed to save queue');
+      js.console.error(['Failed to save queue']);
     }
   }
 
   final urlQueue = getUrlQueue();
   final urlQueueLength = urlQueue.length;
-  urlQueue.removeWhere((element) => element.$1 == confirmation.uid);
+  urlQueue.removeWhere((element) => element.uid == confirmation.uid);
   if (urlQueueLength != urlQueue.length) {
     if (!saveUrlQueue(urlQueue)) {
-      window.console.error('Failed to save url queue');
+      js.console.error(['Failed to save url queue']);
     }
   }
 
   final results = getResults();
   final resultsLength = results.length;
-  results.removeWhere((element) => element.$1 == confirmation.uid);
+  results.removeWhere((key, value) => key == confirmation.uid);
   if (resultsLength != results.length) {
     if (!saveRequests(results)) {
-      window.console.error('Failed to save results');
+      js.console.error(['Failed to save results']);
     }
   }
 }

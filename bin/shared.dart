@@ -1,5 +1,7 @@
 import 'package:web_content_parser/util.dart';
 
+import 'wql.dart';
+
 class Request {
   final String uid;
   final String code;
@@ -57,14 +59,14 @@ class Response {
 
 class StatusResponse {
   final List<String> queue;
-  final List<(String, String)> results;
+  final Map<String, String> results;
 
   StatusResponse(this.queue, this.results);
 
   factory StatusResponse.fromJson(Map<String, dynamic> json) {
     return StatusResponse(
       (json['queue'] as List<dynamic>).cast<String>(),
-      (json['results'] as List<dynamic>).cast<(String, String)>(),
+      (json['results'] as Map<String, dynamic>).cast<String, String>(),
     );
   }
 
