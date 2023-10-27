@@ -1,6 +1,6 @@
 import 'package:web_content_parser/util.dart';
 
-import 'wql.dart';
+typedef JSON = Map<String, dynamic>;
 
 class Request {
   final String uid;
@@ -106,5 +106,38 @@ class Confirmation {
 
   static bool isConfirmation(Map<String, dynamic> json) {
     return json['event'] == 'confirmation';
+  }
+}
+
+class ClearQueueRequest {
+  ClearQueueRequest();
+
+  factory ClearQueueRequest.fromJson(Map<String, dynamic> json) {
+    return ClearQueueRequest();
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'event': 'clearQueue',
+    };
+  }
+
+  static bool isClearQueueRequest(Map<String, dynamic> json) {
+    return json['event'] == 'clearQueue';
+  }
+}
+
+class ResultItem {
+  final String uid;
+  final String result;
+
+  ResultItem(this.uid, this.result);
+
+  static ResultItem fromJson(JSON json) {
+    return ResultItem(json['uid'], json['result']);
+  }
+
+  JSON toJson() {
+    return {'uid': uid, 'result': result};
   }
 }

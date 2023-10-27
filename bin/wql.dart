@@ -45,6 +45,10 @@ void main() {
           processConfirmation(Confirmation.fromJson(message), ws);
         } else if (Request.isRequest(message)) {
           processRequest(Request.fromJson(message), ws);
+        } else if (ClearQueueRequest.isClearQueueRequest(message)) {
+          saveQueue([]);
+          saveUrlQueue([]);
+          saveRequests({});
         } else {
           js.console.error(['Unknown message type']);
         }
@@ -54,6 +58,8 @@ void main() {
       }
     });
   } else if (getReady() && onScrapePage()) {
+    js.console.log(['On scrape page']);
+
     //get request to run
     final urls = getUrlQueue();
 
@@ -79,18 +85,40 @@ void main() {
 
     initializeWQL();
 
+    js.console.log(['run the wql']);
+
     runWQL(code, parameters: params, throwErrors: false).then((value) {
+      js.console.log(['Did request pass?', value.pass]);
+      if (value.data != null && value.data!.containsKey('return')) {
+        js.console.log(['Data', jsonEncode(value.data!['return'])]);
+      }
       final results = getResults();
-      results[request.uid] = jsonEncode(value);
+
+      if (value.pass) {
+        try {
+          results[request.uid] = jsonEncode(ResultExtended.toJson(Result.pass(value.data!['return'])));
+        } catch (e) {
+          js.console.error(['Failed to encode result', e]);
+          results[request.uid] = jsonEncode(ResultExtended.toJson(const Result.fail()));
+        }
+      } else {
+        results[request.uid] = jsonEncode(ResultExtended.toJson(const Result.fail()));
+      }
+
       if (!saveRequests(results)) {
         js.console.error(['Failed to save results']);
         return;
       }
+      js.console.log(['Saved results']);
+
       queue.removeAt(index);
       if (!saveQueue(queue)) {
         js.console.error(['Failed to save queue']);
         return;
       }
+      js.console.log(['Saved queue']);
+      //TODO: also remove the goto page redirect
+
       setIsReady(true);
       //redirect to ready page
       js.window.location.href = 'http://localhost:4040/ready';
@@ -102,9 +130,10 @@ void initializeWQL() {
   loadWQLFunctions();
   SetStatement.functions['getdocument'] = (args) => js.window.document;
   SetStatement.functions['gotopage'] = (args) {
-    final urlString = args[0] as String;
-    final uid = args[1] as String;
-    if (js.window.location.href == urlString) {
+    print(jsonEncode(args));
+    final urlString = (args[0] is List) ? args[0].first : args[0];
+    final uid = (args[1] is List) ? args[1].first : args[1];
+    if (Uri.parse(js.window.location.href).toString() == Uri.parse(urlString).toString()) {
       return true;
     }
     if (!saveToUrlQueue(uid, urlString)) {
@@ -190,21 +219,6 @@ bool saveQueue(List<QueueItem> queue) {
   }
 }
 
-class ResultItem {
-  final String uid;
-  final String result;
-
-  ResultItem(this.uid, this.result);
-
-  static ResultItem fromJson(JSON json) {
-    return ResultItem(json['uid'], json['result']);
-  }
-
-  JSON toJson() {
-    return {'uid': uid, 'result': result};
-  }
-}
-
 Map<String, String> getResults() {
   return Map.from(jsonDecode(getValue('results') ?? '{}'));
 }
@@ -220,21 +234,24 @@ bool saveRequests(Map<String, String> results) {
 }
 
 bool onReadyPage() {
-  return js.window.location.href == 'http://localhost:4040/ready';
+  return Uri.parse(js.window.location.href).toString() == Uri.parse('http://localhost:4040/ready').toString();
 }
 
 bool onScrapePage() {
   final queue = getQueue();
   final urlToQueue = getUrlQueue();
 
+  js.console.log([js.window.location.href, jsonEncode(urlToQueue)]);
+
   for (final item in urlToQueue) {
-    if (js.window.location.href == item.url) {
+    if (Uri.parse(js.window.location.href).toString() == Uri.parse(item.url).toString()) {
       //TODO: can make this more efficent by returning the index
       final index = queue.indexWhere((element) => element.uid == item.uid);
       if (index == -1) {
         js.console.error(['Failed to find request in queue']);
         return false;
       }
+      js.console.log(['Found request in queue']);
       return true;
     }
   }
@@ -250,6 +267,7 @@ void setIsReady(bool ready) {
   setValue('ready', ready.toString());
 }
 
+//TODO: if the request is marked as failed in storage, then simply clear result and re-run
 void processRequest(Request request, WebSocket ws) {
   final results = getResults();
 
@@ -260,17 +278,34 @@ void processRequest(Request request, WebSocket ws) {
   }
 
   final queue = getQueue();
+  queue.removeWhere((element) => element.uid == request.uid);
   request.params['uid'] = request.uid;
   queue.add(QueueItem(request.uid, request.code, request.params));
   if (!saveQueue(queue)) {
     js.console.error(['Failed to save queue']);
     return;
   }
+
+  final urlQueue = getUrlQueue();
+  urlQueue.removeWhere((element) => element.uid == request.uid);
+  if (!saveUrlQueue(urlQueue)) {
+    js.console.error(['Failed to save url queue but proceeding anyway']);
+  }
+
   setIsReady(true);
 
   initializeWQL();
 
-  runWQL(request.code, parameters: request.params, throwErrors: false);
+  try {
+    runWQL(request.code, parameters: request.params, throwErrors: true).then((value) {
+      js.console.log(['Did request pass?', value.pass]);
+      if (value.data != null && value.data!.containsKey('return')) {
+        js.console.log(['Data', jsonEncode(value.data!['return'])]);
+      }
+    });
+  } catch (e, stack) {
+    js.console.error([e, stack]);
+  }
 }
 
 ///On confirmation, remove the uid from the queue, results, and url queue if they exist

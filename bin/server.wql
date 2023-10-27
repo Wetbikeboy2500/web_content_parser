@@ -1,2 +1,5 @@
-SET document TO getDocument();
-SET return TO document.querySelector(s'title').text();
+SET isOnPage to goToPage(s'https://www.google.com/', uid);
+IF isOnPage EQUALS b'true':
+    SET document TO getDocument();
+    SET return TO document.querySelector(s'title').text();
+ENDIF;

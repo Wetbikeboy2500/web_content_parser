@@ -70,6 +70,9 @@ Future<void> main(List<String> args) async {
           externalServer = socket;
         });
       }
+    } else if (char == 'c') {
+      stdout.writeln('Clearing queue');
+      client.clearQueue();
     }
   });
 
@@ -87,13 +90,14 @@ Future<void> main(List<String> args) async {
   }); */
 
   stdout.writeln(
-      'Press q to exit. Press r to run code. Press s to see socket status. Press f to filter errors. Press p to connect to external client.');
+      'Press q to exit. Press r to run code. Press s to see socket status. Press f to filter errors. Press c to clear queue. Press p to connect to external client.');
 }
 
 abstract class Server {
   void start();
   void close();
   Future run(Request request);
+  Future clearQueue();
   List<WebSocket> getSockets();
 }
 
@@ -187,6 +191,21 @@ class ClientServer implements Server {
   void close() {
     server.close();
   }
+
+  @override
+  Future clearQueue() async {
+    try {
+      for (final socket in userscriptServers) {
+        if (socket.closeCode == null) {
+          socket.add(jsonEncode(ClearQueueRequest()));
+        }
+      }
+    } catch (e, stack) {
+      stdout.writeln('Error running request');
+      stdout.writeln(e);
+      stdout.writeln(stack);
+    }
+  }
 }
 
 ///Stores all needed information for driving the operations that a clinet is doing.
@@ -216,8 +235,15 @@ class RemoteServer implements Server {
   void close() {
     server.close();
   }
+
+  @override
+  Future clearQueue() {
+    // TODO: implement clearQueue
+    throw UnimplementedError();
+  }
 }
 
+//TODO: add a way to clear all the queue items. Maybe this could be done using timestamps to make sure old items are removed
 class ClientInterface {
   Server server;
 
@@ -228,9 +254,13 @@ class ClientInterface {
   }
 
   Future runWQL(String wql) {
-    final Request request = Request('', wql, <String, dynamic>{});
+    final Request request = Request('1', wql, <String, dynamic>{});
 
     return server.run(request);
+  }
+
+  Future clearQueue() {
+    return server.clearQueue();
   }
 
   List<WebSocket> getSockets() {
