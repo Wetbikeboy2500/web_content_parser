@@ -1227,6 +1227,20 @@ void main() {
 
       expect(values.data!['output'], equals('passed'));
     });
+    test('If Statement second', () async {
+      final code = '''
+        SET status TO n'200';
+        IF status equals n'200':
+          SET output TO s'passed';
+        ENDIF;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+
+      expect(values.data!['output'], equals('passed'));
+    });
     test('Get last segment', () async {
       final code = '''
         SET url TO s'https://www.example.com/home/testing/';
