@@ -148,23 +148,45 @@ class SelectStatement extends Statement {
       }
     }
 
+    final Set<String> seenKeys = {};
+
     //create a list of only the merge values
     for (final entry in mergeLists) {
-      for (int i = 0; i < entry.value.length; i++) {
-        if (i == returns.length) {
-          if (entry.value[i] is Map) {
-            returns.add(entry.value[i]);
+      final entryValueLength = entry.value.length;
+
+      final currentMax = returns.length >= entryValueLength ? returns.length : entryValueLength;
+
+      for (int i = 0; i < currentMax; i++) {
+        if (i < entryValueLength) {
+          if (i == returns.length) {
+            late final Map<String, dynamic> newMap;
+
+            if (entry.value[i] is Map) {
+              newMap = {
+                ...(entry.value[i] as Map)
+              };
+            } else {
+              newMap = <String, dynamic>{entry.key: entry.value[i]};
+            }
+
+            for (final key in seenKeys) {
+              newMap[key] = null;
+            }
+
+            returns.add(newMap);
           } else {
-            returns.add(<String, dynamic>{entry.key: entry.value[i]});
+            if (entry.value[i] is Map) {
+              returns[i].addAll(entry.value[i]);
+            } else {
+              returns[i][entry.key] = entry.value[i];
+            }
           }
         } else {
-          if (entry.value[i] is Map) {
-            returns[i].addAll(entry.value[i]);
-          } else {
-            returns[i][entry.key] = entry.value[i];
-          }
+          returns[i][entry.key] = null;
         }
       }
+
+      seenKeys.add(entry.key);
     }
 
     //sort by decreasing length to make sure values populate correctly
@@ -172,14 +194,26 @@ class SelectStatement extends Statement {
 
     //populate the values that everything needs. This occurs after the merged values to make sure everything works correctly
     for (final entry in values) {
+      final entryValueLength = entry.value.length;
+
       //match value length
-      while (returns.length < entry.value.length) {
-        returns.add(<String, dynamic>{});
+      while (returns.length < entryValueLength) {
+        final newMap = <String, dynamic>{};
+
+        for (final key in seenKeys) {
+          newMap[key] = null;
+        }
+
+        returns.add(newMap);
       }
       //if a single value, duplicate
-      if (entry.value.length > 1) {
-        for (int i = 0; i < entry.value.length; i++) {
-          returns[i][entry.key] = entry.value[i];
+      if (entryValueLength > 1) {
+        for (int i = 0; i < returns.length; i++) {
+          if (i < entryValueLength) {
+            returns[i][entry.key] = entry.value[i];
+          } else {
+            returns[i][entry.key] = null;
+          }
         }
       } else {
         //add the values by key to value

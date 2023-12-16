@@ -1397,6 +1397,198 @@ void main() {
         ]),
       );
     });
+    test('Select merge values', () async {
+      final code = '''
+        SET firstRange TO createRange(n'0', n'2');
+        SET secondRange TO createRange(n'0', n'4');
+        SELECT firstRange[], secondRange[] FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'firstRange': 0,
+            'secondRange': 0,
+          },
+          {
+            'firstRange': 1,
+            'secondRange': 1,
+          },
+          {
+            'firstRange': null,
+            'secondRange': 2,
+          },
+          {
+            'firstRange': null,
+            'secondRange': 3,
+          },
+        ]),
+      );
+    });
+    test('Select merge values with a single value', () async {
+      final code = '''
+        SET firstRange TO createRange(n'0', n'2');
+        SET secondRange TO createRange(n'0', n'4');
+        SELECT firstRange, secondRange[] FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'firstRange': [0, 1],
+            'secondRange': 0,
+          },
+          {
+            'firstRange': [0, 1],
+            'secondRange': 1,
+          },
+          {
+            'firstRange': [0, 1],
+            'secondRange': 2,
+          },
+          {
+            'firstRange': [0, 1],
+            'secondRange': 3,
+          },
+        ]),
+      );
+    });
+    test('Select merge values with an alias', () async {
+      final code = '''
+        SET firstRange TO createRange(n'0', n'2');
+        SET secondRange TO createRange(n'0', n'4');
+        SELECT firstRange[] as first, secondRange[] FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'first': 0,
+            'secondRange': 0,
+          },
+          {
+            'first': 1,
+            'secondRange': 1,
+          },
+          {
+            'first': null,
+            'secondRange': 2,
+          },
+          {
+            'first': null,
+            'secondRange': 3,
+          },
+        ]),
+      );
+    });
+    test('Select merge values where value is greater than merge', () async {
+      final code = '''
+        SET firstRange TO createRange(n'0', n'4');
+        SET secondRange TO createRange(n'0', n'2');
+        SELECT firstRange[] as first, secondRange[] FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'first': 0,
+            'secondRange': 0,
+          },
+          {
+            'first': 1,
+            'secondRange': 1,
+          },
+          {
+            'first': 2,
+            'secondRange': null,
+          },
+          {
+            'first': 3,
+            'secondRange': null,
+          },
+        ]),
+      );
+    });
+    test('Select merge values where two values are uneven', () async {
+      final code = '''
+        SET firstRange TO createRange(n'0', n'4');
+        SET secondRange TO createRange(n'0', n'2');
+        SELECT firstRange[] as first, secondRange[] as second FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'first': 0,
+            'second': 0,
+          },
+          {
+            'first': 1,
+            'second': 1,
+          },
+          {
+            'first': 2,
+            'second': null,
+          },
+          {
+            'first': 3,
+            'second': null,
+          },
+        ]),
+      );
+    });
+    test('Select merge values where two values are uneven inverse', () async {
+      final code = '''
+        SET firstRange TO createRange(n'0', n'4');
+        SET secondRange TO createRange(n'0', n'2');
+        SELECT secondRange[] as second, firstRange[] as first FROM * INTO output;
+      ''';
+
+      final Result values = await runWQL(code);
+
+      expect(values.pass, isTrue);
+      expect(
+        values.data!['output'],
+        equals([
+          {
+            'first': 0,
+            'second': 0,
+          },
+          {
+            'first': 1,
+            'second': 1,
+          },
+          {
+            'first': 2,
+            'second': null,
+          },
+          {
+            'first': 3,
+            'second': null,
+          },
+        ]),
+      );
+    });
     test('Raw values', () async {
       final code = '''
         SELECT s'hello' as intro, n'25' as number, b'true' as true, l'' as list FROM * INTO return;
