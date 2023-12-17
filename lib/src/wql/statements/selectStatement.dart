@@ -135,28 +135,40 @@ class SelectStatement extends Statement {
     final List<MapEntry> values = [];
 
     for (final op in operators) {
-      /* final List<MapEntry<String, List>> opResults = [];
+      MapEntry<String, List<dynamic>>? opResults;
       bool wasExpanded = false;
 
       if (expand) {
         for (final singleValue in value) {
-
+          final ({MapEntry<String, List<dynamic>> result, bool wasExpanded}) entry = await op.getValue(
+            singleValue,
+            interpreter,
+            //TODO: add a test function to make check if there is a valid object being used
+            custom: SetStatement.functions,
+          );
+          wasExpanded = entry.wasExpanded;
+          if (opResults == null) {
+            opResults = entry.result;
+          } else {
+            opResults.value.addAll(entry.result.value);
+          }
         }
       } else {
-      } */
-
-      final ({MapEntry result, bool wasExpanded}) entry = await op.getValue(
-        value,
-        interpreter,
-        //TODO: add a test function to make check if there is a valid object being used
-        custom: SetStatement.functions,
-      );
+        final ({MapEntry<String, List<dynamic>> result, bool wasExpanded}) entry = await op.getValue(
+            value,
+            interpreter,
+            //TODO: add a test function to make check if there is a valid object being used
+            custom: SetStatement.functions,
+          );
+        wasExpanded = entry.wasExpanded;
+        opResults = entry.result;
+      }
 
       //classify the type of the values
-      if (op.alias == null && entry.wasExpanded) {
-        mergeLists.add(entry.result);
-      } else if (entry.result.value.isNotEmpty) {
-        values.add(entry.result);
+      if (op.alias == null && wasExpanded) {
+        mergeLists.add(opResults!);
+      } else if (opResults!.value.isNotEmpty) {
+        values.add(opResults);
       }
     }
 

@@ -1515,6 +1515,34 @@ void main() {
         ]),
       );
     });
+    test('Select values and expand', () async {
+      final complex = {
+        'first': [
+          {'second': [0]},
+          {'second': [0, 1]},
+          {'second': [0, 1, 2]},
+        ]
+      };
+
+      final code = '''
+        SELECT second[] FROM *.first[] INTO output;
+      ''';
+
+      final Result values = await runWQL(code, parameters: complex);
+
+      expect(values.pass, isTrue);
+      expect(
+        values.data!['output'],
+        equals([
+          {'second': 0},
+          {'second': 0},
+          {'second': 1},
+          {'second': 0},
+          {'second': 1},
+          {'second': 2},
+        ]),
+      );
+    });
     test('Select merge values where value is greater than merge', () async {
       final code = '''
         SET firstRange TO createRange(n'0', n'4');
