@@ -538,7 +538,7 @@ void main() {
       //have one scraper
       expect(scrapers.length, equals(1));
       //scraper has 8 requests
-      expect(scrapers[0].requests.length, equals(9));
+      expect(scrapers[0].requests.length, equals(10));
       //info is correct
       expect(
         scrapers[0].info,
@@ -613,7 +613,7 @@ void main() {
 
       //override setstatement function to work with loading a file
       SetStatement.functions['getrequest'] = (args) async {
-        return await File(args[0].first).readAsString();
+        return await File(args[0]).readAsString();
       };
 
       Result<List> response =
@@ -634,7 +634,7 @@ void main() {
 
       //override setstatement function to work with loading a file
       SetStatement.functions['getrequest'] = (args) async {
-        return await File(args[0].first).readAsString();
+        return await File(args[0]).readAsString();
       };
 
       Result<List> response =
@@ -1262,7 +1262,7 @@ void main() {
     test('Get last segment', () async {
       final code = '''
         SET url TO s'https://www.example.com/home/testing/';
-        SET output TO url.getLastSegment()[0];
+        SET output TO url.getLastSegment();
       ''';
 
       final Result values = await runWQL(code);
@@ -1351,9 +1351,7 @@ void main() {
           equals([
             {
               'matchOutput': {'first': 'hello'},
-              'noMatchOutput': {
-                'first': [],
-              }
+              'noMatchOutput': null,
             }
           ]));
       expect(
@@ -1363,11 +1361,7 @@ void main() {
               'matchOutput': [
                 {'first': 'hello'}
               ],
-              'noMatchOutput': [
-                {
-                  'first': [],
-                }
-              ]
+              'noMatchOutput': []
             }
           ]));
     });
@@ -1388,9 +1382,7 @@ void main() {
         equals([
           {
             'matchOutput': {'first': 'hello'},
-            'noMatchOutput': {
-              'first': [],
-            }
+            'noMatchOutput': null,
           }
         ]),
       );
@@ -1412,9 +1404,7 @@ void main() {
         equals([
           {
             'matchOutput': {'first': 'hello'},
-            'noMatchOutput': {
-              'first': [],
-            }
+            'noMatchOutput': null,
           }
         ]),
       );
@@ -1518,9 +1508,15 @@ void main() {
     test('Select values and expand', () async {
       final complex = {
         'first': [
-          {'second': [0]},
-          {'second': [0, 1]},
-          {'second': [0, 1, 2]},
+          {
+            'second': [0]
+          },
+          {
+            'second': [0, 1]
+          },
+          {
+            'second': [0, 1, 2]
+          },
         ]
       };
 
@@ -1841,7 +1837,9 @@ void main() {
       expect(
         argCalls,
         equals([
-          [['hello', 'hello', 'hello', 'hello']]
+          [
+            ['hello', 'hello', 'hello', 'hello']
+          ]
         ]),
       );
     });

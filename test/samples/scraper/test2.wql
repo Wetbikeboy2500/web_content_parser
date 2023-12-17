@@ -1,8 +1,8 @@
 SET html TO getRequest(^.path);
 SET html TO parse(^.html);
 SET items TO html.querySelectorAll(s'.item');
-SELECT text.querySelector(s'.description').text() as title1 FROM items[] INTO first WHEN *.text() contains s'Title 1';
-SELECT text.querySelector(s'.description').text() as title2 FROM items[] INTO second WHEN *.text() contains s'Title 2';
-SELECT text.querySelector(s'.description').text() as title3 FROM items[] INTO third WHEN *.text() contains s'Title 3';
+SELECT *.querySelector(s'.description').text() as title1 FROM items[] INTO first WHEN *.text() contains s'Title 1';
+SELECT *.querySelector(s'.description').text() as title2 FROM items[] INTO second WHEN *.text() contains s'Title 2';
+SELECT *.querySelector(s'.description').text() as title3 FROM items[] INTO third WHEN *.text() contains s'Title 3';
 
 SET return TO merge(^.first[0].title1, ^.second[0].title2, ^.third[0].title3);

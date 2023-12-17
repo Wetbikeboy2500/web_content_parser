@@ -12,39 +12,35 @@ void loadWQLFunctions() {
     'getrequest': (args) async {
       //for the second argument, we are going to assume it is a map within a list
       return await getRequest(
-        args[0].first,
-        (args.length > 1) ? args[1].first : const <String, String>{},
+        args[0],
+        (args.length > 1) ? args[1] : const <String, String>{},
       );
     },
     'getdynamicrequest': (args) async {
-      if (args[0].length == 2) {
-        return await getDynamicPage(args[0].first, id: args[0].last);
+      if (args.length == 2) {
+        return await getDynamicPage(args[0], id: args[1]);
       } else {
-        return await getDynamicPage(args[0].first);
+        return await getDynamicPage(args[0]);
       }
     },
     'postrequest': (args) async {
       return await postRequest(
-        args[0].first,
-        args[1].first,
-        (args.length > 2) ? Map<String, String>.from(args[2].first) : const <String, String>{},
+        args[0],
+        args[1],
+        (args.length > 2) ? Map<String, String>.from(args[2]) : const <String, String>{},
       );
     },
     'parse': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      return parse(arg);
+      return parse(args[0]);
     },
     'getstatuscode': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      return arg.statusCode;
+      return args[0].statusCode;
     },
     'parsebody': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      return parse(arg.body);
+      return parse(args[0].body);
     },
     'body': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      return arg.body;
+      return args[0].body;
     },
     'joinurl': (args) {
       final List<String> flattened = [];
@@ -58,36 +54,16 @@ void loadWQLFunctions() {
       return path.url.joinAll(flattened);
     },
     'spliturl': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      return path.url.split(arg);
+      return path.url.split(args[0]);
     },
     'decodebasesixtyfour': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      return utf8.decode(base64.decode(arg));
+      return utf8.decode(base64.decode(args[0]));
     },
     'getlastsegment': (args) {
-      final List arg0 = (args[0] is List) ? args[0] : [args[0]];
-      final String? arg1 = (args.length == 1)
-          ? null
-          : (args[1] is List)
-              ? args[1].first
-              : args[1];
-
-      final List<String> output = [];
-      if (arg1 == null) {
-        for (String item in arg0) {
-          output.add(Uri.parse(item).pathSegments.lastWhere((element) => element.isNotEmpty, orElse: () => ''));
-        }
-      } else {
-        for (Map item in arg0) {
-          output.add(Uri.parse(item[arg1]).pathSegments.lastWhere((element) => element.isNotEmpty, orElse: () => ''));
-        }
-      }
-
-      return output;
+      return Uri.parse(args[0]).pathSegments.lastWhere((element) => element.isNotEmpty, orElse: () => '');
     },
     'datetimeago': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg0 = args[0];
       if (arg0 == null) {
         return DateTime.now();
       }
@@ -113,63 +89,63 @@ void loadWQLFunctions() {
       return DateTime.now();
     },
     'innerhtml': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg0 = args[0];
       if (arg0 == null) {
         return null;
       }
       return arg0.innerHtml;
     },
     'outerhtml': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg0 = args[0];
       if (arg0 == null) {
         return null;
       }
       return arg0.outerHtml;
     },
     'attribute': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      final dynamic arg0 = args[0];
+      final dynamic arg1 = args[1];
       if (arg0 == null) {
         return null;
       }
       return arg0.attributes[arg1];
     },
     'name': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg0 = args[0];
       if (arg0 == null) {
         return null;
       }
       return arg0.localName;
     },
     'text': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg0 = args[0];
       if (arg0 == null) {
         return null;
       }
       return arg0.text;
     },
     'decode': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg0 = args[0];
       if (arg0 == null) {
         return null;
       }
       return jsonDecode(arg0);
     },
     'encode': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final dynamic arg0 = args[0];
       return jsonEncode(arg0);
     },
     'queryselector': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      final dynamic arg0 = args[0];
+      final dynamic arg1 = args[1];
       if (arg0 == null) {
         return null;
       }
       return arg0.querySelector(arg1);
     },
     'queryselectorall': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
+      final dynamic arg0 = args[0];
+      final dynamic arg1 = args[1];
       if (arg0 == null) {
         return null;
       }

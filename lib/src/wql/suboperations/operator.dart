@@ -154,7 +154,8 @@ class Operator {
         }
 
         for (final param in params) {
-          final ({MapEntry<String, List> result, bool wasExpanded}) operationResult = (await param.getValue(context, interpreter, custom: custom));
+          final ({MapEntry<String, List> result, bool wasExpanded}) operationResult =
+              (await param.getValue(context, interpreter, custom: custom));
           final result = operationResult.result;
           if (result.value.length > maxLengthOfMultiArgs) {
             maxLengthOfMultiArgs = result.value.length;
@@ -194,44 +195,15 @@ class Operator {
         wasExpanded = false;
         value = anyWasExpanded ? [functionResults] : functionResults;
       } else {
-        //select a value
-        final List<dynamic> newValues = List.generate(value.length, (index) => index);
-        for (final index in newValues) {
-          //When iterating over a list, like [1, 2, 4], e is going to be 1, 2, 4 unwrapped
-          final e = value[index];
-
-          /* if (operation.type == OperationType.function) {
-            final operationLength = operation.value?.length ?? 0;
-            //map values
-            final List<dynamic> values = List.generate(operationLength, (index) => index);
-            int max = 0;
-            for (final index2 in values) {
-              values[index2] = (await operation.value[index2].getValue(e, interpreter, custom: custom)).value;
-              if (values[index2].length > max) {
-                max = values[index2].length;
-              }
-            }
-
-            print('max $max');
-
-            if (topLevel) {
-              //if top, then the value should be the first value
-              newValues[index] = await custom[operation.name.toLowerCase()]!(values);
-              continue;
-            } else {
-              newValues[index] = await custom[operation.name.toLowerCase()]!([e, ...values]);
-              continue;
-            }
-          } else { */
-            //TODO: might want to consider null cases prevent Dart errors
-            if (e is Map) {
-              newValues[index] = e[operation.name];
-              continue;
-            } else {
-              newValues[index] = e;
-              continue;
-            }
-          //}
+        // Select a value through map access
+        final List<dynamic> newValues = [];
+        for (final element in value) {
+          if (element is Map && element.containsKey(operation.name)) {
+            newValues.add(element[operation.name]);
+          } else {
+            log2('Cannot access value of non-map type with key: ', operation.name, level: const LogLevel.warn());
+            newValues.add(null);
+          }
         }
 
         value = newValues;
@@ -248,7 +220,11 @@ class Operator {
           value = value.reduce((value, element) => [...(value ?? const []), ...(element ?? const [])]);
           wasExpanded = true;
         } else if (operation.listAccess!.trim() == '[0]') {
-          value = value[0];
+          if (value[0].isEmpty) {
+            value = [null];
+          } else {
+            value = value[0];
+          }
         } else {
           log('Specialized list access is not supported yet', level: const LogLevel.warn());
         }

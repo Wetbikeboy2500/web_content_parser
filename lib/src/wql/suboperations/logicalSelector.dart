@@ -45,6 +45,13 @@ class LogicalSelector {
         final firstValue = (await first.getValue(context, interpreter, custom: SetStatement.functions)).result.value.first;
         final secondValue = (await second.getValue(context, interpreter, custom: SetStatement.functions)).result.value.first;
 
+        if (firstValue is! String) {
+          print(first.names);
+          print(firstValue);
+        }
+
+        print(secondValue);
+
         switch(value[1].toLowerCase()) {
           case 'matches':
             return firstValue.querySelector(secondValue) != null;

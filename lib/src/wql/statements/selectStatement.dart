@@ -76,7 +76,8 @@ class SelectStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
-    final ({MapEntry result, bool wasExpanded}) valueResult = await from.getValue(context, interpreter, custom: SetStatement.functions);
+    final ({MapEntry result, bool wasExpanded}) valueResult =
+        await from.getValue(context, interpreter, custom: SetStatement.functions);
 
     //this is relevant for the getValue on the operators to know if it is being passed a list to modify or a elements within a list to modify
     bool expand = false;
@@ -114,7 +115,7 @@ class SelectStatement extends Statement {
 
     //run when
     if (when != null) {
-      if (value is List) {
+      if (expand) {
         //filter by the when condition per element
         final newValue = [];
         for (final element in value) {
@@ -122,10 +123,25 @@ class SelectStatement extends Statement {
             newValue.add(element);
           }
         }
+
+        if (newValue.isEmpty) {
+          // Exit early
+          if (into != null) {
+            interpreter.setValue(into!, []);
+          }
+          return;
+        }
+
         value = newValue;
       } else if (!(await when!.evaluate(value, interpreter))) {
         //clear value if it doesn't meet the when condition
         value = [];
+
+        // Exit early
+        if (into != null) {
+          interpreter.setValue(into!, []);
+        }
+        return;
       }
     }
 
@@ -138,30 +154,19 @@ class SelectStatement extends Statement {
       MapEntry<String, List<dynamic>>? opResults;
       bool wasExpanded = false;
 
-      if (expand) {
-        for (final singleValue in value) {
-          final ({MapEntry<String, List<dynamic>> result, bool wasExpanded}) entry = await op.getValue(
-            singleValue,
-            interpreter,
-            //TODO: add a test function to make check if there is a valid object being used
-            custom: SetStatement.functions,
-          );
-          wasExpanded = entry.wasExpanded;
-          if (opResults == null) {
-            opResults = entry.result;
-          } else {
-            opResults.value.addAll(entry.result.value);
-          }
-        }
-      } else {
+      for (final singleValue in expand ? value : [value]) {
         final ({MapEntry<String, List<dynamic>> result, bool wasExpanded}) entry = await op.getValue(
-            value,
-            interpreter,
-            //TODO: add a test function to make check if there is a valid object being used
-            custom: SetStatement.functions,
-          );
+          singleValue,
+          interpreter,
+          //TODO: add a test function to make check if there is a valid object being used
+          custom: SetStatement.functions,
+        );
         wasExpanded = entry.wasExpanded;
-        opResults = entry.result;
+        if (opResults == null) {
+          opResults = entry.result;
+        } else {
+          opResults.value.addAll(entry.result.value);
+        }
       }
 
       //classify the type of the values
@@ -186,9 +191,7 @@ class SelectStatement extends Statement {
             late final Map<String, dynamic> newMap;
 
             if (entry.value[i] is Map) {
-              newMap = {
-                ...(entry.value[i] as Map)
-              };
+              newMap = {...(entry.value[i] as Map)};
             } else {
               newMap = <String, dynamic>{entry.key: entry.value[i]};
             }
