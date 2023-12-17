@@ -45,7 +45,7 @@ class RunStatement extends Statement {
     //gets the args to pass along
     final List args = [];
     for (final arg in arguments) {
-      args.add((await arg.getValue(context, interpreter, custom: SetStatement.functions)).value);
+      args.add((await arg.getValue(context, interpreter, custom: SetStatement.functions)).result.value);
     }
 
     //runs the function

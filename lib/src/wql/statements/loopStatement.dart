@@ -24,7 +24,7 @@ class LoopStatement extends Statement {
   Future<void> execute(Interpreter interpreter, dynamic context) async {
     interpreter.pushLocal();
 
-    final List<dynamic> items = (await item.getValue(context, interpreter, custom: SetStatement.functions)).value;
+    final List<dynamic> items = (await item.getValue(context, interpreter, custom: SetStatement.functions)).result.value;
 
     for (final item in items) {
       for (final statement in statements) {

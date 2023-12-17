@@ -42,8 +42,8 @@ class LogicalSelector {
         final first = Operator.fromTokensNoAlias(value[0]);
         final second = Operator.fromTokensNoAlias(value[2]);
 
-        final firstValue = (await first.getValue(context, interpreter, custom: SetStatement.functions)).value.first;
-        final secondValue = (await second.getValue(context, interpreter, custom: SetStatement.functions)).value.first;
+        final firstValue = (await first.getValue(context, interpreter, custom: SetStatement.functions)).result.value.first;
+        final secondValue = (await second.getValue(context, interpreter, custom: SetStatement.functions)).result.value.first;
 
         switch(value[1].toLowerCase()) {
           case 'matches':

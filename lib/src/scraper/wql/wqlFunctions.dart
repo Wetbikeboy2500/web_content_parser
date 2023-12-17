@@ -47,7 +47,15 @@ void loadWQLFunctions() {
       return arg.body;
     },
     'joinurl': (args) {
-      return path.url.joinAll(List<String>.from(args.map((e) => e.first)));
+      final List<String> flattened = [];
+      for (dynamic arg in args) {
+        if (arg is List) {
+          flattened.addAll(arg.cast<String>());
+        } else {
+          flattened.add(arg);
+        }
+      }
+      return path.url.joinAll(flattened);
     },
     'spliturl': (args) {
       final dynamic arg = (args[0] is List) ? args[0].first : args[0];

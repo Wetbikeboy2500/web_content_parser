@@ -63,33 +63,36 @@ class SetStatement extends Statement {
 
   static Map<String, Function> functions = {
     'increment': (args) {
-      dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      dynamic arg0 = args[0];
       if (arg0 is String) {
         arg0 = num.parse(arg0);
       }
       return arg0 + 1;
     },
     'decrement': (args) {
-      dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      dynamic arg0 = args[0];
       if (arg0 is String) {
         arg0 = num.parse(arg0);
       }
       return arg0 - 1;
     },
     'trim': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      return arg0.trim();
+      return args[0].trim();
     },
     'merge': (args) {
       final List results = [];
-      for (List l in args) {
-        results.addAll(l);
+      for (dynamic l in args) {
+        if (l is List) {
+          results.addAll(l);
+        } else {
+          results.add(l);
+        }
       }
       return results;
     },
     'mergekeyvalue': (args) {
-      final value1 = args[0];
-      final value2 = args[1];
+      final value1 = (args[0] is List) ? args[0] : [args[0]];
+      final value2 = (args[1] is List) ? args[1] : [args[1]];
       final result = {};
 
       bool stringMap = true;
@@ -129,84 +132,61 @@ class SetStatement extends Statement {
       return result.join('');
     },
     'last': (args) {
-      final dynamic arg = (args[0] is List && args[0].first is List) ? args[0].first : args[0];
-      return arg.last;
+      return args[0].last;
     },
     'count': (args) {
-      final dynamic arg0 = (args[0] is List && args[0].isNotEmpty && args[0].first is List) ? args[0].first : args[0];
-      return arg0.length;
+      return args[0].length;
     },
     'split': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
-      return arg.split(arg1);
+      return args[0].split(args[1]);
     },
     'indexof': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
-      return arg.indexOf(arg1);
+      return args[0].indexOf(args[1]);
     },
     'indexofstartingat': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
-      final dynamic arg2 = (args[2] is List) ? args[2].first : args[2];
-      return arg.indexOf(arg1, arg2);
+      return args[0].indexOf(args[1], args[2]);
     },
     'substring': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
-      final dynamic arg2 = (args[2] is List) ? args[2].first : args[2];
-      return arg.substring(arg1, arg2);
+      return args[0].substring(args[1], args[2]);
     },
     'replaceall': (args) {
-      final dynamic arg = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
-      final dynamic arg2 = (args[2] is List) ? args[2].first : args[2];
-      return arg.replaceAll(arg1, arg2);
+      return args[0].replaceAll(args[1], args[2]);
     },
     'createrange': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      final dynamic arg1 = (args[1] is List) ? args[1].first : args[1];
       final List<int> output = [];
-      for (int i = arg0; i < arg1; i++) {
+      for (int i = args[0]; i < args[1]; i++) {
         output.add(i);
       }
       return output;
     },
     'reverse': (args) {
-      final dynamic arg0 = (args[0] is List && args[0].isNotEmpty && args[0].first is List) ? args[0].first : args[0];
-      return arg0.reversed.toList();
+      return args[0].reversed.toList();
     },
     'itself': (args) {
-      return (args[0] is List) ? args[0].first : args[0];
+      return args[0];
     },
     'print': (args) {
       // ignore: avoid_print
-      print(args);
+      print(args.join(', '));
       return null;
     },
     'isnull': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      return arg0 == null;
+      return args[0] == null;
     },
     'isempty': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      return arg0.isEmpty;
+      return args[0].isEmpty;
     },
     'tostring': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      return arg0.toString();
+      return args[0].toString();
     },
     'lowercase': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      return arg0.toLowerCase();
+      return args[0].toLowerCase();
     },
     'uppercase': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
-      return arg0.toUpperCase();
+      return args[0].toUpperCase();
     },
     'json': (args) {
-      final dynamic arg0 = (args[0] is List) ? args[0].first : args[0];
+      final arg0 = args[0];
 
       dynamic localJson;
 
@@ -218,8 +198,8 @@ class SetStatement extends Statement {
 
       if (args.length > 1) {
         for (var i = 1; i < args.length - 1; i += 2) {
-          final dynamic selector = (args[i] is List) ? args[i].first : args[i];
-          final dynamic value = (args[i + 1] is List) ? args[i + 1].first : args[i + 1];
+          final dynamic selector = args[i];
+          final dynamic value = args[i + 1];
 
           final split = selector.split('.');
           var current = localJson;
@@ -246,7 +226,7 @@ class SetStatement extends Statement {
       }
     }
 
-    final value = (await operation.getValue(context, interpreter, custom: functions)).value;
+    final value = (await operation.getValue(context, interpreter, custom: functions)).result.value;
 
     //set the value
     interpreter.setValue(target, value.first);

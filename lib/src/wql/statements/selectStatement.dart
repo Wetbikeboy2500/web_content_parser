@@ -76,15 +76,18 @@ class SelectStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
-    dynamic value = (await from.getValue(context, interpreter, custom: SetStatement.functions)).value;
+    final ({MapEntry result, bool wasExpanded}) valueResult = await from.getValue(context, interpreter, custom: SetStatement.functions);
 
     //this is relevant for the getValue on the operators to know if it is being passed a list to modify or a elements within a list to modify
     bool expand = false;
 
-    if ((value.length > 1 || from.names.last.listAccess?.trim() == '[]')) {
+    dynamic value;
+
+    if (valueResult.wasExpanded) {
       expand = true;
+      value = valueResult.result.value;
     } else {
-      value = value.first;
+      value = valueResult.result.value.first;
     }
 
     //run where
@@ -132,19 +135,28 @@ class SelectStatement extends Statement {
     final List<MapEntry> values = [];
 
     for (final op in operators) {
-      final MapEntry entry = await op.getValue(
+      /* final List<MapEntry<String, List>> opResults = [];
+      bool wasExpanded = false;
+
+      if (expand) {
+        for (final singleValue in value) {
+
+        }
+      } else {
+      } */
+
+      final ({MapEntry result, bool wasExpanded}) entry = await op.getValue(
         value,
         interpreter,
         //TODO: add a test function to make check if there is a valid object being used
         custom: SetStatement.functions,
-        expand: expand,
       );
 
       //classify the type of the values
-      if (op.alias == null && (entry.value.length > 1 || op.names.last.listAccess?.trim() == '[]')) {
-        mergeLists.add(entry);
-      } else if (entry.value.isNotEmpty) {
-        values.add(entry);
+      if (op.alias == null && entry.wasExpanded) {
+        mergeLists.add(entry.result);
+      } else if (entry.result.value.isNotEmpty) {
+        values.add(entry.result);
       }
     }
 
@@ -192,11 +204,11 @@ class SelectStatement extends Statement {
     //sort by decreasing length to make sure values populate correctly
     values.sort((a, b) => b.value.length.compareTo(a.value.length));
 
-    //populate the values that everything needs. This occurs after the merged values to make sure everything works correctly
+    // Populate the values that everything needs. This occurs after the merged values to make sure everything works correctly
     for (final entry in values) {
       final entryValueLength = entry.value.length;
 
-      //match value length
+      // Match value length
       while (returns.length < entryValueLength) {
         final newMap = <String, dynamic>{};
 
@@ -206,17 +218,14 @@ class SelectStatement extends Statement {
 
         returns.add(newMap);
       }
-      //if a single value, duplicate
+
+      // If a single value, duplicate
       if (entryValueLength > 1) {
         for (int i = 0; i < returns.length; i++) {
-          if (i < entryValueLength) {
-            returns[i][entry.key] = entry.value[i];
-          } else {
-            returns[i][entry.key] = null;
-          }
+          returns[i][entry.key] = i < entryValueLength ? entry.value[i] : null;
         }
       } else {
-        //add the values by key to value
+        // Add the values by key to value
         for (int i = 0; i < returns.length; i++) {
           returns[i][entry.key] = entry.value.first;
         }
