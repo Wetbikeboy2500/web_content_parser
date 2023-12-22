@@ -10,7 +10,7 @@ import '../parserHelper.dart' as helpers;
 
 /// Tokenized a string into a list of tokens.
 /// This defines the grammar of the language as well.
-List parseAndTokenize(String input) {
+List parseAndTokenize(String input, {bool verbose = false}) {
   final conditionalStatement = undefined();
   final loopStatement = undefined();
 
@@ -43,7 +43,11 @@ List parseAndTokenize(String input) {
 
   final parsed = allListStatements.parse(input);
 
-  if (parsed.isFailure) {
+  if (parsed is Failure) {
+    if (verbose) {
+      // ignore: avoid_print
+      print(parsed.message);
+    }
     return const [];
   }
 

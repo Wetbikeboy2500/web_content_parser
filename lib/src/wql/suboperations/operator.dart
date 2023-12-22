@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../interpreter/interpreter.dart';
 
 import '../../util/log.dart';
@@ -67,7 +69,11 @@ class Operator {
 
     for (final List nameList in tokens) {
       final dynamic firstIdentifier = nameList.first;
-      final dynamic listAccess = nameList.last;
+      final List? listAccess = nameList.last;
+
+      if (listAccess != null && listAccess[1] == null) {
+        listAccess[1] = SeparatedList([const Token('all', '', 0, 0)], []);
+      }
 
       //support for functions
       if (firstIdentifier is List) {
@@ -76,13 +82,13 @@ class Operator {
           name: firstIdentifier.first,
           type: OperationType.function,
           value: firstIdentifier.last?.map((value) => Operator.fromTokensNoAlias(value)).toList(),
-          listAccess: listAccess,
+          listAccess: listAccess?[1]?.elements,
         ));
       } else {
         names.add(OperationName(
           name: nameList.first,
           type: OperationType.access,
-          listAccess: listAccess,
+          listAccess: listAccess?[1]?.elements,
         ));
       }
     }
@@ -215,22 +221,213 @@ class Operator {
 
       //try and get the values as a list based on the selector
       if (operation.listAccess != null) {
-        if (operation.listAccess!.trim() == '[]') {
-          //join all the sublists to create a master list
-          value = value.reduce((value, element) => [...(value ?? const []), ...(element ?? const [])]);
-          wasExpanded = true;
-        } else if (operation.listAccess!.trim() == '[0]') {
-          if (value[0].isEmpty) {
-            value = [null];
-          } else {
-            value = value[0];
+        for (final access in operation.listAccess!) {
+          switch (access) {
+            case final List l:
+              int getIndex(String value) {
+                switch (value) {
+                  case 'first':
+                    return 0;
+                  case 'last':
+                    return value.length - 1;
+                  default:
+                    final parsed = int.tryParse(value);
+                    if (parsed == null || parsed > value.length || parsed < -value.length) {
+                      log2('Invalid list access index', parsed, level: const LogLevel.warn());
+                      return 0;
+                    } else if (parsed < 0) {
+                      return value.length + parsed;
+                    } else {
+                      return parsed;
+                    }
+                }
+              }
+              switch (l) {
+                case [final a, ':', final b, ':', final c]:
+                  final int start = getIndex(a);
+                  final int end = getIndex(b);
+                  final int? step = int.tryParse(c);
+
+                  if (step == null) {
+                    log2('Invalid step', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  if (start < 0 || end < 0 || step == 0) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  if (start > end && step > 0) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  if (start < end && step < 0) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  if (start >= value.length || end >= value.length) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+
+                  }
+
+                  final List<dynamic> newValues = [];
+
+                  if (value.isNotEmpty) {
+                    if (start < end) {
+                      for (int i = start; i <= end; i += step) {
+                        newValues.add(value[i]);
+                      }
+                    } else {
+                      for (int i = start; i >= end; i += step) {
+                        newValues.add(value[i]);
+                      }
+                    }
+                  }
+
+                  value = newValues;
+                  wasExpanded = false;
+                  break;
+                case [final a, ':', final b]:
+                  final int start = getIndex(a);
+                  final int end = getIndex(b);
+                  final int step = 1;
+
+                  if (start < 0 || end < 0 || step == 0) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  if (start > end && step > 0) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  if (start < end && step < 0) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  if (start >= value.length || end >= value.length) {
+                    log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
+                    value = [null];
+                    wasExpanded = false;
+                    break;
+                  }
+
+                  final List<dynamic> newValues = [];
+
+                  if (value.isNotEmpty) {
+                    if (start < end) {
+                      for (int i = start; i <= end; i += step) {
+                        newValues.add(value[i]);
+                      }
+                    } else {
+                      for (int i = start; i >= end; i -= step) {
+                        newValues.add(value[i]);
+                      }
+                    }
+                  }
+
+                  value = newValues;
+                  wasExpanded = false;
+                  break;
+              }
+              break;
+            case final String s:
+              final parsed = int.tryParse(s);
+              if (parsed == null || parsed > value.length || parsed < -value.length) {
+                log2('Invalid list access index', parsed, level: const LogLevel.warn());
+                value = [null];
+              } else if (parsed < 0) {
+                value = [value[value.length + parsed]];
+              } else {
+                print(wasExpanded);
+                value = [value[parsed]];
+              }
+              wasExpanded = false;
+              break;
+            case Token(value: final String v):
+              switch (v.toLowerCase()) {
+                case 'first':
+                  if (value.isEmpty) {
+                    value = [null];
+                  } else {
+                    value = [value.first];
+                  }
+                  wasExpanded = false;
+                  break;
+                case 'last':
+                  if (value.isEmpty) {
+                    value = [null];
+                  } else {
+                    value = [value.last];
+                  }
+                  wasExpanded = false;
+                  break;
+                case 'even':
+                  final List<dynamic> newValues = [];
+                  for (int i = 0; i < value.length; ++i) {
+                    if (i % 2 == 0) {
+                      newValues.add(value[i]);
+                    }
+                  }
+                  value = newValues;
+                  wasExpanded = false;
+                  break;
+                case 'odd':
+                  final List<dynamic> newValues = [];
+                  for (int i = 0; i < value.length; ++i) {
+                    if (i % 2 == 1) {
+                      newValues.add(value[i]);
+                    }
+                  }
+                  value = newValues;
+                  wasExpanded = false;
+                  break;
+                case 'all':
+                  final List<dynamic> newValues = [];
+                  for (final element in value) {
+                    if (element is List) {
+                      newValues.addAll(element);
+                    } else {
+                      newValues.add(element);
+                    }
+                  }
+                  value = newValues;
+                  wasExpanded = true;
+                  break;
+                default:
+                  log2('Unknown list access type', v, level: const LogLevel.warn());
+              }
+              break;
+            default:
+              log2('Unknown list access type', access, level: const LogLevel.warn());
           }
-        } else {
-          log('Specialized list access is not supported yet', level: const LogLevel.warn());
         }
       }
     }
 
+    print(jsonEncode(value));
     return (result: MapEntry(alias ?? names.last.name, value), wasExpanded: wasExpanded);
   }
 }
@@ -245,7 +442,7 @@ class OperationName {
   final OperationType type;
   final String name;
   final dynamic value;
-  final String? listAccess;
+  final List? listAccess;
 
   const OperationName({required this.name, required this.type, this.value, this.listAccess});
 }

@@ -5,7 +5,7 @@ import 'interpreter/parseAndTokenize.dart';
 import 'interpreter/parseStatements.dart';
 
 Future<Result<Map<String, dynamic>>> runWQL(String code,
-    {Map<String, dynamic> parameters = const {}, bool throwErrors = false}) async {
+    {Map<String, dynamic> parameters = const {}, bool throwErrors = false, bool verbose = false}) async {
   final Interpreter interpreter = Interpreter();
   interpreter.setValues(parameters);
   try {

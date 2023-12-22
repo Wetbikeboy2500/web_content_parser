@@ -1,7 +1,9 @@
 //Make sure to keep this as the first import
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
+import 'package:petitparser/petitparser.dart' as petitparser;
 import 'package:web_content_parser/src/parser/sources/computer.dart';
+import 'package:web_content_parser/src/wql/parserHelper.dart';
 import 'package:web_content_parser/src/wql/statements/loopStatement.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
 
@@ -818,20 +820,82 @@ void main() {
     setUp(() {
       loadWQLFunctions();
     });
+    group('Parsers', () {
+      test('Array access []', () {
+        final arrayAccess = '[]';
+
+        final result = digitInput.parse(arrayAccess);
+
+        expect(result is petitparser.Success, isTrue);
+        final value = result.value[1];
+        expect(value, isNull);
+      });
+      test('Array access [all]', () {
+        final arrayAccess = '[all]';
+
+        final result = digitInput.parse(arrayAccess);
+
+        expect(result is petitparser.Success, isTrue);
+        final value = result.value[1];
+        expect(value is petitparser.SeparatedList, isTrue);
+        expect(value.elements.map((t) => t.value), equals(['all']));
+      });
+      test('Array access [all,first]', () {
+        final arrayAccess = '[all,first]';
+
+        final result = digitInput.parse(arrayAccess);
+
+        expect(result is petitparser.Success, isTrue);
+        final value = result.value[1];
+        expect(value is petitparser.SeparatedList, isTrue);
+        expect(value.elements.map((t) => t.value), equals(['all', 'first']));
+      });
+      test('Array access [all,first,1]', () {
+        final arrayAccess = '[all,first,1]';
+
+        final result = digitInput.parse(arrayAccess);
+
+        expect(result is petitparser.Success, isTrue);
+        final value = result.value[1];
+        expect(value is petitparser.SeparatedList, isTrue);
+        expect(value.elements.map((t) => t is petitparser.Token ? t.value : t), equals(['all', 'first', '1']));
+      });
+      test('Array access [all,first,1:2]', () {
+        final arrayAccess = '[all,first,1:2]';
+
+        final result = digitInput.parse(arrayAccess);
+
+        expect(result is petitparser.Success, isTrue);
+        final value = result.value[1];
+        expect(value is petitparser.SeparatedList, isTrue);
+        expect(value.elements.map((t) => t is petitparser.Token ? t.value : t), equals(['all', 'first', ['1', ':', '2']]));
+      });
+      test('Array access [all,first,-1:-2]', () {
+        final arrayAccess = '[all,first,-1:-2]';
+
+        final result = digitInput.parse(arrayAccess);
+
+        expect(result is petitparser.Success, isTrue);
+        final value = result.value[1];
+        expect(value is petitparser.SeparatedList, isTrue);
+        expect(value.elements.map((t) => t is petitparser.Token ? t.value : t), equals(['all', 'first', ['-1', ':', '-2']]));
+      });
+    });
     test('Do not rethrow error', () async {
       final Result values = await runWQL('SET return TO value[0];', throwErrors: false);
 
       expect(values.pass, isFalse);
-    });
-    test('Custom list access not supported', () async {
+    }, skip: true);
+    test('Custom list access supported', () async {
       final code = '''
         SET value TO l'';
         SET return TO value[0:1];
       ''';
 
-      final Result values = await runWQL(code, throwErrors: false);
+      final Result values = await runWQL(code, throwErrors: true);
 
       expect(values.pass, isTrue);
+      expect(values.data!['return'], isNull);
     });
     test('Statement unimplemented', () async {
       final statement = Statement();
