@@ -59,7 +59,7 @@ class LogicalSelector {
         }
       }
 
-      if (value[1] == 'or') {
+      if (value[1].toLowerCase() == 'or') {
         final bool first = await _eval(value[0]);
         if (first) {
           return true;
@@ -68,7 +68,7 @@ class LogicalSelector {
         return first || second;
       }
 
-      if (value[1] == 'and') {
+      if (value[1].toLowerCase() == 'and') {
         final bool first = await _eval(value[0]);
         if (!first) {
           return false;

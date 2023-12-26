@@ -171,7 +171,7 @@ class Operator {
         }
 
         //merge the results into equal arg lists
-        final mutliArgs = [];
+        final multiArgs = [];
         for (int i = 0; i < maxLengthOfMultiArgs; ++i) {
           final args = [];
           for (int j = 0; j < results.length; ++j) {
@@ -183,18 +183,18 @@ class Operator {
               args.add(result.$1.first);
             }
           }
-          mutliArgs.add(args);
+          multiArgs.add(args);
         }
 
         final functionCall = custom[operation.name.toLowerCase()]!;
 
         //Account for a top level function call with no args
-        if (mutliArgs.isEmpty) {
-          mutliArgs.add(const []);
+        if (multiArgs.isEmpty) {
+          multiArgs.add(const []);
         }
 
         final functionResults = [];
-        for (final args in mutliArgs) {
+        for (final args in multiArgs) {
           functionResults.add(await functionCall(args));
         }
 
@@ -216,8 +216,6 @@ class Operator {
       }
 
       topLevel = false;
-
-      //TODO: allow list access to have keywords ex: [first] [last] [all]
 
       //try and get the values as a list based on the selector
       if (operation.listAccess != null) {
@@ -391,9 +389,9 @@ class Operator {
               wasExpanded = false;
               break;
             case Token(value: final String v):
+              final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
               switch (v.toLowerCase()) {
                 case 'first':
-                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
                   if (currentValue == null) {
                     log2('Invalid list access index on null object', v, level: const LogLevel.warn());
                     value = [null];
@@ -406,7 +404,6 @@ class Operator {
                   wasExpanded = false;
                   break;
                 case 'last':
-                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
                   if (currentValue == null) {
                     log2('Invalid list access index on null object', v, level: const LogLevel.warn());
                     value = [null];
@@ -421,7 +418,6 @@ class Operator {
                 case 'even':
                   final List<dynamic> newValues = [];
 
-                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
                   if (currentValue != null) {
                     for (int i = 0; i < currentValue.length; ++i) {
                       if (i % 2 == 0) {
@@ -437,7 +433,6 @@ class Operator {
                 case 'odd':
                   final List<dynamic> newValues = [];
 
-                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
                   if (currentValue != null) {
                     for (int i = 0; i < value.length; ++i) {
                       if (i % 2 == 1) {
@@ -452,7 +447,6 @@ class Operator {
                   break;
                 case 'all':
                   final List<dynamic> newValues = [];
-                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
                   for (final element in currentValue ?? []) {
                     if (element is List) {
                       newValues.addAll(element);
