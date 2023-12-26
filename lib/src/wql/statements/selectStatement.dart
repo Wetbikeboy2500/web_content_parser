@@ -162,10 +162,19 @@ class SelectStatement extends Statement {
           custom: SetStatement.functions,
         );
         wasExpanded = entry.wasExpanded;
-        if (opResults == null) {
-          opResults = entry.result;
+
+        if (entry.wasExpanded) {
+          if (opResults == null) {
+            opResults = MapEntry(entry.result.key, entry.result.value);
+          } else {
+            opResults.value.addAll(entry.result.value);
+          }
         } else {
-          opResults.value.addAll(entry.result.value);
+          if (opResults == null) {
+            opResults = MapEntry(entry.result.key, [entry.result.value.firstOrNull]);
+          } else {
+            opResults.value.add(entry.result.value.firstOrNull);
+          }
         }
       }
 

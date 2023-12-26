@@ -224,19 +224,25 @@ class Operator {
         for (final access in operation.listAccess!) {
           switch (access) {
             case final List l:
-              int getIndex(String value) {
-                switch (value) {
+              int getIndex(String accessString) {
+                final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+                switch (accessString) {
                   case 'first':
                     return 0;
                   case 'last':
-                    return value.length - 1;
+                    if (currentValue == null) {
+                      return 0;
+                    } else {
+                      return currentValue.length - 1;
+                    }
                   default:
-                    final parsed = int.tryParse(value);
-                    if (parsed == null || parsed > value.length || parsed < -value.length) {
+                    final parsed = int.tryParse(accessString);
+                    final currentValueLength = currentValue.length;
+                    if (parsed == null || parsed > currentValueLength || parsed < -currentValueLength) {
                       log2('Invalid list access index', parsed, level: const LogLevel.warn());
                       return 0;
                     } else if (parsed < 0) {
-                      return value.length + parsed;
+                      return currentValueLength + parsed;
                     } else {
                       return parsed;
                     }
@@ -276,24 +282,25 @@ class Operator {
                     break;
                   }
 
-                  if (start >= value.length || end >= value.length) {
+                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+
+                  if (start >= currentValue.length || end >= currentValue.length) {
                     log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
                     value = [null];
                     wasExpanded = false;
                     break;
-
                   }
 
                   final List<dynamic> newValues = [];
 
-                  if (value.isNotEmpty) {
+                  if (currentValue.isNotEmpty) {
                     if (start < end) {
                       for (int i = start; i <= end; i += step) {
-                        newValues.add(value[i]);
+                        newValues.add(currentValue[i]);
                       }
                     } else {
                       for (int i = start; i >= end; i += step) {
-                        newValues.add(value[i]);
+                        newValues.add(currentValue[i]);
                       }
                     }
                   }
@@ -327,7 +334,9 @@ class Operator {
                     break;
                   }
 
-                  if (start >= value.length || end >= value.length) {
+                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+
+                  if (start >= currentValue.length || end >= currentValue.length) {
                     log2('Invalid list access index', [start, end, step], level: const LogLevel.warn());
                     value = [null];
                     wasExpanded = false;
@@ -336,14 +345,14 @@ class Operator {
 
                   final List<dynamic> newValues = [];
 
-                  if (value.isNotEmpty) {
+                  if (currentValue.isNotEmpty) {
                     if (start < end) {
                       for (int i = start; i <= end; i += step) {
-                        newValues.add(value[i]);
+                        newValues.add(currentValue[i]);
                       }
                     } else {
                       for (int i = start; i >= end; i -= step) {
-                        newValues.add(value[i]);
+                        newValues.add(currentValue[i]);
                       }
                     }
                   }
@@ -355,58 +364,96 @@ class Operator {
               break;
             case final String s:
               final parsed = int.tryParse(s);
-              if (parsed == null || parsed > value.length || parsed < -value.length) {
+              final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+              if (currentValue == null) {
+                log2('Invalid list access index on null object', parsed, level: const LogLevel.warn());
+                value = [null];
+              } else if (currentValue.isEmpty) {
+                value = [null];
+              } else if (parsed == null || parsed > currentValue.length || parsed < -currentValue.length) {
                 log2('Invalid list access index', parsed, level: const LogLevel.warn());
                 value = [null];
               } else if (parsed < 0) {
-                value = [value[value.length + parsed]];
+                try {
+                  value = [currentValue?[value.length + parsed]];
+                } on RangeError catch (_) {
+                  log2('Invalid list access index', parsed, level: const LogLevel.warn());
+                  value = [null];
+                }
               } else {
-                print(wasExpanded);
-                value = [value[parsed]];
+                try {
+                  value = [currentValue?[parsed]];
+                } on RangeError catch (_) {
+                  log2('Invalid list access index', parsed, level: const LogLevel.warn());
+                  value = [null];
+                }
               }
               wasExpanded = false;
               break;
             case Token(value: final String v):
               switch (v.toLowerCase()) {
                 case 'first':
-                  if (value.isEmpty) {
+                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+                  if (currentValue == null) {
+                    log2('Invalid list access index on null object', v, level: const LogLevel.warn());
+                    value = [null];
+                  } if (currentValue.isEmpty) {
+                    log2('Invalid list access index on empty list', v, level: const LogLevel.warn());
                     value = [null];
                   } else {
-                    value = [value.first];
+                    value = [currentValue.firstOrNull];
                   }
                   wasExpanded = false;
                   break;
                 case 'last':
-                  if (value.isEmpty) {
+                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+                  if (currentValue == null) {
+                    log2('Invalid list access index on null object', v, level: const LogLevel.warn());
+                    value = [null];
+                  } if (currentValue.isEmpty) {
+                    log2('Invalid list access index on empty list', v, level: const LogLevel.warn());
                     value = [null];
                   } else {
-                    value = [value.last];
+                    value = [currentValue.lastOrNull];
                   }
                   wasExpanded = false;
                   break;
                 case 'even':
                   final List<dynamic> newValues = [];
-                  for (int i = 0; i < value.length; ++i) {
-                    if (i % 2 == 0) {
-                      newValues.add(value[i]);
+
+                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+                  if (currentValue != null) {
+                    for (int i = 0; i < currentValue.length; ++i) {
+                      if (i % 2 == 0) {
+                        newValues.add(currentValue[i]);
+                      }
                     }
+                  } else {
+                    log2('Invalid list access index on null object', v, level: const LogLevel.warn());
                   }
                   value = newValues;
                   wasExpanded = false;
                   break;
                 case 'odd':
                   final List<dynamic> newValues = [];
-                  for (int i = 0; i < value.length; ++i) {
-                    if (i % 2 == 1) {
-                      newValues.add(value[i]);
+
+                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+                  if (currentValue != null) {
+                    for (int i = 0; i < value.length; ++i) {
+                      if (i % 2 == 1) {
+                        newValues.add(value[i]);
+                      }
                     }
+                  } else {
+                    log2('Invalid list access index on null object', v, level: const LogLevel.warn());
                   }
                   value = newValues;
                   wasExpanded = false;
                   break;
                 case 'all':
                   final List<dynamic> newValues = [];
-                  for (final element in value) {
+                  final currentValue = _getValueBasedOnExpanded(value, wasExpanded);
+                  for (final element in currentValue ?? []) {
                     if (element is List) {
                       newValues.addAll(element);
                     } else {
@@ -427,8 +474,15 @@ class Operator {
       }
     }
 
-    print(jsonEncode(value));
     return (result: MapEntry(alias ?? names.last.name, value), wasExpanded: wasExpanded);
+  }
+
+  dynamic _getValueBasedOnExpanded(List value, bool wasExpanded) {
+    if (wasExpanded) {
+      return value;
+    } else {
+      return value.firstOrNull;
+    }
   }
 }
 

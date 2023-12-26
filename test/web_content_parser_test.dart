@@ -1406,7 +1406,7 @@ void main() {
         SELECT matchOutput, noMatchOutput FROM * INTO outputList;
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await runWQL(code, throwErrors: true);
 
       expect(values.pass, isTrue);
 
