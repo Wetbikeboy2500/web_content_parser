@@ -10,74 +10,54 @@ class SelectStatement extends Statement {
   final List<Operator> operators;
   final Operator from;
   final String? into;
-  final String? selector;
-  final LogicalSelector? when;
+  final LogicalSelector? whenClause;
 
-  const SelectStatement({required this.operators, required this.from, this.into, this.selector, this.when});
+  const SelectStatement({required this.operators, required this.from, this.into, this.whenClause});
 
   factory SelectStatement.fromTokens(List tokens) {
+    final [_, inputs, __, from, into, whenClause] = tokens;
+
     //select operators
     final List<Operator> operators = [];
 
-    for (final List operatorTokens in tokens[1]) {
+    for (final List operatorTokens in inputs) {
       operators.add(Operator.fromTokens(operatorTokens));
     }
 
-    //select into if exists
-    late final String? into;
-    if (tokens[4] != null) {
-      into = tokens[4].last;
-    } else {
-      into = null;
-    }
-
     //select from
-    late final Operator from;
-    if (tokens[3] is String) {
-      if (tokens[3].trim() == '*') {
-        from = const Operator([OperationName(name: '*', type: OperationType.access, listAccess: null)], null);
-      } else {
-        throw Exception('Not supported');
-      }
+    late final Operator tmpFrom;
+    if (from is! String) {
+      tmpFrom = Operator.fromTokensNoAlias(from);
+    } else if (from.trim() == '*') {
+      tmpFrom = const Operator([OperationName(name: '*', type: OperationType.access, listAccess: null)], null);
     } else {
-      from = Operator.fromTokensNoAlias(tokens[3]);
+      throw Exception('Not supported');
     }
 
-    //select selector if exists
-    late final String? selector;
-
-    if (tokens[5] != null) {
-      selector = tokens[5].last;
-    } else {
-      selector = null;
-    }
-
-    //get when conditions
-    late final LogicalSelector? when;
-
-    if (tokens[6] != null) {
-      when = LogicalSelector(tokens[6].last);
-    } else {
-      when = null;
-    }
-
-    return SelectStatement(operators: operators, from: from, into: into, selector: selector, when: when);
+    return SelectStatement(
+      operators: operators,
+      from: tmpFrom,
+      into: into?.last,
+      whenClause: whenClause != null ? LogicalSelector(whenClause.last) : null,
+    );
   }
 
   static Parser getParser() {
     return stringIgnoreCase('select').trim().token() &
         inputs &
         stringIgnoreCase('from').trim() &
-        input & //TODO: change this into a single input parser
-        (stringIgnoreCase('into').trim() & name).optional() & //TODO: change this into a single input parser
-        (stringIgnoreCase('where').trim().token() & stringIgnoreCase('selector is').trim() & rawInput).optional() &
+        input &
+        (stringIgnoreCase('into').trim() & name).optional() &
         (stringIgnoreCase('when').trim().token() & LogicalSelector.getParser()).optional();
   }
 
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
-    final ({MapEntry result, bool wasExpanded}) valueResult =
-        await from.getValue(context, interpreter, custom: SetStatement.functions);
+    final ({MapEntry result, bool wasExpanded}) valueResult = await from.getValue(
+      context,
+      interpreter,
+      custom: SetStatement.functions,
+    );
 
     //this is relevant for the getValue on the operators to know if it is being passed a list to modify or a elements within a list to modify
     bool expand = false;
@@ -91,35 +71,13 @@ class SelectStatement extends Statement {
       value = valueResult.result.value.first;
     }
 
-    //run where
-    if (selector != null) {
-      dynamic querySelect(dynamic given) {
-        if (given is Map) {
-          if (!given.containsKey('element')) {
-            throw Exception('No element found in map for selector');
-          }
-
-          return given['element'].querySelectorAll(selector);
-        } else {
-          return given.querySelectorAll(selector);
-        }
-      }
-
-      if (value is List) {
-        value = value.map((e) => querySelect(e)).expand((element) => element).toList();
-      } else {
-        value = querySelect(value);
-      }
-      expand = true;
-    }
-
     //run when
-    if (when != null) {
+    if (whenClause != null) {
       if (expand) {
         //filter by the when condition per element
         final newValue = [];
         for (final element in value) {
-          if (await when!.evaluate(element, interpreter)) {
+          if (await whenClause!.evaluate(element, interpreter)) {
             newValue.add(element);
           }
         }
@@ -133,7 +91,7 @@ class SelectStatement extends Statement {
         }
 
         value = newValue;
-      } else if (!(await when!.evaluate(value, interpreter))) {
+      } else if (!(await whenClause!.evaluate(value, interpreter))) {
         //clear value if it doesn't meet the when condition
         value = [];
 

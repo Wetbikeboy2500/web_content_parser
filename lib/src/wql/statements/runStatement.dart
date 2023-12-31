@@ -1,4 +1,5 @@
 import 'package:petitparser/parser.dart';
+import 'package:web_content_parser/src/util/log.dart';
 
 import '../interpreter/interpreter.dart';
 import '../suboperations/operator.dart';
@@ -14,19 +15,21 @@ class RunStatement extends Statement {
   const RunStatement(this.function, this.functionReference, this.arguments);
 
   factory RunStatement.fromTokens(List tokens) {
-    final String function = tokens[1].toLowerCase();
+    final [_, function, __, arguments] = tokens;
 
-    final List<Operator> arguments = [];
+    final String tmpFunction = function.toLowerCase();
 
-    for (final List operatorTokens in tokens[3]) {
-      arguments.add(Operator.fromTokens(operatorTokens));
+    final List<Operator> tmpArguments = [];
+
+    for (final List operatorTokens in arguments) {
+      tmpArguments.add(Operator.fromTokens(operatorTokens));
     }
 
-    if (SetStatement.functions.containsKey(function)) {
-      return RunStatement(function, SetStatement.functions[function], arguments);
+    if (SetStatement.functions.containsKey(tmpFunction)) {
+      return RunStatement(function, SetStatement.functions[tmpFunction], tmpArguments);
     }
 
-    return RunStatement(function, null, arguments);
+    return RunStatement(function, null, tmpArguments);
   }
 
   static Parser getParser() {
@@ -39,6 +42,7 @@ class RunStatement extends Statement {
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
     if (functionReference == null) {
+      log2('Unsupported function', function, level: const LogLevel.error());
       throw UnsupportedError('Unsupported function: $function');
     }
 

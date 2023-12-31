@@ -11,25 +11,18 @@ import 'statement.dart';
 class SetStatement extends Statement {
   final String target;
   final Operator operation;
-  final LogicalSelector? when;
+  final LogicalSelector? whenClause;
 
-  const SetStatement(this.target, this.operation, {this.when});
+  const SetStatement(this.target, this.operation, {this.whenClause});
 
   factory SetStatement.fromTokens(List tokens) {
-    final String target = tokens[1];
+    final [_, String target, __, operation, whenClause] = tokens;
 
-    final Operator operation = Operator.fromTokensNoAlias(tokens[3]);
-
-    //get when conditions
-    late final LogicalSelector? when;
-
-    if (tokens[4] != null) {
-      when = LogicalSelector(tokens[4].last);
-    } else {
-      when = null;
-    }
-
-    return SetStatement(target, operation, when: when);
+    return SetStatement(
+      target,
+      Operator.fromTokensNoAlias(operation),
+      whenClause: whenClause != null ? LogicalSelector(whenClause.last) : null,
+    );
   }
 
   static Parser getParser() {
@@ -49,6 +42,7 @@ class SetStatement extends Statement {
   static Function? getFunctionByIndex(int index) {
     return values[index];
   }
+
   static (Function?, int) getFunction(String key) {
     final index = keys.indexOf(key);
     if (index == -1) {
@@ -56,6 +50,7 @@ class SetStatement extends Statement {
     }
     return (values[index], index);
   }
+
   static void convertFunctionsMapToSplitArray() {
     keys = functions.keys.toList();
     values = functions.values.toList();
@@ -219,8 +214,8 @@ class SetStatement extends Statement {
 
   @override
   Future<void> execute(Interpreter interpreter, dynamic context) async {
-    if (when != null) {
-      final whenResult = await when!.evaluate(context, interpreter);
+    if (whenClause != null) {
+      final whenResult = await whenClause!.evaluate(context, interpreter);
       if (whenResult == false) {
         return;
       }

@@ -908,9 +908,8 @@ void main() {
         SELECT
           *.name() AS random,
           *.innerHTML()
-        FROM document
-        INTO doc
-        WHERE SELECTOR IS 'body > p';
+        FROM document.querySelectorAll(s'body > p')[]
+        INTO doc;
 
         SET firstname TO s'hello';
 
@@ -946,7 +945,7 @@ void main() {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
       final code = '''
-        SELECT *.name() AS random, *.innerHTML() FROM document INTO doc WHERE SELECTOR IS 'body > p';
+        SELECT *.name() AS random, *.innerHTML() FROM document.querySelectorAll(s'body > p')[] INTO doc;
         SET firstname TO s'hello';
         SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
       ''';
