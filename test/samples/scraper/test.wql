@@ -5,3 +5,10 @@ SELECT *.text() FROM html INTO second WHERE SELECTOR IS 'body > p';
 SET first TO trim(^.first[0].text);
 SET second TO trim(^.second[0].text);
 SET return TO merge(^.first, ^.second);
+
+html = getRequest(path).parse();
+first = html.where{ s'#main-tag' }.select{ *.text() };
+second = html.where{ s'body > p' }.select{ *.text() };
+first = first[0].text.trim();
+second = second[0].text.trim();
+return = merge(first, second);

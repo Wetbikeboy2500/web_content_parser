@@ -5,9 +5,9 @@ void main() {
       result = getRequest(s'https://github.com/topics')
       .if{*.getStatusCode() EQUALS n'200'} else {}
       .parseBody().querySelectorAll(s'.py-4.border-bottom')[].select{
-        *.querySelector(s'.f3').text().trim() as name,
-        *.querySelector(s'.f5').text().trim() as description,
-        joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href')) as url
+        name: *.querySelector(s'.f3').text().trim(),
+        description: *.querySelector(s'.f5').text().trim(),
+        url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
       };''';
 
   //don't allow square brackets, round brackets, curly brackets, semi-colon, colon, and comma
@@ -51,7 +51,7 @@ void main() {
 
   final function = letter().plus().flatten().trim() & (char('(').trim() & dotInput.plusSeparated(char(',').trim()).optional() & char(')').trim()).pick(1);
 
-  final selectStatement = stringIgnoreCase('select').token().trim() & (char('{').trim() & (dotInput & (stringIgnoreCase('as').token().trim() & access).optional()).plusSeparated(char(',').trim()) & char('}').trim()).pick(1);
+  final selectStatement = stringIgnoreCase('select').token().trim() & (char('{').trim() & ((access & char(':').token().trim()).optional() & dotInput).plusSeparated(char(',').trim()) & char('}').trim()).pick(1);
 
   final ifStatement = stringIgnoreCase('if').token().trim()
     & (char('{').trim() & logicalOperation & char('}').trim()).pick(1)

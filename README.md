@@ -6,15 +6,13 @@
 
 One goal: Unify web content parsing between projects.
 
-Parsing, in the context of this project, means scraping and transforming data into an expected output.
-
 This package is separated into two parts: the scraper and the parser.
 
-The scraper is the basis of retrieving web pages, executing scripts or code, and returning raw data.
+The scraper is responsible for extract of data. It can retrieve web pages and execute extraction scripts.
 
-The parser is the basis of converting raw data into a known format like structured Dart objects.
+The parser is responsible for transforming the raw data and loading it into a known Dart object structure.
 
-The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [WQL](#wql-web-query-language), a SQL-like language designed for scraping websites. Custom functions are also implemented in WQL to make scripting easier. These functions that are exposed can also be used in regular Dart projects. There are also methods to get webpages through a headless browser for mobile and desktop. These interfaces are available separately in the packages directory. If you need a dynamic system to parse websites, this is it.
+The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [WQL](#wql-web-query-language), a language designed for scraping websites. Custom functions are also implemented in WQL to make scripting easier. These functions that are exposed can also be used in regular Dart projects. There are also methods to get webpages through a headless browser for mobile and desktop. These interfaces are available separately in the packages directory. If you need a dynamic system to parse websites, this is it.
 
 Web Content Parser will not support downloading of any content. This project isn't a download manager. Web Content Parser's goal, from a functionality standpoint, is to be an interface and a system for standardization.
 
@@ -131,7 +129,7 @@ The scraper handles the interaction with [WQL](#wql-web-query-language) and maki
 
 Headless browsers provide a lot of power to scrape dynamic pages. This project currently uses puppeteer and flutter_inappwebview. These two packages provide the power to scrape on any platform.
 
-**Note:** These packages have only been tested on Android, Linux, and Windows machines.
+**Note:** These packages have only been tested on Android, Linux, and Windows systems.
 
 The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browsers with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
 
@@ -227,7 +225,7 @@ A ComputeDecorator is a class implementation for allowing different types of com
 
 ## WQL: Web Query Language
 
-WQL is a scripting language built for extracting data from web pages. It is designed to use a declarative syntax like SQL. The goal is to simplify web scraping and reduce the common patterns that a more generic scripting language forms when scraping websites.
+WQL is a scripting language built for extracting data from web pages. It is designed to be declarative and quick to change. The goal is to simplify web scraping and reduce the common patterns that a more generic scripting language forms when scraping websites.
 
 ### Why use a custom language?
 
@@ -235,37 +233,8 @@ Using a general purpose scripting language within another language is overkill. 
 
 There is also the problem of finding a stable scripting language that is cross platform.
 
-Websites can also be thought of as a place where structured data is stored. SQL works with a relational database. WQL works with websites.
-
-Lastly, I can't find a comparable language. The select statement itself is something that I would love to have in regular front-end development.
+Lastly, I can't find a comparable language. From a few iterations while using it for scripts, the current WQL is the best balance I could find between declarativeness, intuitiveness, and flexibility.
 
 ### How to use it
 
 Currently, the best examples are written in the test file. There are examples of making requests directly as well as integrating into the scraper system.
-
-### Wanted Syntax
-
-Syntax that I want to have implemented at some point
-
-Array access:
-
-```
-arr[first]
-arr[last]
-arr[spread] (equivalent to arr[])
-
-(optional more. could also support three value ranges)
-arr[even]
-arr[odd]
-```
-
-Function chaining:
-
-This would allow for functions to not require the parenthesis. This is useful for functions that take a single parameter.
-
-```
-value|trim|lowercase (Instead of value.trim())
-value|trim()|lowercase() (also supported)
-
-value.trim().lowercase() (current)
-```
