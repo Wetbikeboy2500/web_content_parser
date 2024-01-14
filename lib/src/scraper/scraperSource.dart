@@ -121,7 +121,7 @@ class ScraperSource {
       //ensure that the request file exists
       if (!(await r.file.exists())) {
         log2('Request file does not exist', r.file.path, level: const LogLevel.warn());
-        return const Result.fail();
+        return const Fail();
       }
 
       if (r.programType == 'wql') {
@@ -135,12 +135,12 @@ class ScraperSource {
             final String code = await r.file.readAsString();
             final parameters = Map.fromEntries(arguments);
             final result = await runWQL(code, parameters: parameters, throwErrors: true);
-            if (result.pass) {
-              if (result.data!['return'] is! T) {
+            if (result case Pass<Map<String, dynamic>>(data: final data)) {
+              if (data['return'] is! T) {
                 throw Exception('Return type is not correct');
               }
 
-              return result.data!['return'];
+              return data['return'];
             }
 
             throw Exception('Fail state was no re-thrown');
@@ -150,10 +150,10 @@ class ScraperSource {
       }
     }
 
-    return const Result.fail();
+    return const Fail();
   }
 
-  //TODO: have a cache system for loaded hetu files (remove readsync which occurs in the eval)
+  //TODO: have a cache system for loaded WQL files, this could also be used for saving already parsed files
 }
 
 class Request {

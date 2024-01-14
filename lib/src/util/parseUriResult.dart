@@ -5,9 +5,9 @@ extension UriResult on Uri {
     final Uri? uri = Uri.tryParse(url);
 
     if (uri == null) {
-      return const Result.fail();
+      return const Fail();
     }
 
-    return Result.pass(uri);
+    return Pass(uri);
   }
 }

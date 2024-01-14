@@ -64,7 +64,7 @@ class ParseSource extends SourceTemplate {
 
     if (result.fail || result.data == null) {
       log('Fetch chapter images request failed', level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     try {
@@ -72,7 +72,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log2('Error converting chapter images', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
-      return const Result.fail();
+      return const Fail();
     }
   }
 
@@ -86,7 +86,7 @@ class ParseSource extends SourceTemplate {
 
     if (result.fail || result.data == null) {
       log('Fetch chapter images url request failed', level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     try {
@@ -94,7 +94,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log2('Error converting chapter images', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
-      return const Result.fail();
+      return const Fail();
     }
   }
 
@@ -109,7 +109,7 @@ class ParseSource extends SourceTemplate {
 
     if (chapters.fail || chapters.data == null) {
       log('Fetch chapters request failed', level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     if (computeEnabled) {
@@ -126,7 +126,7 @@ class ParseSource extends SourceTemplate {
         log2('Error parsing chapter list computer:', e, level: const LogLevel.error());
         log(stack, level: const LogLevel.debug());
         //if compute fails, we cancel the return
-        return const Result.fail();
+        return const Fail();
       }
     }
 
@@ -137,7 +137,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log2('Error parsing chapter list:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
-      return const Result.fail();
+      return const Fail();
     }
   }
 
@@ -151,7 +151,7 @@ class ParseSource extends SourceTemplate {
 
     if (post.fail || post.data == null) {
       log('Fetch post url request failed', level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     try {
@@ -161,7 +161,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log2('Error parsing post data:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
-      return const Result.fail();
+      return const Fail();
     }
   }
 
@@ -175,7 +175,7 @@ class ParseSource extends SourceTemplate {
 
     if (post.fail || post.data == null) {
       log('Fetch post request failed', level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     try {
@@ -185,7 +185,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log2('Error parsing post data:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
-      return const Result.fail();
+      return const Fail();
     }
   }
 
@@ -207,7 +207,7 @@ class ParseSource extends SourceTemplate {
 
     if (entries.fail || entries.data == null) {
       log('Fetch catalog request failed', level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     try {
@@ -217,7 +217,7 @@ class ParseSource extends SourceTemplate {
     } catch (e, stack) {
       log2('Error fetching catalog:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
-      return const Result.fail();
+      return const Fail();
     }
   }
 }

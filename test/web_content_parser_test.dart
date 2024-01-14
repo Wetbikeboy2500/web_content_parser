@@ -81,7 +81,7 @@ void main() {
     });
 
     test('ResultExtended toJson', () {
-      Result r = const Result.fail();
+      Result r = const Fail();
       Map<String, dynamic> values = ResultExtended.toJson(r);
       expect(
         {

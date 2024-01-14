@@ -31,32 +31,32 @@ abstract class SourceTemplate {
 
   Future<Result<Post>> fetchPost(ID id) async {
     log('Empty request for fetch post', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   Future<Result<Post>> fetchPostUrl(String url) async {
     log('Empty request for fetch post url', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   Future<Result<List<Chapter>>> fetchChapters(ID id) async {
     log('Empty request for fetch chapters', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterId) async {
     log('Empty request for fetch chapter images', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
     log('Empty request for chapter images url', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   Future<Result<List<CatalogEntry>>> fetchCatalog({int page = 0, Map<String, dynamic> options = const {}}) async {
     log('Empty request for fetch catalog', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   bool supports(RequestType type) {

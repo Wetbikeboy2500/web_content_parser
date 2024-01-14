@@ -33,7 +33,7 @@ Future<Result<Post>> fetchPost(ID id) async {
   } else {
     log2('Unable to find source', id.source, level: const LogLevel.warn());
   }
-  return const Result.fail();
+  return const Fail();
 }
 
 ///Returns post data if it can match the url
@@ -42,9 +42,9 @@ Future<Result<Post>> fetchPost(ID id) async {
 Future<Result<Post>> fetchPostUrl(String url) async {
   final u = UriResult.parse(url);
 
-  if (u.fail) {
+  if (u is! Pass<Uri>) {
     log2('Error parsing url:', url, level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   SourceTemplate? source;
@@ -55,7 +55,7 @@ Future<Result<Post>> fetchPostUrl(String url) async {
   for (SourceTemplate a in sources.values) {
     if (a.supports(RequestType.postUrl)) {
       allowedSourcesFound = true;
-      if (u.data!.host.contains(a.host)) {
+      if (u.data.host.contains(a.host)) {
         source = a;
         break;
       }
@@ -64,13 +64,13 @@ Future<Result<Post>> fetchPostUrl(String url) async {
 
   if (!allowedSourcesFound) {
     log('Found no allowed sources', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   //find the source that support the url for the images
   if (source == null) {
     log2('No series match url:', url, level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   try {
@@ -79,7 +79,7 @@ Future<Result<Post>> fetchPostUrl(String url) async {
     log2('High level error fetching post url', e, level: const LogLevel.error());
     log(stack, level: const LogLevel.debug());
   }
-  return const Result.fail();
+  return const Fail();
 }
 
 ///Returns chapter list info for given id
@@ -91,16 +91,16 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
     try {
       final Result<List<Chapter>> result = await source.fetchChapters(id);
 
-      if (result.fail) {
+      if (result is! Pass<List<Chapter>>) {
         log('Failed fetching chapters', level: const LogLevel.warn());
-        return const Result.fail();
+        return const Fail();
       }
 
-      final List<Chapter> chapters = result.data!;
+      final List<Chapter> chapters = result.data;
 
       //sort the list by chapter index
       chapters.sort((a, b) => a.chapterID.index - b.chapterID.index);
-      return Result.pass(chapters);
+      return Pass(chapters);
     } catch (e, stack) {
       log2('Error getting chapter list info:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
@@ -108,7 +108,7 @@ Future<Result<List<Chapter>>> fetchChapters(ID id) async {
   } else {
     log2('Unable to find source', id.source, level: const LogLevel.warn());
   }
-  return const Result.fail();
+  return const Fail();
 }
 
 ///Requests chapter images based only on url
@@ -120,7 +120,7 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
 
   if (u == null) {
     log2('Error parsing url:', url, level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   //compile list of all allowed sources for chapter images
@@ -138,12 +138,12 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
 
   if (!allowedSourcesFound) {
     log('Found no allowed sources', level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   if (source == null) {
     log2('No sources match chapter image url', url, level: const LogLevel.warn());
-    return const Result.fail();
+    return const Fail();
   }
 
   try {
@@ -153,7 +153,7 @@ Future<Result<Map<int, String>>> fetchChapterImagesUrl(String url) async {
     log2('Error in getting chapter images url:', e, level: const LogLevel.error());
     log(stack, level: const LogLevel.debug());
   }
-  return const Result.fail();
+  return const Fail();
 }
 
 ///Requests chapter images based on ChapterID
@@ -172,7 +172,7 @@ Future<Result<Map<int, String>>> fetchChapterImages(ChapterID chapterID) async {
     log2('Error in getting chapter images:', e, level: const LogLevel.error());
     log(stack, level: const LogLevel.debug());
   }
-  return const Result.fail();
+  return const Fail();
 }
 
 ///Request catalog for the source
@@ -200,7 +200,7 @@ Future<Result<List<CatalogEntry>>> fetchCatalog(String source,
     log2('Invalid source: ', source, level: const LogLevel.warn());
   }
 
-  return const Result.fail();
+  return const Fail();
 }
 
 ///Determines if the source supports a specific type of request
@@ -259,7 +259,7 @@ Result<Map<String, dynamic>> getSourceInfo(String name) {
   final dynamic source = sources[name];
   if (source != null) {
     if (source is ParseSource) {
-      return Result.pass({
+      return Pass({
         'parse': true,
         'source': source.source,
         'version': source.version,
@@ -269,7 +269,7 @@ Result<Map<String, dynamic>> getSourceInfo(String name) {
         'programType': source.programType,
       });
     } else if (source is SourceTemplate) {
-      return Result.pass({
+      return Pass({
         'parse': false,
         'source': source.source,
         'version': source.version,
@@ -279,7 +279,7 @@ Result<Map<String, dynamic>> getSourceInfo(String name) {
     }
   }
 
-  return const Result.fail();
+  return const Fail();
 }
 
 ///Stores all source object

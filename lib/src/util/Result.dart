@@ -1,32 +1,21 @@
-import './ResultStatus.dart';
+///Base class for all results
+sealed class Result<T> {
+  const Result();
+}
 
-///Wraps result data to determine if it can be trusted
+///Passing result
 ///
-///Can call [pass] or [fail] for shortcuts on the status
-///If data is passing, it can be trusted to be the correct data type and results
-class Result<T> {
-  ///Status of whatever fetch was made. [FetchStatus.pass] or [FetchStatus.fail]
-  final ResultStatus status;
+///Check for this using `is Pass` or `case Pass<T>()`
+///[data] is the data passing result data
+class Pass<T> extends Result<T> {
+  final T data;
 
-  ///Data this class wraps around
-  final T? data;
+  const Pass(this.data);
+}
 
-  ///Passing fetch
-  ///
-  ///[status] is set to [FetchStatus.pass]
-  const Result.pass(T this.data) : status = ResultStatus.pass;
-
-  ///Failing fetch
-  ///
-  ///[status] is set to [FetchStatus.fail]
-  ///[data] is set to null
-  const Result.fail()
-      : status = ResultStatus.fail,
-        data = null;
-
-  ///Is [status] [FetchStatus.pass]
-  bool get pass => ResultStatus.pass == status;
-
-  ///Is [status] [FetchStatus.fail]
-  bool get fail => ResultStatus.fail == status;
+///Failing result
+///
+///Check for this using `is Fail` or `case Fail<T>()`
+class Fail<T> extends Result<T> {
+  const Fail();
 }

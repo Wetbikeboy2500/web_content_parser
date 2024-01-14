@@ -143,7 +143,7 @@ class MobileHeadless extends Headless {
     final uri = UriResult.parse(url);
 
     if (uri.fail) {
-      return const Result.fail();
+      return const Fail();
     }
 
     final Map<String, String>? cookies = _cookies[uri.data!.host];
@@ -152,7 +152,7 @@ class MobileHeadless extends Headless {
       return Result.pass(cookies);
     }
 
-    return const Result.fail();
+    return const Fail();
   }
 
   @override

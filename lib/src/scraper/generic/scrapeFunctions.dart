@@ -19,21 +19,21 @@ import 'package:http/http.dart';
 Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, String>? headers) async {
   final Result<Uri> uri = UriResult.parse(url);
 
-  if (uri.fail) {
-    return ResultExtended.toJson(const Result.fail());
+  if (uri is! Pass<Uri>) {
+    return ResultExtended.toJson(const Fail());
   }
 
   try {
     final Response result = await post(
-      uri.data!,
+      uri.data,
       headers: headers,
       body: jsonEncode(body),
     );
-    return ResultExtended.toJson(Result.pass(result));
+    return ResultExtended.toJson(Pass(result));
   } catch (e, stack) {
     log2('Post failed: ', e, level: const LogLevel.error());
     log(stack, level: const LogLevel.debug());
-    return ResultExtended.toJson(const Result.fail());
+    return ResultExtended.toJson(const Fail());
   }
 }
 
@@ -73,8 +73,8 @@ Future<Result<String>> getDynamicPage(String url, {String? id}) async {
   final Result<Headless> headless =
       WebContentParser.headlessBrowsers.firstWhereResult((element) => element.isSupported);
   //means headless exists for the current platform
-  if (headless.pass) {
-    //allow to use requsts that are or have been made
+  if (headless case Pass<Headless>(data: final data)) {
+    //allow to use requests that are or have been made
     final Completer<Result<String>>? cachedRequest = _getDynamicCache[url];
     if (cachedRequest != null) {
       return cachedRequest.future;
@@ -84,7 +84,7 @@ Future<Result<String>> getDynamicPage(String url, {String? id}) async {
     final Completer<Result<String>> task = Completer<Result<String>>();
     _getDynamicCache[url] = task;
 
-    final result = await headless.data!.getHtml(url, id);
+    final result = await data.getHtml(url, id);
 
     //completes the futures
     task.complete(result);
@@ -96,5 +96,5 @@ Future<Result<String>> getDynamicPage(String url, {String? id}) async {
     return result;
   }
   //generic fail
-  return const Result.fail();
+  return const Fail();
 }

@@ -39,14 +39,14 @@ class DesktopHeadless extends Headless {
 
     if (uri == null) {
       log2('Failed get cookies url parse:', url, level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     final List<Cookie>? cookies = _cookies[uri.host];
 
     if (cookies == null) {
       log2('Failed to find cookies for url given:', url, level: const LogLevel.warn());
-      return const Result.fail();
+      return const Fail();
     }
 
     return Result.pass(cookies);
@@ -111,7 +111,7 @@ class DesktopHeadless extends Headless {
         final Result<String> r;
 
         if (html == null) {
-          r = const Result.fail();
+          r = const Fail();
         } else {
           r = Result.pass(html);
         }

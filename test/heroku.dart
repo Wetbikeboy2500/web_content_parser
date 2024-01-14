@@ -21,12 +21,12 @@ class TestSource extends SourceTemplate {
 
   @override
   Future<Result<Post>> fetchPostUrl(String url) async {
-    return Result.pass(Post(id: ID(id: '1', source: 'test'), name: 'test'));
+    return Pass(Post(id: ID(id: '1', source: 'test'), name: 'test'));
   }
 
   @override
   Future<Result<List<Chapter>>> fetchChapters(ID id) async {
-    return Result.pass([
+    return Pass([
       Chapter(
         name: 'test 1',
         date: DateTime.now(),

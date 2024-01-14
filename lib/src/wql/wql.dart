@@ -17,7 +17,7 @@ Future<Result<Map<String, dynamic>>> runWQL(String code,
     }
     log(e, level: const LogLevel.error());
     log(stack, level: const LogLevel.debug());
-    return const Result.fail();
+    return const Fail();
   }
-  return Result.pass(interpreter.values);
+  return Pass(interpreter.values);
 }

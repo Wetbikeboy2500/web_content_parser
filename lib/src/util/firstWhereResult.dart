@@ -6,8 +6,8 @@ extension ResultReturns<T> on Iterable<T> {
   ///Instead of returning null or throwing and error, [Result] will be failed indicating if the search passed or failed.
   Result<T> firstWhereResult(bool Function(T element) test) {
     for (T element in this) {
-      if (test(element)) return Result<T>.pass(element);
+      if (test(element)) return Pass(element);
     }
-    return const Result.fail();
+    return Fail();
   }
 }
