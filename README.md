@@ -64,51 +64,57 @@ The util directory has vital code for how things interact with each other.
 
 ### Result
 
-The most important part of the project is how data is moved between methods and functions. Result is a class that defines if data passes or fails which indicates if data can be trusted. This is used in place of exceptions for this project due to catches having very bad performance. This also enforces a practice of checking if the data is valid.
+The most important part of the project is how data is moved between methods and functions. `Result` is a sealed class that has a `Pass` and `Fail` class to represent the two different object state types. This is used in place of exceptions due to the need to handle failing cases and enforce checking if the data is valid.
 
 The data type annotation for the result can be set like so:
 
 ```dart
-void Result<String> someFunction() { return Result.error() };
+void Result<String> someFunction() { return Fail() };
 ```
 
-The result class has two attributes:
+The `Result<T>` is sealed and cannot be instantiated. This leaves `Result` being either a `Pass` or `Fail` object.
 
-* `ResultStatus status`
+`Fail` does not store any information on what the failure is. It simply indicates that the operation failed.
 
-    The `Result` class only has two constructors that sets the `status` to either `ResultStatus.pass` or `ResultStatus.fail`. You should check what the status is by calling the '.pass' or '.fail' getters on the `Result` class.
+`Pass<T>` has one attribute:
 
-* `T? data`
+* `T data`
 
-    T is the type annotation set by the dev. With the `?`, data will always be nullable while the type annotation can be non-nullable, but checking status is how to avoid any unintentional nulls.
+    T is the type annotation set by the dev. Data is what was given in the object constructor.
+
+
+Examples:
 
 ```dart
-Result<String>.pass('valid'); //valid
-Result<String>.pass(null); //invalid
-Result<String?>.pass('valid'); //valid
-Result<String?>.pass(null); //valid
-Result<String>.fail(); //valid
+Pass<String>('valid'); //valid
+Pass<String>(null); //invalid since type cannot be null
+Pass<String?>('valid'); //valid
+Pass<String?>(null); //valid
+const Fail(); //valid
 ```
-
-Note that the `pass` constructor type will always reflect the type annotation while data will always be nullable.
 
 The following is the best way to check for if a result has passed or failed. This avoids the need to keep checking if `status` equals a specific `ResultStatus` enum.
 
 ```dart
-Result<String>.pass('valid').pass; //returns true
-Result<String>.pass('valid').fail; //returns false
-Result<String>.fail().pass; //returns false
-Result<String>.fail().fail; //returns true
+Pass('valid') is Pass; //true
+Pass('valid') is Fail; //false
+const Fail() is Pass; //false
+const Fail() is Fail; //true
+//Sometimes type checking is not properly applied using `is`. Instead use `case` for pattern matching which also allows for type checking of the data. The following is not valid dart code but is used to show the idea.
+Pass('valid') case Pass(); //true
+Pass<String>('valid') case Pass(); //true
+Pass<String?>('valid') case Pass<String>(); //false
+Pass('valid') case Fail(); //false
+const Fail() case Pass(); //false
+const Fail() case Fail(); //true
 ```
 
 ```dart
-Result<String> result = Result<String>.pass('valid');
-if (result.pass) {
-    result.data!; //use ! so dart knows that this is null-safe
+Result<String> result = Pass('valid');
+if (result case Pass(data: final data)) { //pattern matching and destructuring
+    print(data);
 }
 ```
-
-If the result is passing, then the data can be trusted and will be the expected type. No need to worry about it being null unless it has been specified in the initial type annotation.
 
 ### ResultExtended
 

@@ -62,13 +62,13 @@ class ParseSource extends SourceTemplate {
 
     final result = await scraper.makeRequest(RequestType.images.string, [MapEntry('chapterId', chapterId.toJson())]);
 
-    if (result.fail || result.data == null) {
+    if (result is! Pass) {
       log('Fetch chapter images request failed', level: const LogLevel.warn());
       return const Fail();
     }
 
     try {
-      return Result.pass((result.data is! Map<int, String>) ? Map<int, String>.from(result.data) : result.data);
+      return Pass((result.data is! Map<int, String>) ? Map<int, String>.from(result.data) : result.data);
     } catch (e, stack) {
       log2('Error converting chapter images', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
@@ -84,13 +84,13 @@ class ParseSource extends SourceTemplate {
 
     final result = await scraper.makeRequest(RequestType.imagesUrl.string, [MapEntry('url', url)]);
 
-    if (result.fail || result.data == null) {
+    if (result is! Pass) {
       log('Fetch chapter images url request failed', level: const LogLevel.warn());
       return const Fail();
     }
 
     try {
-      return Result.pass((result.data is! Map<int, String>) ? Map<int, String>.from(result.data!) : result.data!);
+      return Pass((result.data is! Map<int, String>) ? Map<int, String>.from(result.data!) : result.data!);
     } catch (e, stack) {
       log2('Error converting chapter images', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
@@ -107,7 +107,7 @@ class ParseSource extends SourceTemplate {
     final Result<List> chapters =
         await scraper.makeRequest<List>(RequestType.chapters.string, [MapEntry('id', id.toJson())]);
 
-    if (chapters.fail || chapters.data == null) {
+    if (chapters is! Pass<List>) {
       log('Fetch chapters request failed', level: const LogLevel.warn());
       return const Fail();
     }
@@ -120,7 +120,7 @@ class ParseSource extends SourceTemplate {
         final List<Chapter> response =
             await Chapter.computeChaptersFromJson(computeDecorator, chapters.data!.cast<Map<String, dynamic>>());
         computeDecorator.end();
-        return Result.pass(response);
+        return Pass(response);
       } catch (e, stack) {
         computeDecorator.end();
         log2('Error parsing chapter list computer:', e, level: const LogLevel.error());
@@ -131,7 +131,7 @@ class ParseSource extends SourceTemplate {
     }
 
     try {
-      return Result.pass(List<Chapter>.from(chapters.data!.map((value) {
+      return Pass(List<Chapter>.from(chapters.data!.map((value) {
         return Chapter.fromJson((value is! Map<String, dynamic>) ? Map<String, dynamic>.from(value) : value);
       })));
     } catch (e, stack) {
@@ -149,7 +149,7 @@ class ParseSource extends SourceTemplate {
 
     final Result post = await scraper.makeRequest(RequestType.postUrl.string, [MapEntry('url', url)]);
 
-    if (post.fail || post.data == null) {
+    if (post is! Pass) {
       log('Fetch post url request failed', level: const LogLevel.warn());
       return const Fail();
     }
@@ -157,7 +157,7 @@ class ParseSource extends SourceTemplate {
     try {
       final data = (post.data is! Map<String, dynamic>) ? Map<String, dynamic>.from(post.data) : post.data;
 
-      return Result.pass(Post.fromJson(data));
+      return Pass(Post.fromJson(data));
     } catch (e, stack) {
       log2('Error parsing post data:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
@@ -173,7 +173,7 @@ class ParseSource extends SourceTemplate {
 
     final Result post = await scraper.makeRequest(RequestType.post.string, [MapEntry('id', id.toJson())]);
 
-    if (post.fail || post.data == null) {
+    if (post is! Pass) {
       log('Fetch post request failed', level: const LogLevel.warn());
       return const Fail();
     }
@@ -181,7 +181,7 @@ class ParseSource extends SourceTemplate {
     try {
       final data = (post.data is! Map<String, dynamic>) ? Map<String, dynamic>.from(post.data) : post.data;
 
-      return Result.pass(Post.fromJson(data));
+      return Pass(Post.fromJson(data));
     } catch (e, stack) {
       log2('Error parsing post data:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
@@ -205,13 +205,13 @@ class ParseSource extends SourceTemplate {
     final Result<List> entries =
         await scraper.makeRequest<List>(requestType.string, [MapEntry('page', page), MapEntry('options', options)]);
 
-    if (entries.fail || entries.data == null) {
+    if (entries is! Pass<List>) {
       log('Fetch catalog request failed', level: const LogLevel.warn());
       return const Fail();
     }
 
     try {
-      return Result.pass(List<CatalogEntry>.from(entries.data!.map((entry) {
+      return Pass(List<CatalogEntry>.from(entries.data!.map((entry) {
         return CatalogEntry.fromJson((entry is! Map<String, dynamic>) ? Map<String, dynamic>.from(entry) : entry);
       })));
     } catch (e, stack) {

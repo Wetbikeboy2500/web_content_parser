@@ -23,26 +23,25 @@ void main() {
       expect(WebContentParser.verbose, equals(const LogLevel.debug()));
     });
     test('Passing Result', () {
-      Result<String> f = Result<String>.pass('Test');
-      expect(f.pass, isTrue);
-      expect(f.fail, isFalse);
-      expect(f.data, equals('Test'));
+      Result<String> f = Pass<String>('Test');
+      expect(f is Pass, isTrue);
+      expect(f is Fail, isFalse);
+      expect((f as Pass).data, equals('Test'));
     });
     test('Passing Result Nullable With Null', () {
-      Result<String?> f = Result<String?>.pass(null);
-      expect(f.pass, isTrue);
-      expect(f.data, null);
+      Result<String?> f = Pass<String?>(null);
+      expect(f is Pass, isTrue);
+      expect((f as Pass).data, null);
     });
     test('Passing Result Nullable With String', () {
-      Result<String?> f = Result<String?>.pass('Test');
-      expect(f.pass, isTrue);
-      expect(f.data, equals('Test'));
+      Result<String?> f = Pass<String?>('Test');
+      expect(f is Pass, isTrue);
+      expect((f as Pass).data, equals('Test'));
     });
     test('Failing Result', () {
-      Result<String> f = Result<String>.fail();
-      expect(f.pass, isFalse);
-      expect(f.fail, isTrue);
-      expect(f.data, equals(null));
+      Result<String> f = Fail();
+      expect(f is Pass, isFalse);
+      expect(f is Fail, isTrue);
     });
     test('RequestType extension comparisons', () {
       expect(RequestType.catalog.catalog, isTrue);
@@ -100,7 +99,7 @@ void main() {
       }
 
       Result r = ResultExtended.unsafe(unsafe);
-      expect(r.fail, isTrue);
+      expect(r is Fail, isTrue);
     });
     test('ResultExtended unsafe pass', () {
       // ignore: always_declare_return_types
@@ -109,29 +108,29 @@ void main() {
       }
 
       Result r = ResultExtended.unsafe(unsafe);
-      expect(r.pass, isTrue);
-      expect(r.data, equals('test'));
+      expect(r is Pass, isTrue);
+      expect((r as Pass).data, equals('test'));
     });
     test('ResultExtended unsafe async fail', () async {
       Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
             throw 'error';
           }));
-      expect(r.fail, isTrue);
+      expect(r is Fail, isTrue);
     });
     test('ResultExtended unsafe async pass', () async {
       Result<String> r = await ResultExtended.unsafeAsync(() => Future.delayed(Duration(milliseconds: 0), () {
             return 'test';
           }));
-      expect(r.pass, isTrue);
-      expect(r.data, equals('test'));
+      expect(r is Pass, isTrue);
+      expect((r as Pass).data, equals('test'));
     });
     test('ParseUriResult fail', () {
       Result<dynamic> r = UriResult.parse('http ://');
-      expect(r.fail, isTrue);
+      expect(r is Fail, isTrue);
     });
     test('ParseUriResult pass', () {
       Result<dynamic> r = UriResult.parse('http://');
-      expect(r.pass, isTrue);
+      expect(r is Pass, isTrue);
     });
   });
 
@@ -621,9 +620,9 @@ void main() {
       Result<List> response =
           await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
-      expect(response.pass, isTrue);
+      expect(response is Pass, isTrue);
 
-      expect(response.data, equals(['Some testing text', 'Some testing text']));
+      expect((response as Pass).data, equals(['Some testing text', 'Some testing text']));
     });
     test('Load global scraper source and run WQL entry 2', () async {
       WebContentParser.verbose = const LogLevel.debug();
@@ -648,11 +647,11 @@ void main() {
       Result<List> responseNew =
           await result.makeRequest<List>('test3_new', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
-      expect(response.pass, isTrue);
+      expect(response is Pass, isTrue);
       expect(responseAlt.pass, isTrue);
       expect(responseNew.pass, isTrue);
 
-      expect(response.data, equals(['Description 1', 'Description 2', 'Description 3']));
+      expect((response as Pass).data, equals(['Description 1', 'Description 2', 'Description 3']));
       expect(responseAlt.data, equals(['Description 1', 'Description 2', 'Description 3']));
       expect(responseNew.data, equals(['Description 1', 'Description 2', 'Description 3']));
     });
@@ -785,18 +784,18 @@ void main() {
 
       test('Get post', () async {
         Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
-        expect(p.pass, isTrue);
+        expect(p is Pass, isTrue);
       }, skip: true);
 
       test('Get post url', () async {
         addSource('heroku', TestSource('test.example', 'test'));
         Result<Post> p = await fetchPostUrl('https://test.example.test/manga/get/1');
-        expect(p.pass, isTrue);
+        expect(p is Pass, isTrue);
       }, skip: true);
 
       test('Post to json', () async {
         Result<Post> p = await fetchPost(ID(id: '1', source: 'test'));
-        expect(p.data?.toJson(), isMap);
+        expect((p as Pass).data.toJson(), isMap);
       }, skip: true);
 
       test('Fail post', () async {
@@ -884,7 +883,7 @@ void main() {
     test('Do not rethrow error', () async {
       final Result values = await runWQL('SET return TO value[0];', throwErrors: false);
 
-      expect(values.pass, isFalse);
+      expect(values is Pass, isFalse);
     }, skip: true);
     test('Custom list access supported', () async {
       final code = '''
@@ -894,8 +893,8 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
-      expect(values.data!['return'], isNull);
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data['return'], isNull);
     });
     test('Statement unimplemented', () async {
       final statement = Statement();
@@ -1481,9 +1480,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'firstRange': 0,
@@ -1513,9 +1512,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'firstRange': [0, 1],
@@ -1545,9 +1544,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'first': 0,

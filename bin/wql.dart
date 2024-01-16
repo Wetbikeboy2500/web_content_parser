@@ -88,21 +88,23 @@ void main() {
     js.console.log(['run the wql']);
 
     runWQL(code, parameters: params, throwErrors: false).then((value) {
-      js.console.log(['Did request pass?', value.pass]);
-      if (value.data != null && value.data!.containsKey('return')) {
-        js.console.log(['Data', jsonEncode(value.data!['return'])]);
+      js.console.log(['Did request pass?', value is Pass]);
+      if (value case Pass()) {
+        if (value.data.containsKey('return')) {
+          js.console.log(['Data', jsonEncode(value.data['return'])]);
+        }
       }
       final results = getResults();
 
-      if (value.pass) {
+      if (value case Pass()) {
         try {
-          results[request.uid] = jsonEncode(ResultExtended.toJson(Result.pass(value.data!['return'])));
+          results[request.uid] = jsonEncode(ResultExtended.toJson(Pass(value.data!['return'])));
         } catch (e) {
           js.console.error(['Failed to encode result', e]);
-          results[request.uid] = jsonEncode(ResultExtended.toJson(const Result.fail()));
+          results[request.uid] = jsonEncode(ResultExtended.toJson(const Fail()));
         }
       } else {
-        results[request.uid] = jsonEncode(ResultExtended.toJson(const Result.fail()));
+        results[request.uid] = jsonEncode(ResultExtended.toJson(const Fail()));
       }
 
       if (!saveRequests(results)) {
@@ -298,9 +300,11 @@ void processRequest(Request request, WebSocket ws) {
 
   try {
     runWQL(request.code, parameters: request.params, throwErrors: true).then((value) {
-      js.console.log(['Did request pass?', value.pass]);
-      if (value.data != null && value.data!.containsKey('return')) {
-        js.console.log(['Data', jsonEncode(value.data!['return'])]);
+      js.console.log(['Did request pass?', value is Pass]);
+      if (value case Pass()) {
+        if (value.data.containsKey('return')) {
+          js.console.log(['Data', jsonEncode(value.data['return'])]);
+        }
       }
     });
   } catch (e, stack) {

@@ -5,6 +5,7 @@ import 'package:web_content_parser/scraper.dart';
 
 import 'package:path/path.dart' as path;
 import 'package:web_content_parser/src/util/log.dart';
+import 'package:web_content_parser/util.dart';
 
 ///Example: dart bin/run.dart ./test/samples/wql google text
 ///TODO: add a verbose option
@@ -41,7 +42,7 @@ void run(String projectName, Directory dir, String type, List<MapEntry<String, d
     try {
       final r =
           await sources.firstWhere((element) => element.info['source'] == projectName).makeRequest(type, arguments);
-      if (r.pass) {
+      if (r case Pass()) {
         //encode json
         final String json = jsonEncode(r.data);
         //output the json to command line

@@ -1,6 +1,7 @@
 
 import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
+import 'package:web_content_parser/util.dart';
 
 void main(List<String> args) {
   const wql ='''
@@ -18,6 +19,10 @@ void main(List<String> args) {
   loadWQLFunctions();
 
   runWQL(wql).then((value) {
-    print(value.data?['return']);
+    if (value case Pass()) {
+      print(value.data['return']);
+    } else {
+      print('Failed');
+    }
   });
 }
