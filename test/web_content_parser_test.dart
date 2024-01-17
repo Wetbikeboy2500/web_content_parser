@@ -648,12 +648,12 @@ void main() {
           await result.makeRequest<List>('test3_new', [MapEntry('path', 'test/samples/scraper/test.html')]);
 
       expect(response is Pass, isTrue);
-      expect(responseAlt.pass, isTrue);
-      expect(responseNew.pass, isTrue);
+      expect(responseAlt is Pass, isTrue);
+      expect(responseNew is Pass, isTrue);
 
       expect((response as Pass).data, equals(['Description 1', 'Description 2', 'Description 3']));
-      expect(responseAlt.data, equals(['Description 1', 'Description 2', 'Description 3']));
-      expect(responseNew.data, equals(['Description 1', 'Description 2', 'Description 3']));
+      expect((responseAlt as Pass).data, equals(['Description 1', 'Description 2', 'Description 3']));
+      expect((responseNew as Pass).data, equals(['Description 1', 'Description 2', 'Description 3']));
     });
   });
 
@@ -666,29 +666,29 @@ void main() {
 
       test('Get source info', () {
         Result r = getSourceInfo('');
-        expect(r.fail, isTrue);
+        expect(r is Fail, isTrue);
       });
 
       test('Get post', () async {
         Result<Post> post = await fetchPost(ID(source: '', id: ''));
-        expect(post.fail, isTrue);
+        expect(post is Fail, isTrue);
       });
       test('Get post url', () async {
         Result<Post> post = await fetchPostUrl('');
-        expect(post.fail, isTrue);
+        expect(post is Fail, isTrue);
       });
       test('Get chapters', () async {
         Result<List<Chapter>> chapter = await fetchChapters(ID(source: '', id: ''));
-        expect(chapter.fail, isTrue);
+        expect(chapter is Fail, isTrue);
       });
       test('Get chapter images', () async {
         Result<Map<int, String>> chapter =
             await fetchChapterImages(ChapterID(url: '', index: 0, id: ID(source: '', id: '')));
-        expect(chapter.fail, isTrue);
+        expect(chapter is Fail, isTrue);
       });
       test('Get chapter images url', () async {
         Result<Map<int, String>> chapter = await fetchChapterImagesUrl('');
-        expect(chapter.fail, isTrue);
+        expect(chapter is Fail, isTrue);
       });
     });
 
@@ -699,37 +699,37 @@ void main() {
 
       test('Fail get catalog', () async {
         Result<List<CatalogEntry>> catalog = await fetchCatalog('blank');
-        expect(catalog.fail, isTrue);
+        expect(catalog is Fail, isTrue);
       });
       test('Fail get post', () async {
         Result<Post> post = await fetchPost(id);
-        expect(post.fail, isTrue);
+        expect(post is Fail, isTrue);
       });
       test('Fail get post url with valid url', () async {
         Result<Post> post = await fetchPostUrl('test.test');
-        expect(post.fail, isTrue);
+        expect(post is Fail, isTrue);
       });
       test('Fail get post url with invalid url', () async {
         Result<Post> post = await fetchPostUrl('test.com');
-        expect(post.fail, isTrue);
+        expect(post is Fail, isTrue);
       });
       test('Fail get chapter', () async {
         Result<List<Chapter>> chapter = await fetchChapters(id);
-        expect(chapter.fail, isTrue);
+        expect(chapter is Fail, isTrue);
       });
       test('Fail get chapter images', () async {
         Result<Map<int, String>> images = await fetchChapterImages(ChapterID(url: '', index: 0, id: id));
-        expect(images.fail, isTrue);
+        expect(images is Fail, isTrue);
       });
       test('Fail get chapter images url', () async {
         Result<Map<int, String>> images = await fetchChapterImagesUrl('test.test');
-        expect(images.fail, isTrue);
+        expect(images is Fail, isTrue);
       });
       test('Get correct info', () {
         Result<Map<String, dynamic>> info = getSourceInfo('blank');
-        expect(info.pass, isTrue);
+        expect(info is Pass, isTrue);
         expect(
-          info.data,
+          (info as Pass).data,
           equals(<String, dynamic>{
             'parse': false,
             'source': 'blank',
@@ -800,16 +800,16 @@ void main() {
 
       test('Fail post', () async {
         Result<Post> p = await fetchPost(ID(id: '0', source: 'test'));
-        expect(p.fail, isTrue);
+        expect(p is Fail, isTrue);
       }, skip: true);
 
       test('Get chapter list', () async {
         Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
-        expect(chapters.pass, isTrue);
+        expect(chapters is Pass, isTrue);
       }, skip: true);
       test('Get chapter list not empty', () async {
         Result<List<Chapter>> chapters = await fetchChapters(ID(id: '1', source: 'test'));
-        expect(chapters.data, isNotEmpty);
+        expect((chapters as Pass).data, isNotEmpty);
       }, skip: true);
     });
   });
@@ -928,11 +928,11 @@ void main() {
 
       final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['doctwo'], equals(values.data!['docthree']));
+      expect((values as Pass).data!['doctwo'], equals((values as Pass).data!['docthree']));
       expect(
-          values.data!['doctwo'],
+          (values as Pass).data!['doctwo'],
           equals([
             {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
             {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
@@ -951,10 +951,10 @@ void main() {
 
       final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data!['docthree'],
+          (values as Pass).data!['docthree'],
           equals([
             {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
             {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
@@ -970,8 +970,8 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
-      expect(values.data!['page'], equals('?page=hello'));
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data!['page'], equals('?page=hello'));
     });
     test('Multiple arguments raw', () async {
       final String code = '''
@@ -980,8 +980,8 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
-      expect(values.data!['page'], equals('?page=hello'));
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data!['page'], equals('?page=hello'));
     });
     test('Multiple arguments nested', () async {
       final String code = '''
@@ -991,8 +991,8 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
-      expect(values.data!['url'], equals('https://www.example.com/?page=1'));
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data!['url'], equals('https://www.example.com/?page=1'));
     });
     test('Multiple arguments nested with select', () async {
       final String code = '''
@@ -1003,8 +1003,8 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
-      expect(values.data!['url'], equals('https://www.example.com/?page=1'));
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data!['url'], equals('https://www.example.com/?page=1'));
     });
     test('Increment', () async {
       final code = '''
@@ -1014,9 +1014,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['number'], equals(1));
+      expect((values as Pass).data!['number'], equals(1));
     });
     test('Decrement', () async {
       final code = '''
@@ -1026,9 +1026,9 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['number'], equals(-1));
+      expect((values as Pass).data!['number'], equals(-1));
     });
     test('Concat', () async {
       final code = '''
@@ -1037,9 +1037,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('hello world'));
+      expect((values as Pass).data!['output'], equals('hello world'));
     });
     test('Concat list', () async {
       final code = '''
@@ -1052,9 +1052,9 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('hello world'));
+      expect((values as Pass).data!['output'], equals('hello world'));
     });
     test('Trim', () async {
       final code = '''
@@ -1063,9 +1063,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('hello world'));
+      expect((values as Pass).data!['output'], equals('hello world'));
     });
     test('Itself', () async {
       final code = '''
@@ -1074,9 +1074,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('hello world'));
+      expect((values as Pass).data!['output'], equals('hello world'));
     });
     test('Create Range', () async {
       final code = '''
@@ -1085,9 +1085,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+      expect((values as Pass).data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
     });
     test('Run print', () async {
       SetStatement.functions['print'] = (args) {
@@ -1100,7 +1100,7 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
     });
     test('Reverse', () async {
       final code = '''
@@ -1110,9 +1110,9 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+      expect((values as Pass).data!['output'], equals([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
     });
     test('Count', () async {
       final code = '''
@@ -1122,9 +1122,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals(10));
+      expect((values as Pass).data!['output'], equals(10));
     });
     test('Merge Key Value', () async {
       final code = '''
@@ -1134,10 +1134,10 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data!['output'],
+          (values as Pass).data!['output'],
           equals(<int, dynamic>{
             0: 0,
             1: 1,
@@ -1158,10 +1158,10 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data!['output'],
+          (values as Pass).data!['output'],
           equals(<String, dynamic>{
             'first': 1,
             'second': 'third',
@@ -1175,10 +1175,10 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data!['output'],
+          (values as Pass).data!['output'],
           equals([
             {
               'output': {0: 0},
@@ -1202,10 +1202,10 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data!['output'],
+          (values as Pass).data!['output'],
           equals([
             {'num': 0},
             {'num': 1},
@@ -1221,9 +1221,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+      expect((values as Pass).data!['output'], equals([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
     });
     test('toString', () async {
       final code = '''
@@ -1232,9 +1232,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('10'));
+      expect((values as Pass).data!['output'], equals('10'));
     });
     test('decode', () async {
       final code = '''
@@ -1243,9 +1243,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals({'hello': 'world'}));
+      expect((values as Pass).data!['output'], equals({'hello': 'world'}));
     });
     test('encode', () async {
       WebContentParser.verbose = const LogLevel.debug();
@@ -1257,9 +1257,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('{"hello":"world"}'));
+      expect((values as Pass).data!['output'], equals('{"hello":"world"}'));
     });
     test('Is Empty', () async {
       final code = '''
@@ -1268,9 +1268,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals(true));
+      expect((values as Pass).data!['output'], equals(true));
     });
     test('Uppercase', () async {
       final code = '''
@@ -1279,9 +1279,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('HELLO WORLD'));
+      expect((values as Pass).data!['output'], equals('HELLO WORLD'));
     });
     test('Lowercase', () async {
       final code = '''
@@ -1290,9 +1290,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('hello world'));
+      expect((values as Pass).data!['output'], equals('hello world'));
     });
     test('If Statement', () async {
       final code = '''
@@ -1303,9 +1303,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('passed'));
+      expect((values as Pass).data!['output'], equals('passed'));
     });
     test('If Statement second', () async {
       final code = '''
@@ -1317,9 +1317,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('passed'));
+      expect((values as Pass).data!['output'], equals('passed'));
     });
     test('Get last segment', () async {
       final code = '''
@@ -1329,9 +1329,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('testing'));
+      expect((values as Pass).data!['output'], equals('testing'));
     });
     test('Json', () async {
       final code = '''
@@ -1340,9 +1340,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals({'hello': 'world'}));
+      expect((values as Pass).data!['output'], equals({'hello': 'world'}));
     });
     test('Json Insert', () async {
       final code = '''
@@ -1351,9 +1351,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals({'hello': 'Unknown'}));
+      expect((values as Pass).data!['output'], equals({'hello': 'Unknown'}));
     });
     test('Json Insert Nested', () async {
       final code = '''
@@ -1362,10 +1362,10 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data!['output'],
+          (values as Pass).data!['output'],
           equals({
             'hello': {'world': 'Unknown'}
           }));
@@ -1378,9 +1378,9 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('hello world'));
+      expect((values as Pass).data!['output'], equals('hello world'));
     });
     test('Trim Function Piped Value', () async {
       WebContentParser.verbose = const LogLevel.debug();
@@ -1391,9 +1391,9 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
-      expect(values.data!['output'], equals('hello world'));
+      expect((values as Pass).data!['output'], equals('hello world'));
     });
     test('Select When Contains', () async {
       final code = '''
@@ -1406,10 +1406,10 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data!['output'],
+          (values as Pass).data!['output'],
           equals([
             {
               'matchOutput': {'first': 'hello'},
@@ -1417,7 +1417,7 @@ void main() {
             }
           ]));
       expect(
-          values.data!['outputList'],
+          (values as Pass).data!['outputList'],
           equals([
             {
               'matchOutput': [
@@ -1437,10 +1437,10 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'matchOutput': {'first': 'hello'},
@@ -1459,10 +1459,10 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'matchOutput': {'first': 'hello'},
@@ -1588,9 +1588,9 @@ void main() {
 
       final Result values = await runWQL(code, parameters: complex);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {'second': 0},
           {'second': 0},
@@ -1610,9 +1610,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'first': 0,
@@ -1642,9 +1642,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'first': 0,
@@ -1674,9 +1674,9 @@ void main() {
 
       final Result values = await runWQL(code);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
-        values.data!['output'],
+        (values as Pass).data!['output'],
         equals([
           {
             'first': 0,
@@ -1704,10 +1704,10 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
 
       expect(
-          values.data,
+          (values as Pass).data,
           equals({
             'return': [
               {
@@ -1734,7 +1734,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1757,7 +1757,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1780,7 +1780,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1807,7 +1807,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1835,7 +1835,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1863,7 +1863,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1895,7 +1895,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1927,7 +1927,7 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
@@ -1956,14 +1956,14 @@ void main() {
 
       final Result values = await runWQL(code, throwErrors: true);
 
-      expect(values.pass, isTrue);
+      expect(values is Pass, isTrue);
       expect(
         argCalls,
         equals([
           ['hello']
         ]),
       );
-      expect(values.data!['output'], equals('hello'));
+      expect((values as Pass).data!['output'], equals('hello'));
     });
   });
 }

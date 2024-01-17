@@ -12,3 +12,5 @@ second = html.where{ s'body > p' }.select{ *.text() };
 first = first[0].text.trim();
 second = second[0].text.trim();
 return = merge(first, second);
+
+first = select{ *.text() } from { html.where{ s'#main-tag' } }

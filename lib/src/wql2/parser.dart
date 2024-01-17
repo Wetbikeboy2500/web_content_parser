@@ -1,14 +1,33 @@
 import 'package:petitparser/petitparser.dart';
+import 'package:web_content_parser/src/wql2/dot_input/dot_input.dart';
+import 'package:web_content_parser/src/wql2/statements/set_statement.dart';
+
+import 'logicalSelector.dart';
+import 'statements/if_statement.dart';
 
 void main() {
+  // String input = '''getRequest(s'https://github.com/topics').if{*.getStatusCode() EQUALS n'200'}''';
   String input = '''
+      if (a equals s'1') {
+
+      }''';
+  /* String input = '''
       result = getRequest(s'https://github.com/topics')
       .if{*.getStatusCode() EQUALS n'200'} else {}
       .parseBody().querySelectorAll(s'.py-4.border-bottom')[].select{
         name: *.querySelector(s'.f3').text().trim(),
         description: *.querySelector(s'.f5').text().trim(),
         url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
-      };''';
+      };
+
+      result = select {
+        name: *.querySelector(s'.f3').text().trim(),
+        description: *.querySelector(s'.f5').text().trim(),
+        url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
+      } from {
+        getRequest(s'https://github.com/topics')
+        .if{ *.getStatusCode() EQUALS n'200' }
+      };'''; */
 
   //don't allow square brackets, round brackets, curly brackets, semi-colon, colon, and comma
   final safeChars = patternIgnoreCase('~!@\$%&*_+=/\'"?><|`#a-zA-Z0-9') | char('-') | char('^');
@@ -51,7 +70,7 @@ void main() {
 
   final function = letter().plus().flatten().trim() & (char('(').trim() & dotInput.plusSeparated(char(',').trim()).optional() & char(')').trim()).pick(1);
 
-  final selectStatement = stringIgnoreCase('select').token().trim() & (char('{').trim() & ((access & char(':').token().trim()).optional() & dotInput).plusSeparated(char(',').trim()) & char('}').trim()).pick(1);
+  final selectStatement = stringIgnoreCase('select').token().trim() & (char('{').trim() & ((access & char(':').token().trim()).optional() & dotInput).plusSeparated(char(',').trim()) & char('}').trim()).pick(1) & (stringIgnoreCase('from').trim() & char('{').trim() & dotInput & char('}').trim()).pick(2).optional();
 
   final ifStatement = stringIgnoreCase('if').token().trim()
     & (char('{').trim() & logicalOperation & char('}').trim()).pick(1)
@@ -78,8 +97,42 @@ void main() {
 
   switch (parsed) {
     case Success(value: final value):
-      print('Success: $value');
+      // print('Success: $value');
+      parseToObjects(value);
     case Failure(message: final message, position: final position):
       print('Failure at $position: $message');
   }
+}
+
+List<Object> parseToObjects(SeparatedList baseList) {
+  final List<Object> items = [];
+
+  for (final element in baseList.elements) {
+    if (element == null) {
+      continue;
+    }
+
+    switch (element) {
+      case [final String access, final Token equals, final SeparatedList value]:
+        assert(equals.value == '=');
+        items.add(SetStatement(access, DotInput.fromTokens(value)));
+        break;
+      case [final Token ifToken, final List logicalOperation, final SeparatedList body, final List? elseList]:
+        assert(ifToken.value == 'if');
+
+        List<Object>? elseBodyStatements;
+
+        if (elseList case [Token(), final SeparatedList elseBody]) {
+          elseBodyStatements = parseToObjects(elseBody);
+        }
+
+        items.add(IfStatement(LogicalSelector(logicalOperation), true, parseToObjects(body), elseBodyStatements));
+
+        break;
+      case final SeparatedList elements:
+        items.add(DotInput.fromTokens(elements));
+        break;
+    }
+  }
+    return items;
 }
