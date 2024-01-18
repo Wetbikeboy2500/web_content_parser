@@ -56,16 +56,14 @@ class StatementOperation extends Operation {
   FutureOr<dynamic> process(dynamic input, Interpreter interpreter) => statement.execute(input, interpreter);
 }
 
-class DotInput {
+class DotInput extends Statement {
   factory DotInput.fromTokens(SeparatedList tokens) {
     throw UnimplementedError();
   }
 
-  Future<({MapEntry<String, List> result, bool wasExpanded})> getValue(
-    dynamic context,
-    Interpreter interpreter, {
-    required Map<String, Function> custom,
-  }) async {
+  @override
+  StatementReturn execute(context, Interpreter interpreter) {
+    // TODO: implement execute
     throw UnimplementedError();
   }
 }

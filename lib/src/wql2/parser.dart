@@ -4,6 +4,7 @@ import 'package:web_content_parser/src/wql2/statements/set_statement.dart';
 
 import 'logicalSelector.dart';
 import 'statements/if_statement.dart';
+import 'statements/statement.dart';
 
 void main() {
   // String input = '''getRequest(s'https://github.com/topics').if{*.getStatusCode() EQUALS n'200'}''';
@@ -51,6 +52,7 @@ void main() {
   final completeParser = undefined();
   final dotInput = undefined();
 
+  //TODO: add 'non' to negate the result
   final terms = dotInput & (stringIgnoreCase('matches') | stringIgnoreCase('contains') | stringIgnoreCase('startsWith') | stringIgnoreCase('endsWith') | stringIgnoreCase('equals')).token().trim() & dotInput;
 
   final logicalOperation = undefined();
@@ -104,8 +106,8 @@ void main() {
   }
 }
 
-List<Object> parseToObjects(SeparatedList baseList) {
-  final List<Object> items = [];
+List<Statement> parseToObjects(SeparatedList baseList) {
+  final List<Statement> items = [];
 
   for (final element in baseList.elements) {
     if (element == null) {
@@ -120,7 +122,7 @@ List<Object> parseToObjects(SeparatedList baseList) {
       case [final Token ifToken, final List logicalOperation, final SeparatedList body, final List? elseList]:
         assert(ifToken.value == 'if');
 
-        List<Object>? elseBodyStatements;
+        List<Statement>? elseBodyStatements;
 
         if (elseList case [Token(), final SeparatedList elseBody]) {
           elseBodyStatements = parseToObjects(elseBody);

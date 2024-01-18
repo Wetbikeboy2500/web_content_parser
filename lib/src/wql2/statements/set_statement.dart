@@ -11,7 +11,13 @@ class SetStatement extends Statement {
 
   @override
   StatementReturn execute(dynamic context, Interpreter interpreter) async {
-    interpreter.setValue(access, await value.getValue(context, interpreter, custom: {}));
+    final result = await value.execute(context, interpreter);
+
+    if (result.noop) {
+      return const (name: '', result: null, wasExpanded: false, noop: true);
+    }
+
+    interpreter.setValue(access, result.result);
     return const (name: '', result: null, wasExpanded: false, noop: false);
   }
 }

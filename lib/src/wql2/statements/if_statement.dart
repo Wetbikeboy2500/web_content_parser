@@ -6,22 +6,35 @@ import 'statement.dart';
 class IfStatement extends Statement {
   final LogicalSelector selector;
   final bool topLevel;
-  final List<Object>? statements;
-  final List<Object>? elseIfs;
+  final List<Statement>? statements;
+  final List<Statement>? elseIfs;
 
   IfStatement(this.selector, this.topLevel, this.statements, this.elseIfs);
 
   @override
   StatementReturn execute(context, Interpreter interpreter) async {
-    if (await selector.evaluate(context, interpreter)) {
+    final (result: bool result, noop: bool noop) = await selector.evaluate(context, interpreter);
+
+    if (noop) {
+      return const (name: '', result: null, wasExpanded: false, noop: true);
+    }
+
+    if (result) {
       if (statements != null) {
-        await interpreter.runStatements(statements!);
+        await interpreter.runStatementsWithContext(statements!, context);
       }
       return (name: '', result: context, wasExpanded: false, noop: false);
     } else {
       if (elseIfs != null) {
-        await interpreter.runStatements(elseIfs!);
+        final (noop: bool noop) = await interpreter.runStatementsWithContext(elseIfs!, context);
+
+        if (noop) {
+          return const (name: '', result: null, wasExpanded: false, noop: true);
+        }
+      } else if (topLevel == false) {
+        return (name: '', result: context, wasExpanded: false, noop: true);
       }
+
       return (name: '', result: null, wasExpanded: false, noop: false);
     }
   }

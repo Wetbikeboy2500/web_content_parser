@@ -1,4 +1,10 @@
+import 'statements/statement.dart';
+
 class Interpreter {
+  final Map<String, dynamic> functions;
+
+  Interpreter(this.functions);
+
   final Map<String, dynamic> _values = {};
 
   Map<String, dynamic> _currentStackCached = {};
@@ -64,8 +70,20 @@ class Interpreter {
     _recomputeStackCache();
   }
 
-  Future<void> runStatements(List statements) async {
+  Future<({bool noop})> runStatements(List<Statement> statements) async {
+    return runStatementsWithContext(statements, values);
+  }
+
+  Future<({bool noop})> runStatementsWithContext(List<Statement> statements, dynamic context) async {
     pushLocal();
+    for (final statement in statements) {
+      final result = await statement.execute(context, this);
+      if (result.noop) {
+        popLocal();
+        return const (noop: true);
+      }
+    }
     popLocal();
+    return const (noop: false);
   }
 }
