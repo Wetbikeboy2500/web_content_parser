@@ -57,13 +57,24 @@ class StatementOperation extends Operation {
 }
 
 class DotInput extends Statement {
+  final List<Operation> operations = [];
+
   factory DotInput.fromTokens(SeparatedList tokens) {
     throw UnimplementedError();
   }
 
   @override
-  StatementReturn execute(context, Interpreter interpreter) {
-    // TODO: implement execute
-    throw UnimplementedError();
+  StatementReturn execute(context, Interpreter interpreter) async {
+    dynamic currentValue = context;
+    bool wasExpanded = false;
+
+    for (final operation in operations) {
+      final result = await operation.process(currentValue, interpreter);
+      currentValue = result;
+    }
+
+
+
+    return (name: '', result: currentValue, wasExpanded: wasExpanded, noop: false);
   }
 }

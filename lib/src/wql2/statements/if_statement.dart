@@ -1,6 +1,5 @@
 import '../interpreter.dart';
 import '../logicalSelector.dart';
-
 import 'statement.dart';
 
 class IfStatement extends Statement {
@@ -21,12 +20,12 @@ class IfStatement extends Statement {
 
     if (result) {
       if (statements != null) {
-        await interpreter.runStatementsWithContext(statements!, context);
+        await interpreter.runStatementsWithContext(statements!, context, true);
       }
       return (name: '', result: context, wasExpanded: false, noop: false);
     } else {
       if (elseIfs != null) {
-        final (noop: bool noop) = await interpreter.runStatementsWithContext(elseIfs!, context);
+        final (noop: bool noop) = await interpreter.runStatementsWithContext(elseIfs!, context, true);
 
         if (noop) {
           return const (name: '', result: null, wasExpanded: false, noop: true);

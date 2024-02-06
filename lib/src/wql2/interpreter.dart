@@ -5,80 +5,96 @@ class Interpreter {
 
   Interpreter(this.functions);
 
-  final Map<String, dynamic> _values = {};
+  final Map<String, List<(int, dynamic)>> _values = {};
 
-  Map<String, dynamic> _currentStackCached = {};
+  //TODO: make the cache recompute based on the actual values changed
+  Map<String, dynamic>? _cache;
 
-  void _recomputeStackCache() {
-    if (localStack.isEmpty) {
-      _currentStackCached = _values;
-      return;
+  void _recomputeCache() {
+    final Map<String, dynamic> result = {};
+
+    for (final entry in _values.entries) {
+      result[entry.key] = entry.value.last.$2;
     }
 
-    if (localStack.length == 1) {
-      _currentStackCached = {
-        ..._values,
-        ...localStack.first
-      };
-      return;
-    }
-
-    _currentStackCached = {
-      ..._values,
-      ...localStack.reduce((value, element) => {...value, ...element})
-    };
+    _cache = result;
   }
 
-  Map<String, dynamic> get values => _currentStackCached;
+  Map<String, dynamic> get values {
+    if (_cache != null) {
+      return _cache!;
+    }
 
-  void setValues(Map<String, dynamic> values) {
-    _values.addAll(values);
-    _recomputeStackCache();
+    _recomputeCache();
+    return _cache!;
   }
 
   void setValue(String name, dynamic value) {
     if (name.startsWith('_') && localStack.isNotEmpty) {
-      localStack.last[name] = value;
-      _recomputeStackCache();
+      localStack.last.add(name);
+      final stackValue = (localStack.length - 1, value);
+      if (_values.containsKey(name)) {
+        final List<(int, dynamic)> stack = _values[name]!;
+        if (stack.last.$1 == localStack.length - 1) {
+          stack[stack.length - 1] = stackValue;
+        } else {
+          stack.add(stackValue);
+        }
+      } else {
+        _values[name] = [stackValue];
+      }
+      _recomputeCache();
       return;
     }
 
-    _values[name] = value;
-    _recomputeStackCache();
+    _values[name] = [(0, value)];
+    _recomputeCache();
   }
 
   dynamic getValue(String name) {
-    if (name.startsWith('_') && localStack.isNotEmpty) {
-      for (int i = localStack.length - 1; i >= 0; i--) {
-        if (localStack[i].containsKey(name)) {
-          return localStack[i][name];
-        }
-      }
-    }
-
-    return _values[name];
+    return _values[name]?.last.$2;
   }
 
-  final List<Map<String, dynamic>> localStack = [];
+  final List<Set<String>> localStack = [];
 
   void pushLocal() {
     localStack.add({});
   }
 
   void popLocal() {
+    final stackOffset = localStack.length - 1;
+
+    assert(stackOffset != -1);
+
+    if (stackOffset == 0) {
+      for (final name in localStack.last) {
+        _values.remove(name);
+      }
+    } else {
+      for (final name in localStack.last) {
+        final item = _values[name]?.last;
+
+        assert(item != null);
+        if (item != null) {
+          assert(item.$1 == stackOffset);
+          _values[name]!.removeLast();
+        }
+      }
+    }
+
     localStack.removeLast();
-    _recomputeStackCache();
+    _recomputeCache();
   }
 
   Future<({bool noop})> runStatements(List<Statement> statements) async {
-    return runStatementsWithContext(statements, values);
+    return runStatementsWithContext(statements, values, false);
   }
 
-  Future<({bool noop})> runStatementsWithContext(List<Statement> statements, dynamic context) async {
+  Future<({bool noop})> runStatementsWithContext(List<Statement> statements, dynamic context, bool allowNoopEscape) async {
     pushLocal();
     for (final statement in statements) {
       final result = await statement.execute(context, this);
-      if (result.noop) {
+      if (result.noop && allowNoopEscape) {
         popLocal();
         return const (noop: true);
       }

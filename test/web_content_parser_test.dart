@@ -1,17 +1,16 @@
 //Make sure to keep this as the first import
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
+import 'dart:io';
+
+import 'package:html/dom.dart';
+import 'package:html/parser.dart';
 import 'package:petitparser/petitparser.dart' as petitparser;
+import 'package:test/test.dart';
 import 'package:web_content_parser/src/parser/sources/computer.dart';
 import 'package:web_content_parser/src/wql/parserHelper.dart';
 import 'package:web_content_parser/src/wql/statements/loopStatement.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
-
-import 'dart:io';
-import 'package:test/test.dart';
-
-import 'package:html/dom.dart';
-import 'package:html/parser.dart';
 
 import 'blank.dart';
 import 'heroku.dart';
@@ -375,7 +374,7 @@ void main() {
         expect(chapter.chapterID, equals(ChapterID(url: '', index: 0, id: ID(id: 'test', source: 'testing'))));
       });
       test('Compute chapter to json', () async {
-        final computer = ComputerDecorator();
+        final computer = IsolateComputer();
         final chapter = Chapter(
           name: 'Title',
           date: DateTime.now(),
@@ -387,7 +386,7 @@ void main() {
         expect(json, equals(chapter.toJson()));
       });
       test('Compute chapter from json', () async {
-        final computer = ComputerDecorator();
+        final computer = IsolateComputer();
         final json = {
           'name': 'Title',
           'date': DateTime.now().toIso8601String(),
@@ -429,7 +428,7 @@ void main() {
         );
       });
       test('Compute chapters from json', () async {
-        final computer = ComputerDecorator();
+        final computer = IsolateComputer();
         final json = [
           {
             'name': 'Title',
@@ -460,7 +459,7 @@ void main() {
         );
       });
       test('Computer chapters to json', () async {
-        final computer = ComputerDecorator();
+        final computer = IsolateComputer();
         final chapters = [
           Chapter(
             name: 'Title',

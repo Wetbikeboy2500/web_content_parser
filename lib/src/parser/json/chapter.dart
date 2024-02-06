@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:web_content_parser/src/parser/sources/computeDecorator.dart';
-import '../../parser/sources/computer.dart';
+
 import './chapterID.dart';
 
 part 'chapter.g.dart';
@@ -51,11 +51,11 @@ class Chapter {
     }
   }
 
-  static Future<Chapter> computeChapterFromJson(ComputerDecorator computer, Map<String, dynamic> chapter) {
+  static Future<Chapter> computeChapterFromJson(ComputeDecorator computer, Map<String, dynamic> chapter) {
     return computer.compute<Chapter, Map<String, dynamic>>(_$ChapterFromJson, chapter);
   }
 
-  static Future<Map<String, dynamic>> computeChapterToJson(ComputerDecorator computer, Chapter chapter) {
+  static Future<Map<String, dynamic>> computeChapterToJson(ComputeDecorator computer, Chapter chapter) {
     return computer.compute<Map<String, dynamic>, Chapter>(_$ChapterToJson, chapter);
   }
 

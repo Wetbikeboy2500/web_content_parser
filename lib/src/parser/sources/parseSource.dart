@@ -2,27 +2,27 @@ import 'dart:async';
 
 //source
 import 'package:web_content_parser/src/parser/sources/computer.dart';
-import './computeDecorator.dart';
+
 import '../../scraper/scraperSource.dart';
+//utils
+import '../../util/RequestType.dart';
 import '../../util/Result.dart';
 import '../../util/log.dart';
-
-import './sourceTemplate.dart';
+import '../json/catalogEntry.dart';
 //models
 import '../json/chapter.dart';
 import '../json/chapterID.dart';
 import '../json/id.dart';
 import '../json/post.dart';
-import '../json/catalogEntry.dart';
-//utils
-import '../../util/RequestType.dart';
+import './computeDecorator.dart';
+import './sourceTemplate.dart';
 
 ///Source build from extensions
 class ParseSource extends SourceTemplate {
   final ScraperSource scraper;
   final String programType;
 
-  static ComputeDecorator computeDecorator = ComputerDecorator();
+  static ComputeDecorator computeDecorator = IsolateComputer();
 
   ///Enable computes for data conversion
   ///This provides better performance for multiple async calls
@@ -118,7 +118,7 @@ class ParseSource extends SourceTemplate {
       try {
         //I currently am only using computer here since lists of chapters can have a lot of data to be processed
         final List<Chapter> response =
-            await Chapter.computeChaptersFromJson(computeDecorator, chapters.data!.cast<Map<String, dynamic>>());
+            await Chapter.computeChaptersFromJson(computeDecorator, chapters.data.cast<Map<String, dynamic>>());
         computeDecorator.end();
         return Pass(response);
       } catch (e, stack) {
@@ -131,7 +131,7 @@ class ParseSource extends SourceTemplate {
     }
 
     try {
-      return Pass(List<Chapter>.from(chapters.data!.map((value) {
+      return Pass(List<Chapter>.from(chapters.data.map((value) {
         return Chapter.fromJson((value is! Map<String, dynamic>) ? Map<String, dynamic>.from(value) : value);
       })));
     } catch (e, stack) {
@@ -211,7 +211,7 @@ class ParseSource extends SourceTemplate {
     }
 
     try {
-      return Pass(List<CatalogEntry>.from(entries.data!.map((entry) {
+      return Pass(List<CatalogEntry>.from(entries.data.map((entry) {
         return CatalogEntry.fromJson((entry is! Map<String, dynamic>) ? Map<String, dynamic>.from(entry) : entry);
       })));
     } catch (e, stack) {
