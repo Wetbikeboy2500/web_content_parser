@@ -10,7 +10,7 @@ items = html.querySelectorAll(s'.item')[].select {
     text: *.text(),
     description: *.querySelector(s'.description').text()
 };
-first = items[].if{ text contains s'Title 1' }[0].description;
+first = items[].if{ text contains s'Title 1' }[0]?.description;
 second = items[].if{ text contains s'Title 2' }[0].description;
 third = items[].if{ text contains s'Title 3' }[0].description;
 return = merge(first, second, third);

@@ -1,60 +1,9 @@
-import 'dart:async';
-
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/util/log.dart';
+import 'package:web_content_parser/src/wql2/dot_input/operation.dart';
 
 import '../interpreter.dart';
 import '../statements/statement.dart';
-
-enum OperationType {
-  literal,
-  key,
-  function,
-  statement,
-}
-
-sealed class Operation {
-  final OperationType type;
-  Operation(this.type);
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter);
-}
-
-class LiteralOperation extends Operation {
-  final dynamic value;
-  LiteralOperation(this.value) : super(OperationType.literal);
-  @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) => value;
-}
-
-class KeyOperation extends Operation {
-  final String key;
-  KeyOperation(this.key) : super(OperationType.key);
-  @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) {
-    if (input is Map && input.containsKey(key)) {
-      return input[key];
-    } else {
-      log2('Cannot access value of non-map type with key: ', key, level: const LogLevel.warn());
-      return null;
-    }
-  }
-}
-
-class FunctionOperation extends Operation {
-  final String name;
-  final Function function;
-  final List<DotInput> arguments;
-  FunctionOperation(this.name, this.function, this.arguments) : super(OperationType.function);
-  @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) => function(input);
-}
-
-class StatementOperation extends Operation {
-  final Statement statement;
-  StatementOperation(this.statement) : super(OperationType.statement);
-  @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) => statement.execute(input, interpreter);
-}
+import 'list_access.dart';
 
 class DotInput extends Statement {
   final List<Operation> operations = [];
@@ -68,12 +17,58 @@ class DotInput extends Statement {
     dynamic currentValue = context;
     bool wasExpanded = false;
 
-    for (final operation in operations) {
-      final result = await operation.process(currentValue, interpreter);
-      currentValue = result;
+    Future<({dynamic result, bool noop})> getValue(Operation operation, dynamic value) async {
+      if (operation is ScopeOperation) {
+        return (result: await operation.process(context, interpreter), noop: false);
+      } else if (operation is StatementOperation) {
+        final StatementReturnValue statementResult = await operation.process(value, interpreter);
+
+        if (statementResult.noop) {
+          return (result: null, noop: true);
+        } else {
+          return (result: statementResult.result, noop: false);
+        }
+      } else {
+        return (result: await operation.process(value, interpreter), noop: false);
+      }
     }
 
+    for (final operation in operations) {
+      if (wasExpanded && operation.type != OperationType.scope) {
+        final List<dynamic> allExpandedResults = [];
 
+        assert(currentValue is List<dynamic>);
+
+        for (final value in currentValue) {
+          final result = await getValue(operation, value);
+          if (result.noop) {
+            continue;
+          }
+          allExpandedResults.add(result.result);
+        }
+
+        currentValue = allExpandedResults;
+      } else {
+        final result = await getValue(operation, currentValue);
+        if (result.noop) {
+          return (name: '', result: null, wasExpanded: false, noop: true);
+        }
+        currentValue = result.result;
+      }
+
+      if (operation.type != OperationType.key && wasExpanded) {
+        wasExpanded = false;
+      }
+
+      if (operation.listAccess != null) {
+        for (final listAccess in operation.listAccess!) {
+          currentValue = listAccess.process(currentValue);
+        }
+        if (operation.listAccess!.last.type == ListAccessType.all) {
+          wasExpanded = true;
+        }
+      }
+    }
 
     return (name: '', result: currentValue, wasExpanded: wasExpanded, noop: false);
   }

@@ -34,7 +34,7 @@ class IfStatement extends Statement {
         return (name: '', result: context, wasExpanded: false, noop: true);
       }
 
-      return (name: '', result: null, wasExpanded: false, noop: false);
+      return const (name: '', result: null, wasExpanded: false, noop: false);
     }
   }
 }

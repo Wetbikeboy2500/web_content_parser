@@ -30,6 +30,8 @@ void main() {
         .if{ *.getStatusCode() EQUALS n'200' }
       };'''; */
 
+  // TODO: add ? to allow null when a noop occurs from a statement
+
   //don't allow square brackets, round brackets, curly brackets, semi-colon, colon, and comma
   final safeChars = patternIgnoreCase('~!@\$%&*_+=/\'"?><|`#a-zA-Z0-9') | char('-') | char('^');
 
