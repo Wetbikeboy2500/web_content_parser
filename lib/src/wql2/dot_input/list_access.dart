@@ -83,11 +83,11 @@ class IndexRangeAccess extends ListAccess {
   }
 }
 
-class IndexRangeSkipAccess extends ListAccess {
+class IndexRangeStepAccess extends ListAccess {
   final int start;
   final int end;
-  final int skip;
-  IndexRangeSkipAccess(this.start, this.end, this.skip) : super(ListAccessType.indexRangeSkip);
+  final int step;
+  IndexRangeStepAccess(this.start, this.end, this.step) : super(ListAccessType.indexRangeSkip);
   @override
   List process(List input) {
     final int trueStart = start < 0 ? input.length + start : start;
@@ -97,7 +97,7 @@ class IndexRangeSkipAccess extends ListAccess {
     final int max = trueStart < trueEnd ? trueEnd : trueStart;
 
     final List<dynamic> result = [];
-    for (var i = min; i < max; i += skip) {
+    for (var i = min; i < max; i += step) {
       result.add(input[i]);
     }
     return result;

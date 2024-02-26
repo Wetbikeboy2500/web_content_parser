@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import '../../wql/statements/setStatement.dart';
-import '../generic/scrapeFunctions.dart';
-
 import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
+
+import '../../wql/statements/setStatement.dart';
+import '../../wql2/wql2.dart';
+import '../generic/scrapeFunctions.dart';
 
 void loadWQLFunctions() {
   final Map<String, Function> functions = {
@@ -155,5 +156,10 @@ void loadWQLFunctions() {
   SetStatement.functions = {
     ...functions,
     ...SetStatement.functions,
+  };
+
+  WQL.functions = {
+    ...WQL.functions,
+    ...functions,
   };
 }

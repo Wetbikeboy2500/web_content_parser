@@ -25,7 +25,7 @@ sealed class Operation {
 
 class LiteralOperation extends Operation {
   final dynamic value;
-  LiteralOperation(this.value, ListAccess listAccess) : super(OperationType.literal, null);
+  LiteralOperation(this.value) : super(OperationType.literal, null);
   @override
   FutureOr<dynamic> process(dynamic input, Interpreter interpreter) => value;
 }

@@ -1,6 +1,5 @@
-import 'package:web_content_parser/src/wql2/dot_input/dot_input.dart';
-import 'package:web_content_parser/src/wql2/interpreter.dart';
-
+import '../dot_input/dot_input.dart';
+import '../interpreter.dart';
 import './statement.dart';
 
 class SetStatement extends Statement {

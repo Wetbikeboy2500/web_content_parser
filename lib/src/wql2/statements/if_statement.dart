@@ -1,24 +1,24 @@
+import '../dot_input/dot_input.dart';
 import '../interpreter.dart';
-import '../logicalSelector.dart';
 import 'statement.dart';
 
 class IfStatement extends Statement {
-  final LogicalSelector selector;
+  final DotInput condition;
   final bool topLevel;
   final List<Statement>? statements;
   final List<Statement>? elseIfs;
 
-  IfStatement(this.selector, this.topLevel, this.statements, this.elseIfs);
+  IfStatement(this.condition, this.topLevel, this.statements, this.elseIfs);
 
   @override
   StatementReturn execute(context, Interpreter interpreter) async {
-    final (result: bool result, noop: bool noop) = await selector.evaluate(context, interpreter);
+    final StatementReturnValue result = await condition.execute(context, interpreter);
 
-    if (noop) {
+    if (result.noop) {
       return const (name: '', result: null, wasExpanded: false, noop: true);
     }
 
-    if (result) {
+    if (result.result == true) {
       if (statements != null) {
         await interpreter.runStatementsWithContext(statements!, context, true);
       }

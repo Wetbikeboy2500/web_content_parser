@@ -1,25 +1,38 @@
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/wql2/dot_input/dot_input.dart';
-import 'package:web_content_parser/src/wql2/statements/set_statement.dart';
 
-import 'logicalSelector.dart';
+import '../scraper/wql/wqlFunctions.dart';
+import 'dot_input/dot_input.dart';
 import 'statements/if_statement.dart';
+import 'statements/set_statement.dart';
 import 'statements/statement.dart';
 
 void main() {
-  // String input = '''getRequest(s'https://github.com/topics').if{*.getStatusCode() EQUALS n'200'}''';
+  loadWQLFunctions();
   String input = '''
-      if (a equals s'1') {
+      result = s'hello';
 
-      }''';
-  /* String input = '''
+      *;
+
+      if (result.equals(s'1')) {
+
+      };
+
+      result = getRequest(s'https://github.com/topics')[];
+      result = getRequest(s'https://github.com/topics')[all,1];
+      result = getRequest(s'https://github.com/topics')[1:-1];
+      result = getRequest(s'https://github.com/topics')[1:1:1];
+      result = getRequest(s'https://github.com/topics')[1:last:1];
+
+      result = name;
+
       result = getRequest(s'https://github.com/topics')
-      .if{*.getStatusCode() EQUALS n'200'} else {}
+      .if{*.getStatusCode().equals(n'200')} else {}
+      .if{*.getStatusCode().equals(n'200')}
       .parseBody().querySelectorAll(s'.py-4.border-bottom')[].select{
         name: *.querySelector(s'.f3').text().trim(),
         description: *.querySelector(s'.f5').text().trim(),
         url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
-      };
+      }.loop{}.eval{};
 
       result = select {
         name: *.querySelector(s'.f3').text().trim(),
@@ -27,8 +40,8 @@ void main() {
         url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
       } from {
         getRequest(s'https://github.com/topics')
-        .if{ *.getStatusCode() EQUALS n'200' }
-      };'''; */
+        .if{ *.getStatusCode().equals(n'200') }
+      };''';
 
   // TODO: add ? to allow null when a noop occurs from a statement
 
@@ -39,63 +52,56 @@ void main() {
 
   final rawInputSingleQuote = (char("'") & pattern("^'").star().flatten() & char("'")).pick(1);
 
-  final arrayIndex =
-      (stringIgnoreCase('first') | stringIgnoreCase('last')).token().trim() |
+  final arrayIndex = (stringIgnoreCase('first') | stringIgnoreCase('last')).token().trim() |
       (char('-').optional() & digit().plus().flatten()).flatten().trim();
 
-  final arrayAccess =
-      (stringIgnoreCase('all') | stringIgnoreCase('even') | stringIgnoreCase('odd')).token().trim() |
+  final arrayAccess = (stringIgnoreCase('all') | stringIgnoreCase('even') | stringIgnoreCase('odd')).token().trim() |
       (arrayIndex & char(':').trim() & arrayIndex & char(':').trim() & digit().star().flatten().trim()) |
       (arrayIndex & char(':').trim() & arrayIndex) |
       arrayIndex;
 
-  final digitInput = (char('[').trim() & (arrayAccess.plusSeparated(char(',').trim())).optional() & char(']').trim()).pick(1);
+  final digitInput =
+      (char('[').trim() & (arrayAccess.plusSeparated(char(',').trim())).optional() & char(']').trim()).map((value) => value[1] ?? SeparatedList([], []));
 
   final completeParser = undefined();
   final dotInput = undefined();
 
-  //TODO: add 'non' to negate the result
-  final terms = dotInput & (stringIgnoreCase('matches') | stringIgnoreCase('contains') | stringIgnoreCase('startsWith') | stringIgnoreCase('endsWith') | stringIgnoreCase('equals')).token().trim() & dotInput;
-
-  final logicalOperation = undefined();
-  final andClause = undefined();
-  final parenClause = undefined();
-
-  final or = (andClause & stringIgnoreCase('or').token().trim() & logicalOperation);
-  logicalOperation.set(or | andClause);
-
-  final and = (parenClause & stringIgnoreCase('and').token().trim() & andClause);
-  andClause.set(and | parenClause);
-
-  final paren = (char('(').trim() & logicalOperation & char(')').trim()).map((values) => values[1]);
-  parenClause.set(paren | terms);
-
   final literal = (char('l') | char('s') | char('b') | char('n')).token() & rawInputSingleQuote.trim();
 
-  final function = letter().plus().flatten().trim() & (char('(').trim() & dotInput.plusSeparated(char(',').trim()).optional() & char(')').trim()).pick(1);
+  final function = letter().plus().flatten().trim() &
+      (char('(').trim() & dotInput.plusSeparated(char(',').trim()).optional() & char(')').trim()).pick(1);
 
-  final selectStatement = stringIgnoreCase('select').token().trim() & (char('{').trim() & ((access & char(':').token().trim()).optional() & dotInput).plusSeparated(char(',').trim()) & char('}').trim()).pick(1) & (stringIgnoreCase('from').trim() & char('{').trim() & dotInput & char('}').trim()).pick(2).optional();
+  final selectStatement = stringIgnoreCase('select').token().trim() &
+      (char('{').trim() &
+              ((access & char(':').token().trim()).optional() & dotInput).plusSeparated(char(',').trim()) &
+              char('}').trim())
+          .pick(1) &
+      (stringIgnoreCase('from').trim() & char('{').trim() & dotInput & char('}').trim()).pick(2).optional();
 
-  final ifStatement = stringIgnoreCase('if').token().trim()
-    & (char('{').trim() & logicalOperation & char('}').trim()).pick(1)
-    & (stringIgnoreCase('else').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1)).optional();
+  final ifStatement = stringIgnoreCase('if').token().trim() &
+      (char('{').trim() & dotInput & char('}').trim()).pick(1) &
+      (stringIgnoreCase('else').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1))
+          .optional();
 
-  final loopStatement = stringIgnoreCase('loop').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1);
+  final loopStatement =
+      stringIgnoreCase('loop').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1);
 
-  final evalStatement = stringIgnoreCase('eval').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1);
+  final evalStatement =
+      stringIgnoreCase('eval').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1);
 
   final statements = selectStatement | ifStatement | loopStatement | evalStatement;
 
   dotInput.set(literal | ((statements | function | access) & digitInput.optional()).plusSeparated(char('.').trim()));
 
-  completeParser.set((
-    (access & char('=').token().trim() & dotInput)
-    | stringIgnoreCase('if').token().trim()
-      & (char('(').trim() & logicalOperation & char(')').trim()).pick(1)
-      & (char('{').trim() & completeParser & char('}').trim()).pick(1)
-      & (stringIgnoreCase('else').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1)).optional()
-    | dotInput
-  ).optional().plusSeparated(char(';').trim()));
+  completeParser.set(((access & char('=').token().trim() & dotInput) |
+          stringIgnoreCase('if').token().trim() &
+              (char('(').trim() & dotInput & char(')').trim()).pick(1) &
+              (char('{').trim() & completeParser & char('}').trim()).pick(1) &
+              (stringIgnoreCase('else').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1))
+                  .optional() |
+          dotInput)
+      .optional()
+      .plusSeparated(char(';').trim()));
 
   final parsed = completeParser.parse(input);
 
@@ -119,9 +125,13 @@ List<Statement> parseToObjects(SeparatedList baseList) {
     switch (element) {
       case [final String access, final Token equals, final SeparatedList value]:
         assert(equals.value == '=');
+        items.add(SetStatement(access, DotInput.fromTokens(value.elements)));
+        break;
+      case [final String access, final Token equals, final List value]:
+        assert(equals.value == '=');
         items.add(SetStatement(access, DotInput.fromTokens(value)));
         break;
-      case [final Token ifToken, final List logicalOperation, final SeparatedList body, final List? elseList]:
+      case [final Token ifToken, final SeparatedList condition, final SeparatedList body, final List? elseList]:
         assert(ifToken.value == 'if');
 
         List<Statement>? elseBodyStatements;
@@ -130,13 +140,22 @@ List<Statement> parseToObjects(SeparatedList baseList) {
           elseBodyStatements = parseToObjects(elseBody);
         }
 
-        items.add(IfStatement(LogicalSelector(logicalOperation), true, parseToObjects(body), elseBodyStatements));
+        items.add(
+          IfStatement(
+            DotInput.fromTokens(condition.elements),
+            true,
+            parseToObjects(body),
+            elseBodyStatements,
+          ),
+        );
 
         break;
       case final SeparatedList elements:
-        items.add(DotInput.fromTokens(elements));
+        items.add(DotInput.fromTokens(elements.elements));
         break;
+      default:
+        throw Exception('Invalid operation: $element');
     }
   }
-    return items;
+  return items;
 }
