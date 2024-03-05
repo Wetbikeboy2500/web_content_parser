@@ -4,7 +4,6 @@ import '../interpreter.dart';
 import '../parser.dart';
 import '../statements/eval_statement.dart';
 import '../statements/if_statement.dart';
-import '../statements/loop_statement.dart';
 import '../statements/select_statement.dart';
 import '../statements/statement.dart';
 import '../wql2.dart';
@@ -19,7 +18,7 @@ class DotInput extends Statement {
   factory DotInput.fromTokens(List tokens) {
     final List<Operation> operations = [];
 
-    switch(tokens) {
+    switch (tokens) {
       case [final Token type, final dynamic value]:
         operations.add(_parseLiteral(type, value));
         break;
@@ -67,6 +66,17 @@ class DotInput extends Statement {
                     switch (function) {
                       case [final Token ifToken, final SeparatedList condition, final List? elseList]:
                         assert(ifToken.value == 'if');
+                        operations.add(
+                          StatementOperation(
+                            IfStatement(
+                              DotInput.fromTokens(condition.elements),
+                              false,
+                              null,
+                              (elseList == null) ? null : parseToObjects(elseList),
+                            ),
+                            listAccesses,
+                          ),
+                        );
                         break;
                       default:
                         throw Exception('Invalid if operation: $function');
@@ -76,8 +86,11 @@ class DotInput extends Statement {
                     switch (function) {
                       case [final Token selectToken, final SeparatedList select, final SeparatedList? from]:
                         assert(selectToken.value == 'select');
+
+                        DotInput? fromInput;
+
                         if (from != null) {
-                          DotInput.fromTokens(from.elements);
+                          fromInput = DotInput.fromTokens(from.elements);
                         }
                         break;
                       default:
@@ -85,23 +98,12 @@ class DotInput extends Statement {
                         throw Exception('Invalid select operation: $function');
                     }
                     break;
-                  case 'loop':
-                    switch (function) {
-                      case [final Token loopToken, final SeparatedList loop]:
-                        assert(loopToken.value == 'loop');
-                        final List<Statement> loopOperations = parseToObjects(loop);
-
-                        break;
-                      default:
-                        throw Exception('Invalid loop operation: $function');
-                    }
-                    break;
                   case 'eval':
                     switch (function) {
                       case [final Token evalToken, final SeparatedList eval]:
                         assert(evalToken.value == 'eval');
 
-                        final List<Statement> evalOperations = parseToObjects(eval);
+                        final List<Statement> evalOperations = parseToObjects(eval.elements);
 
                         break;
                       default:
@@ -111,7 +113,6 @@ class DotInput extends Statement {
                   default:
                     throw Exception('Invalid operation: ${function.first.value}');
                 }
-
               }
               break;
             default:
@@ -279,12 +280,11 @@ class DotInput extends Statement {
       final FunctionOperation functionOperation => functionOperation.name,
       final ScopeOperation scopeOperation => scopeOperation.scopeType == ScopeOperationType.current ? '*' : '^',
       final StatementOperation statementOperation => switch (statementOperation.statement) {
-        final IfStatement _ => 'if',
-        final SelectStatement _ => 'select',
-        final LoopStatement _ => 'loop',
-        final EvalStatement _ => 'eval',
-        _ => '',
-      },
+          final IfStatement _ => 'if',
+          final SelectStatement _ => 'select',
+          final EvalStatement _ => 'eval',
+          _ => '',
+        },
       _ => '',
     };
 

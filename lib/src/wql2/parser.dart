@@ -32,7 +32,7 @@ void main() {
         name: *.querySelector(s'.f3').text().trim(),
         description: *.querySelector(s'.f5').text().trim(),
         url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
-      }.loop{}.eval{};
+      }.eval{};
 
       result = select {
         name: *.querySelector(s'.f3').text().trim(),
@@ -83,13 +83,10 @@ void main() {
       (stringIgnoreCase('else').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1))
           .optional();
 
-  final loopStatement =
-      stringIgnoreCase('loop').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1);
-
   final evalStatement =
       stringIgnoreCase('eval').token().trim() & (char('{').trim() & completeParser & char('}').trim()).pick(1);
 
-  final statements = selectStatement | ifStatement | loopStatement | evalStatement;
+  final statements = selectStatement | ifStatement | evalStatement;
 
   dotInput.set(literal | ((statements | function | access) & digitInput.optional()).plusSeparated(char('.').trim()));
 
@@ -114,10 +111,10 @@ void main() {
   }
 }
 
-List<Statement> parseToObjects(SeparatedList baseList) {
+List<Statement> parseToObjects(List elements) {
   final List<Statement> items = [];
 
-  for (final element in baseList.elements) {
+  for (final element in elements) {
     if (element == null) {
       continue;
     }
@@ -137,14 +134,14 @@ List<Statement> parseToObjects(SeparatedList baseList) {
         List<Statement>? elseBodyStatements;
 
         if (elseList case [Token(), final SeparatedList elseBody]) {
-          elseBodyStatements = parseToObjects(elseBody);
+          elseBodyStatements = parseToObjects(elseBody.elements);
         }
 
         items.add(
           IfStatement(
             DotInput.fromTokens(condition.elements),
             true,
-            parseToObjects(body),
+            parseToObjects(body.elements),
             elseBodyStatements,
           ),
         );
