@@ -8,7 +8,7 @@ class IfStatement extends Statement {
   final List<Statement>? statements;
   final List<Statement>? elseIfs;
 
-  IfStatement(this.condition, this.topLevel, this.statements, this.elseIfs);
+  const IfStatement(this.condition, this.topLevel, this.statements, this.elseIfs);
 
   @override
   StatementReturn execute(context, Interpreter interpreter) async {

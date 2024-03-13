@@ -6,5 +6,6 @@ typedef StatementReturnValue = ({String name, dynamic result, bool wasExpanded, 
 typedef StatementReturn = Future<StatementReturnValue>;
 
 abstract class Statement {
+  const Statement();
   StatementReturn execute(dynamic context, Interpreter interpreter);
 }

@@ -1,9 +1,7 @@
-import 'dart:convert';
-
-import '../interpreter/interpreter.dart';
+import 'package:petitparser/petitparser.dart';
 
 import '../../util/log.dart';
-import 'package:petitparser/petitparser.dart';
+import '../interpreter/interpreter.dart';
 
 //TODO: support strings marked by ' or "
 //TODO: support numbers which start as a numeric

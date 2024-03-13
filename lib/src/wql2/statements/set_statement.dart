@@ -6,7 +6,7 @@ class SetStatement extends Statement {
   final String access;
   final DotInput value;
 
-  SetStatement(this.access, this.value);
+  const SetStatement(this.access, this.value);
 
   @override
   StatementReturn execute(dynamic context, Interpreter interpreter) async {

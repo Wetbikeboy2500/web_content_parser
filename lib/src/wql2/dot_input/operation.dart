@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:web_content_parser/src/util/log.dart';
 
@@ -8,33 +7,24 @@ import '../statements/statement.dart';
 import 'dot_input.dart';
 import 'list_access.dart';
 
-enum OperationType {
-  literal,
-  key,
-  function,
-  statement,
-  scope,
-}
-
 sealed class Operation {
-  final OperationType type;
   final List<ListAccess>? listAccess;
-  Operation(this.type, this.listAccess);
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter);
+  const Operation(this.listAccess);
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter);
 }
 
 class LiteralOperation extends Operation {
   final dynamic value;
-  LiteralOperation(this.value) : super(OperationType.literal, null);
+  const LiteralOperation(this.value) : super(null);
   @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) => value;
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter) => value;
 }
 
 class KeyOperation extends Operation {
   final String key;
-  KeyOperation(this.key, List<ListAccess>? listAccess) : super(OperationType.key, listAccess);
+  const KeyOperation(this.key, super.listAccess);
   @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) {
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter) {
     if (input is Map && input.containsKey(key)) {
       return input[key];
     } else {
@@ -46,21 +36,33 @@ class KeyOperation extends Operation {
 
 class FunctionOperation extends Operation {
   final String name;
+  final bool topLevel;
   final Function function;
   final List<DotInput> arguments;
-  FunctionOperation(this.name, this.function, this.arguments, List<ListAccess>? listAccess)
-      : super(OperationType.function, listAccess);
+  const FunctionOperation(this.name, this.topLevel, this.function, this.arguments, super.listAccess);
   @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) async {
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter) async {
     //get all arguments for the function call
     final List<({dynamic value, bool wasExpanded})> args = [];
     int maxLengthOfMerge = -1;
+
+    if (!topLevel) {
+      args.add((value: input, wasExpanded: false));
+      maxLengthOfMerge = 1;
+    }
+
     for (final argument in arguments) {
-      final result = await argument.execute(input, interpreter);
+      final result = await argument.execute(scope, interpreter);
       if (result.noop) {
         return null;
       }
-      maxLengthOfMerge = max(result.result is List ? result.result.length : 1, maxLengthOfMerge);
+
+      if (result.wasExpanded && result.result is List && result.result.length > maxLengthOfMerge) {
+        maxLengthOfMerge = result.result.length;
+      } else if (maxLengthOfMerge == -1) {
+        maxLengthOfMerge = 1;
+      }
+
       args.add((value: result.result, wasExpanded: result.wasExpanded));
     }
 
@@ -100,26 +102,25 @@ class FunctionOperation extends Operation {
 
 class StatementOperation extends Operation {
   final Statement statement;
-  StatementOperation(this.statement, List<ListAccess>? listAccess) : super(OperationType.statement, listAccess);
+  const StatementOperation(this.statement, super.listAccess);
   @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) => statement.execute(input, interpreter);
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter) => statement.execute(input, interpreter);
 }
 
-enum ScopeOperationType {
-  current,
-  top,
+sealed class ScopeOperation extends Operation {
+  const ScopeOperation(super.listAccess);
+  @override
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter);
 }
 
-class ScopeOperation extends Operation {
-  final ScopeOperationType scopeType;
-  ScopeOperation(this.scopeType, List<ListAccess>? listAccess) : super(OperationType.scope, listAccess);
+class CurrentScopeOperation extends ScopeOperation {
+  const CurrentScopeOperation(super.listAccess);
   @override
-  FutureOr<dynamic> process(dynamic input, Interpreter interpreter) {
-    switch (scopeType) {
-      case ScopeOperationType.current:
-        return input;
-      case ScopeOperationType.top:
-        return interpreter.values;
-    }
-  }
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter) => scope;
+}
+
+class TopScopeOperation extends ScopeOperation {
+  const TopScopeOperation(super.listAccess);
+  @override
+  FutureOr<dynamic> process(dynamic input, dynamic scope, Interpreter interpreter) => interpreter.values;
 }

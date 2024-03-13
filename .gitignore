@@ -25,3 +25,5 @@ doc
 bin/main.*
 
 *.js*
+*.exe
+*.jit

@@ -1,34 +1,22 @@
-enum ListAccessType {
-  first,
-  last,
-  even,
-  odd,
-  index1,
-  indexRange,
-  indexRangeSkip,
-  all,
-}
-
 sealed class ListAccess {
-  ListAccessType type;
-  ListAccess(this.type);
+  const ListAccess();
   List process(List input);
 }
 
 class FirstAccess extends ListAccess {
-  FirstAccess() : super(ListAccessType.first);
+  const FirstAccess();
   @override
   List process(List input) => [input.first];
 }
 
 class LastAccess extends ListAccess {
-  LastAccess() : super(ListAccessType.last);
+  const LastAccess();
   @override
   List process(List input) => [input.last];
 }
 
 class EvenAccess extends ListAccess {
-  EvenAccess() : super(ListAccessType.even);
+  const EvenAccess();
   @override
   List process(List input) {
     final List<dynamic> result = [];
@@ -40,7 +28,7 @@ class EvenAccess extends ListAccess {
 }
 
 class OddAccess extends ListAccess {
-  OddAccess() : super(ListAccessType.odd);
+  const OddAccess();
   @override
   List process(List input) {
     final List<dynamic> result = [];
@@ -54,7 +42,7 @@ class OddAccess extends ListAccess {
 class Index1Access extends ListAccess {
   final int index;
 
-  Index1Access(this.index) : super(ListAccessType.index1);
+  const Index1Access(this.index);
 
   @override
   List process(List input) {
@@ -66,7 +54,7 @@ class Index1Access extends ListAccess {
 class IndexRangeAccess extends ListAccess {
   final int start;
   final int end;
-  IndexRangeAccess(this.start, this.end) : super(ListAccessType.indexRange);
+  const IndexRangeAccess(this.start, this.end);
   @override
   List process(List input) {
     final int trueStart = start < 0 ? input.length + start : start;
@@ -87,7 +75,7 @@ class IndexRangeStepAccess extends ListAccess {
   final int start;
   final int end;
   final int step;
-  IndexRangeStepAccess(this.start, this.end, this.step) : super(ListAccessType.indexRangeSkip);
+  const IndexRangeStepAccess(this.start, this.end, this.step);
   @override
   List process(List input) {
     final int trueStart = start < 0 ? input.length + start : start;
@@ -105,7 +93,7 @@ class IndexRangeStepAccess extends ListAccess {
 }
 
 class AllAccess extends ListAccess {
-  AllAccess() : super(ListAccessType.all);
+  AllAccess();
   @override
   List process(List input) => input;
 }

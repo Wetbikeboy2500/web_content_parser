@@ -8,7 +8,7 @@ class SelectStatement extends Statement {
   final List<(String? name, DotInput input)> select;
   final DotInput? from;
 
-  SelectStatement(this.select, this.from);
+  const SelectStatement(this.select, this.from);
 
   @override
   StatementReturn execute(context, Interpreter interpreter) async {
