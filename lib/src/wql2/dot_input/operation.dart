@@ -88,8 +88,10 @@ class FunctionOperation extends Operation {
 
     //Call the function with the arguments
     if (functionValueCallsArgs.isEmpty) {
-      return function(const []);
-    } else {
+      return await function(const []);
+    } else if (maxLengthOfMerge == 1) {
+      return await function(functionValueCallsArgs[0]);
+    } else { //Inputs were expanding and need to return a list of results
       final List<dynamic> results = [];
       for (final value in functionValueCallsArgs) {
         //TODO: add a way to mark functions as async or none-async

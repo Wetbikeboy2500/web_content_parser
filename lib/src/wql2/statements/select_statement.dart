@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import '../dot_input/dot_input.dart';
 import '../interpreter.dart';
 import 'statement.dart';
@@ -30,7 +28,7 @@ class SelectStatement extends Statement {
         results.addAll(await _parseContext(newContext, interpreter));
       }
     } else {
-      _parseContext(context, interpreter);
+      results.addAll(await _parseContext(context, interpreter));
     }
 
     return (name: '', result: results, wasExpanded: false, noop: false);
@@ -42,11 +40,11 @@ class SelectStatement extends Statement {
 
     for (final (name, input) in select) {
       final result = await input.execute(context, interpreter);
-      if (result.wasExpanded && !result.noop) {
-        maxLength = max(result.result.length, maxLength);
+      if (result.wasExpanded && !result.noop && result.result.length > maxLength) {
+        maxLength = result.result.length;
       }
 
-      results.add((name ?? result.name, result.wasExpanded, result.noop, result));
+      results.add((name ?? result.name, result.wasExpanded, result.noop, result.result));
     }
 
     final List<Map<String, dynamic>> resultsMap = [];

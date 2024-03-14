@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:petitparser/petitparser.dart';
 
 import '../scraper/wql/wqlFunctions.dart';
@@ -31,7 +29,7 @@ void main() {
         name: *.querySelector(s'.f3').text().trim(),
         description: *.querySelector(s'.f5').text().trim(),
         url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
-      }
+      };
   ''';
 
   final safeChars = patternIgnoreCase('~!@\$%&*_+=/\'"?><|`#a-zA-Z0-9\\-\\^');
@@ -54,32 +52,24 @@ void main() {
 
   final number = (char('-').optional() & digit().plus()).flatten().map<int>((value) => int.parse(value));
 
-  final allAccess = stringIgnoreCase('all').map<AllAccess>((_) => AllAccess());
-  final firstAccess = stringIgnoreCase('first').map<FirstAccess>((_) => FirstAccess());
-  final lastAccess = stringIgnoreCase('last').map<LastAccess>((_) => LastAccess());
-  final evenAccess = stringIgnoreCase('even').map<EvenAccess>((_) => EvenAccess());
-  final oddAccess = stringIgnoreCase('odd').map<OddAccess>((_) => OddAccess());
-  final index1Access = number.map<Index1Access>((value) => Index1Access(value));
   final accessIndexTypes = (number | stringIgnoreCase('first') | stringIgnoreCase('last'))
       .map<int>((value) => value is String ? (value == 'first' ? 0 : -1) : value);
-  final indexRangeAccess = (accessIndexTypes & charTrim(':') & accessIndexTypes)
-      .map<IndexRangeAccess>((value) => IndexRangeAccess(value[0], value[2]));
-  final indexRangeStepAccess = (accessIndexTypes & charTrim(':') & accessIndexTypes & charTrim(':') & number)
-      .map<IndexRangeStepAccess>((value) => IndexRangeStepAccess(value[0], value[2], value[4]));
 
-  final arrayAccess = allAccess |
-      firstAccess |
-      index1Access |
-      lastAccess |
-      indexRangeAccess |
-      indexRangeStepAccess |
-      evenAccess |
-      oddAccess;
+  final arrayAccess = stringIgnoreCase('all').map<AllAccess>((_) => const AllAccess()) |
+      stringIgnoreCase('first').map<FirstAccess>((_) => const FirstAccess()) |
+      number.map<Index1Access>((value) => Index1Access(value)) |
+      stringIgnoreCase('last').map<LastAccess>((_) => const LastAccess()) |
+      (accessIndexTypes & charTrim(':') & accessIndexTypes)
+          .map<IndexRangeAccess>((value) => IndexRangeAccess(value[0], value[2])) |
+      (accessIndexTypes & charTrim(':') & accessIndexTypes & charTrim(':') & number)
+          .map<IndexRangeStepAccess>((value) => IndexRangeStepAccess(value[0], value[2], value[4])) |
+      stringIgnoreCase('even').map<EvenAccess>((_) => const EvenAccess()) |
+      stringIgnoreCase('odd').map<OddAccess>((_) => const OddAccess());
 
   final digitInput = (arrayAccess.plusSeparated(charTrim(',')))
       .optional()
       .wrapChars('[', ']')
-      .map<List<ListAccess>?>((value) => value?.elements);
+      .map<List<ListAccess>?>((value) => value?.elements.cast<ListAccess>() ?? const [AllAccess()]);
 
   final mapKey = (access & digitInput.optional()).map((value) => switch (value[0]) {
         '*' => CurrentScopeOperation(value[1]),
@@ -92,7 +82,7 @@ void main() {
 
   final function = (letter().plus().flatten().trim() &
           dotInput.plusSeparated(charTrim(',')).optional().wrapChars('(', ')').map<List<DotInput>>((value) {
-            return value?.elements.cast<DotInput>();
+            return value?.elements.cast<DotInput>() ?? [];
           }) &
           digitInput.optional())
       .map<FunctionOperation>((value) => FunctionOperation(
@@ -108,7 +98,7 @@ void main() {
   final selectStatement = (stringIgnoreCase('select').trim() &
           selectKeys.plusSeparated(charTrim(',')).wrapChars("{", "}").map((value) => value.elements) &
           (stringIgnoreCase('from').trim() & charTrim('{') & dotInput & charTrim('}')).pick(2).optional())
-      .map<SelectStatement>((value) => SelectStatement(value[1], value[2]));
+      .map<SelectStatement>((value) => SelectStatement(value[1].cast<(String?, DotInput)>(), value[2]));
 
   final ifStatement = (stringIgnoreCase('if').trim() &
           dotInput.wrapChars('{', '}') &
@@ -122,7 +112,7 @@ void main() {
       .map((value) => StatementOperation(value[0], value[1]));
 
   dotInput.set(literal.map((value) => DotInput([value])) |
-      (function | mapKey | statements).plusSeparated(charTrim('.')).map<DotInput>((dynamic value) {
+      (function | statements | mapKey).plusSeparated(charTrim('.')).map<DotInput>((dynamic value) {
         if (value.elements[0] is FunctionOperation) {
           final function = value.elements[0] as FunctionOperation;
           value.elements[0] =
@@ -154,7 +144,6 @@ void main() {
       interpreter.runStatements(value).then((value) {
         print(interpreter.values);
       });
-      exit(0);
       break;
     case Failure(message: final message, position: final position):
       print('Failure at $position: $message');

@@ -1,5 +1,5 @@
-///Generates the test coverage for the project
-///This works by replacing the all input in the tests dart file and adding all the files to be included in the coverage
+//Generates the test coverage for the project
+//This works by replacing the all input in the tests dart file and adding all the files to be included in the coverage
 
 // ignore_for_file: avoid_print
 

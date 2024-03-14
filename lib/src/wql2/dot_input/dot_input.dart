@@ -43,7 +43,12 @@ class DotInput extends Statement {
           if (result.noop) {
             continue;
           }
-          allExpandedResults.add(result.result);
+
+          if (operation is StatementOperation && operation.statement is SelectStatement) {
+            allExpandedResults.addAll(result.result);
+          } else {
+            allExpandedResults.add(result.result);
+          }
         }
 
         currentValue = allExpandedResults;
