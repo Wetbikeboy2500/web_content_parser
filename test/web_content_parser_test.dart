@@ -10,6 +10,7 @@ import 'package:test/test.dart';
 import 'package:web_content_parser/src/parser/sources/computer.dart';
 import 'package:web_content_parser/src/wql/parserHelper.dart';
 import 'package:web_content_parser/src/wql/statements/loopStatement.dart';
+import 'package:web_content_parser/src/wql2/wql2.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
 
 import 'blank.dart';
@@ -866,7 +867,13 @@ void main() {
         expect(result is petitparser.Success, isTrue);
         final value = result.value[1];
         expect(value is petitparser.SeparatedList, isTrue);
-        expect(value.elements.map((t) => t is petitparser.Token ? t.value : t), equals(['all', 'first', ['1', ':', '2']]));
+        expect(
+            value.elements.map((t) => t is petitparser.Token ? t.value : t),
+            equals([
+              'all',
+              'first',
+              ['1', ':', '2']
+            ]));
       });
       test('Array access [all,first,-1:-2]', () {
         final arrayAccess = '[all,first,-1:-2]';
@@ -876,68 +883,70 @@ void main() {
         expect(result is petitparser.Success, isTrue);
         final value = result.value[1];
         expect(value is petitparser.SeparatedList, isTrue);
-        expect(value.elements.map((t) => t is petitparser.Token ? t.value : t), equals(['all', 'first', ['-1', ':', '-2']]));
+        expect(
+            value.elements.map((t) => t is petitparser.Token ? t.value : t),
+            equals([
+              'all',
+              'first',
+              ['-1', ':', '-2']
+            ]));
       });
     });
     test('Do not rethrow error', () async {
-      final Result values = await runWQL('SET return TO value[0];', throwErrors: false);
+      final Result values = await WQL.run('SET return TO value[0];');
 
       expect(values is Pass, isFalse);
-    }, skip: true);
+    });
     test('Custom list access supported', () async {
       final code = '''
         SET value TO l'';
         SET return TO value[0:1];
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect((values as Pass).data['return'], isNull);
-    });
-    test('Statement unimplemented', () async {
-      final statement = Statement();
-      expect(() => statement.execute(Interpreter(), null), throwsA(isA<UnimplementedError>()));
     });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
       final code = '''
-        SELECT
-          *.name() AS random,
+        doc = document.querySelectorAll(s'body > p')[].select{
+          random: *.name(),
           *.innerHTML()
-        FROM document.querySelectorAll(s'body > p')[]
-        INTO doc;
+        };
 
-        SET firstname TO s'hello';
+        firstname = s'hello';
 
-        SELECT
+        doctwo = select{
           doc[],
           firstname
-        FROM *
-        INTO doctwo;
+        };
 
-        SELECT
+        docthree = select{
           doc[].random,
           doc[].innerHTML,
           firstname
-        FROM *
-        INTO docthree;
+        };
       ''';
 
-      final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
+      final Result values = await WQL.run(
+        code,
+        context: {'document': document},
+      );
 
       expect(values is Pass, isTrue);
 
-      expect((values as Pass).data!['doctwo'], equals((values as Pass).data!['docthree']));
-      expect(
-          (values as Pass).data!['doctwo'],
-          equals([
-            {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
-            {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
-            {'random': 'p', 'innerHTML': ' Some testing text 3 ', 'firstname': 'hello'},
-            {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
-          ]));
+      final expectedResult = [
+        {'random': 'p', 'innerHTML': ' Some testing text 1 ', 'firstname': 'hello'},
+        {'random': 'p', 'innerHTML': ' Some testing text 2 ', 'firstname': 'hello'},
+        {'random': 'p', 'innerHTML': ' Some testing text 3 ', 'firstname': 'hello'},
+        {'random': 'p', 'innerHTML': ' Some testing text 4 ', 'firstname': 'hello'},
+      ];
+
+      expect((values as Pass).data!['doctwo'], equals(expectedResult));
+      expect((values as Pass).data!['docthree'], equals(expectedResult));
     });
     test('Get basic information 2', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());

@@ -1,6 +1,5 @@
 import 'package:petitparser/petitparser.dart';
 
-import '../scraper/wql/wqlFunctions.dart';
 import 'dot_input/dot_input.dart';
 import 'dot_input/list_access.dart';
 import 'dot_input/operation.dart';
@@ -10,7 +9,6 @@ import 'statements/if_statement.dart';
 import 'statements/select_statement.dart';
 import 'statements/set_statement.dart';
 import 'statements/statement.dart';
-import 'wql2.dart';
 
 extension CharWrapper on Parser {
   Parser wrapChars(String ch0, String ch1) => (charTrim(ch0) & this & charTrim(ch1)).pick(1);
@@ -18,20 +16,7 @@ extension CharWrapper on Parser {
 
 Parser charTrim(String ch) => char(ch).trim();
 
-void main() {
-  loadWQLFunctions();
-
-  String input = '''
-      result = getRequest(s'https://github.com/topics')
-      .if{*.getStatusCode().equals(n'200')}
-      .parseBody().querySelectorAll(s'.py-4.border-bottom')[].select{
-        s'hello world',
-        name: *.querySelector(s'.f3').text().trim(),
-        description: *.querySelector(s'.f5').text().trim(),
-        url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
-      };
-  ''';
-
+Result parse(String input, Interpreter interpreter) {
   final safeChars = patternIgnoreCase('~!@\$%&*_+=/\'"?><|`#a-zA-Z0-9\\-\\^');
 
   final access = safeChars.plus().flatten().trim();
@@ -88,7 +73,7 @@ void main() {
       .map<FunctionOperation>((value) => FunctionOperation(
             value[0],
             false,
-            WQL.functions[value[0].toLowerCase()] ?? (throw Exception('Function not found: ${value[0]}')),
+            interpreter.functions[value[0].toLowerCase()] ?? (throw Exception('Function not found: ${value[0]}')),
             value[1],
             value[2],
           ));
@@ -135,17 +120,5 @@ void main() {
       .plusSeparated(charTrim(';'))
       .map<List<Statement>>((value) => value.elements.nonNulls.toList().cast<Statement>()));
 
-  final parsed = completeParser.parse(input);
-
-  switch (parsed) {
-    case Success(value: final value):
-      print('Success: $value');
-      Interpreter interpreter = Interpreter(WQL.functions);
-      interpreter.runStatements(value).then((value) {
-        print(interpreter.values);
-      });
-      break;
-    case Failure(message: final message, position: final position):
-      print('Failure at $position: $message');
-  }
+  return completeParser.parse(input);
 }

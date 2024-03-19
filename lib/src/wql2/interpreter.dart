@@ -12,7 +12,12 @@ class Interpreter {
   Map<String, dynamic> get values => _values;
 
   void setValue(String name, dynamic value) {
-    if (name.startsWith('_')) {
+    if (name == '^') {
+      assert(value is Map<String, dynamic>);
+      _values.removeWhere((key, value) => !key.startsWith('_'));
+      _values.addAll(value);
+      return;
+    } else if (name.startsWith('_')) {
       assert(_contextStack.isNotEmpty);
       bool hasPrevious = false;
       dynamic previous;
@@ -44,8 +49,14 @@ class Interpreter {
     _contextStack.removeLast();
   }
 
-  Future<({bool noop})> runStatements(List<Statement> statements) async {
-    return runStatementsWithContext(statements, values, false);
+  Future<({bool noop})> runStatements(List<Statement> statements, Map<String, dynamic> context) async {
+    pushLocalContext();
+    for (final entry in context.entries) {
+      setValue(entry.key, entry.value);
+    }
+    await runStatementsWithContext(statements, values, false);
+    popLocalContext();
+    return const (noop: false);
   }
 
   Future<({bool noop})> runStatementsWithContext(List<Statement> statements, dynamic context, bool allowNoopEscape) async {

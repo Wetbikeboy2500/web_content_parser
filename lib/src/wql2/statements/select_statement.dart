@@ -1,3 +1,5 @@
+import 'package:web_content_parser/src/wql2/dot_input/list_access.dart';
+
 import '../dot_input/dot_input.dart';
 import '../interpreter.dart';
 import 'statement.dart';
@@ -35,7 +37,8 @@ class SelectStatement extends Statement {
   }
 
   Future<List<Map<String, dynamic>>> _parseContext(context, interpreter) async {
-    final List<(String?, bool, bool, dynamic)> results = [];
+    final List<({String? name, String resultName, bool wasExpanded, bool anonExpand, bool noop, dynamic value})>
+        results = [];
     int maxLength = 1;
 
     for (final (name, input) in select) {
@@ -44,7 +47,14 @@ class SelectStatement extends Statement {
         maxLength = result.result.length;
       }
 
-      results.add((name ?? result.name, result.wasExpanded, result.noop, result.result));
+      results.add((
+        name: name,
+        resultName: result.name,
+        wasExpanded: name != null ? false : result.wasExpanded,
+        anonExpand: input.operations.last.listAccess?.last is AllAccess,
+        noop: result.noop,
+        value: result.result,
+      ));
     }
 
     final List<Map<String, dynamic>> resultsMap = [];
@@ -53,7 +63,14 @@ class SelectStatement extends Statement {
       final Map<String, dynamic> values = {};
       for (final result in results) {
         switch (result) {
-          case (final String? name, true, final bool noop, final dynamic value):
+          case (
+              :final String? name,
+              :final String resultName,
+              wasExpanded: true,
+              :final bool anonExpand,
+              :final bool noop,
+              :final dynamic value
+            ):
             if (noop) {
               continue;
             }
@@ -61,15 +78,28 @@ class SelectStatement extends Statement {
             if (name != null && name.isNotEmpty) {
               values[name] = value;
             } else if (i < value.length) {
-              values[''] = value[i];
+              final expandedValue = value[i];
+
+              if (anonExpand && expandedValue is Map<String, dynamic>) {
+                values.addAll(expandedValue);
+              } else {
+                values[resultName] = expandedValue;
+              }
             }
             break;
-          case (final String? name, false, final bool noop, final dynamic value):
+          case (
+              :final String? name,
+              :final String resultName,
+              wasExpanded: false,
+              anonExpand: _,
+              :final bool noop,
+              :final dynamic value
+            ):
             if (noop) {
               continue;
             }
 
-            values[name ?? ''] = value;
+            values[name ?? resultName] = value;
             break;
         }
       }
