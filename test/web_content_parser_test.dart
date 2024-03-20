@@ -952,12 +952,20 @@ void main() {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
       final code = '''
-        SELECT *.name() AS random, *.innerHTML() FROM document.querySelectorAll(s'body > p')[] INTO doc;
-        SET firstname TO s'hello';
-        SELECT doc[].random, doc[].innerHTML, firstname FROM * INTO docthree;
+        doc = document.querySelectorAll(s'body > p')[].select{
+          random: *.name(),
+          *.innerHTML()
+        };
+
+        firstname = s'hello';
+
+        docthree = select{
+          doc[],
+          firstname
+        };
       ''';
 
-      final Result values = await runWQL(code, parameters: {'document': document}, throwErrors: true);
+      final Result values = await WQL.run(code, context: {'document': document});
 
       expect(values is Pass, isTrue);
 
@@ -972,32 +980,34 @@ void main() {
     });
     test('Multiple arguments', () async {
       final String code = '''
-        SET test TO s'hello';
-        SET page TO concat(s'?page=', ^.test);
+        test = s'hello';
+        page = concat(s'?page=', test);
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect((values as Pass).data!['page'], equals('?page=hello'));
     });
     test('Multiple arguments raw', () async {
       final String code = '''
-        SET page TO concat(s'?page=', s'hello');
+        page = concat(s'?page=', s'hello');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect((values as Pass).data!['page'], equals('?page=hello'));
     });
     test('Multiple arguments nested', () async {
       final String code = '''
-        SET page TO n'0';
-        SET url TO joinUrl(s'https://www.example.com/', concat(s'?page=', increment(^.page)));
+        page = n'0';
+        url = joinUrl(s'https://www.example.com/', concat(s'?page=', increment(^.page)));
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      loadWQLFunctions();
+
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect((values as Pass).data!['url'], equals('https://www.example.com/?page=1'));

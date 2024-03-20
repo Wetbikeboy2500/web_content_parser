@@ -7,11 +7,11 @@ import 'translator.dart';
 
 class WQL {
   static Map<String, Function> functions = {
-    'increment': (args) => (args[0]! is num) ? num.parse(args[0]) + 1 : args[0] + 1,
-    'decrement': (args) => (args[0]! is num) ? num.parse(args[0]) - 1 : args[0] - 1,
+    'increment': (args) => (args[0] is! num) ? num.parse(args[0]) + 1 : args[0] + 1,
+    'decrement': (args) => (args[0] is! num) ? num.parse(args[0]) - 1 : args[0] - 1,
     'trim': (args) => args[0].trim(),
     'merge': (args) => args.expand((l) => (l is List) ? l : [l]).toList(),
-    'concat': (args) => args.join(),
+    'concat': (args) => args.join(''),
     'last': (args) => args[0].last,
     'first': (args) => args[0].first,
     'length': (args) => args[0].length,
