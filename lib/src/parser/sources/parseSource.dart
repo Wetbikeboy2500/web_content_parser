@@ -6,7 +6,6 @@ import 'package:web_content_parser/src/parser/sources/computer.dart';
 import '../../scraper/scraperSource.dart';
 //utils
 import '../../util/RequestType.dart';
-import '../../util/Result.dart';
 import '../../util/log.dart';
 import '../json/catalogEntry.dart';
 //models

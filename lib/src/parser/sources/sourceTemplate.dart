@@ -1,12 +1,10 @@
-import '../../util/Result.dart';
+import '../../util/RequestType.dart';
 import '../../util/log.dart';
-
 import '../json/catalogEntry.dart';
 import '../json/chapter.dart';
 import '../json/chapterID.dart';
 import '../json/id.dart';
 import '../json/post.dart';
-import '../../util/RequestType.dart';
 
 ///Base of all sources
 ///Provides a consistent API for the sources

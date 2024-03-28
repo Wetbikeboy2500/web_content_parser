@@ -1,4 +1,3 @@
-import 'Result.dart';
 import 'log.dart';
 
 ///Useful helps for when dealing with different result outcomes

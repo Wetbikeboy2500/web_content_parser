@@ -11,7 +11,6 @@ import 'package:web_content_parser/parser.dart';
 import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/src/util/parseUriResult.dart';
 
-import '../../util/Result.dart';
 import '../../util/ResultExtended.dart';
 import '../../util/firstWhereResult.dart';
 

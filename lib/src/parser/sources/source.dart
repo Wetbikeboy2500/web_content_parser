@@ -1,21 +1,20 @@
-import '../../scraper/scraper.dart';
-import '../../scraper/scraperSource.dart';
-import '../../util/log.dart';
 import 'dart:io';
 
-//source interfaces
-import 'parseSource.dart';
-import 'sourceTemplate.dart';
+import '../../scraper/scraper.dart';
+import '../../scraper/scraperSource.dart';
+//utils
+import '../../util/RequestType.dart';
+import '../../util/log.dart';
+import '../../util/parseUriResult.dart';
 //models
 import '../json/catalogEntry.dart';
 import '../json/chapter.dart';
-import '../json/id.dart';
 import '../json/chapterID.dart';
+import '../json/id.dart';
 import '../json/post.dart';
-//utils
-import '../../util/Result.dart';
-import '../../util/RequestType.dart';
-import '../../util/parseUriResult.dart';
+//source interfaces
+import 'parseSource.dart';
+import 'sourceTemplate.dart';
 
 ///Returns only post data for the requested id
 ///

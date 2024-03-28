@@ -1,4 +1,3 @@
-import 'Result.dart';
 
 extension ResultReturns<T> on Iterable<T> {
   ///Finds the first element that passes [test]

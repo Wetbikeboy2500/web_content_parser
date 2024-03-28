@@ -1,4 +1,3 @@
-import 'Result.dart';
 
 extension UriResult on Uri {
   static Result<Uri> parse(String url) {

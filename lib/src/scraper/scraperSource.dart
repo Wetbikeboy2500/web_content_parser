@@ -1,18 +1,13 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/util/parseYaml.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
 
-import '../util/ResultExtended.dart';
-
-import '../util/Result.dart';
-
-import '../util/log.dart';
-
-import 'package:path/path.dart' as p;
-
 import '../util/RequestType.dart';
+import '../util/ResultExtended.dart';
+import '../util/log.dart';
 
 class ScraperSource {
   ///Stores references to the global sources by name

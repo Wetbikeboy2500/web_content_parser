@@ -1,4 +1,3 @@
-import '../util/Result.dart';
 import '../util/log.dart';
 import 'interpreter/interpreter.dart';
 import 'interpreter/parseAndTokenize.dart';
