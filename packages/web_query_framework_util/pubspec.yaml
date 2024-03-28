@@ -1,0 +1,8 @@
+name: web_query_framework_util
+description: Shared utils for interfaces to depend on.
+version: 1.0.0
+
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'

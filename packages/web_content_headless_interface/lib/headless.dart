@@ -1,4 +1,4 @@
-import '../../util/Result.dart';
+import 'package:web_query_framework_util:util.dart';
 
 abstract class Headless {
   bool get isSupported => false;

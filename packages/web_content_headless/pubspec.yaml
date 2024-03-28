@@ -13,5 +13,10 @@ dependencies:
       url: https://github.com/Wetbikeboy2500/web_content_parser.git
       ref: dev
       path: packages/web_content_headless_interface
+  web_query_framework_util:
+    git:
+      url: https://github.com/Wetbikeboy2500/web_content_parser.git
+      ref: dev
+      path: packages/web_query_framework_util
   flutter_inappwebview: ^5.4.1
   puppeteer: ^3.0.0

@@ -908,6 +908,22 @@ void main() {
       expect(values is Pass, isTrue);
       expect((values as Pass).data['return'], isNull);
     });
+    test('Custom list access supported', () async {
+      final code = '''
+        result = getRequest(s'https://github.com/topics')
+        .if{*.getStatusCode().equals(n'200')}
+        .parseBody().querySelectorAll(s'.py-4.border-bottom')[].select{
+          s'hello world',
+          name: *.querySelector(s'.f3').text().trim(),
+          description: *.querySelector(s'.f5').text().trim(),
+          url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
+        };
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      print((values as Pass).data['result']);
+    });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
 
