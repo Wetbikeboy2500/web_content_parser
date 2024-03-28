@@ -1,4 +1,3 @@
-import 'scraper/headless/headless.dart';
 import 'util/log.dart';
 
 ///Central class for settings

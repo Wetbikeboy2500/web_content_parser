@@ -1014,23 +1014,24 @@ void main() {
     });
     test('Multiple arguments nested with select', () async {
       final String code = '''
-        SET page TO n'0';
-        SELECT concat(s'https://www.example.com/', concat(s'?page=', increment(*))) as url FROM page into url;
-        SET url TO url[0].url;
+        page = n'0';
+        url = page.select{
+          url: concat(s'https://www.example.com/', concat(s'?page=', increment(*)))
+        }[0].url;
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect((values as Pass).data!['url'], equals('https://www.example.com/?page=1'));
     });
     test('Increment', () async {
       final code = '''
-        SET number TO n'0';
-        SET number TO number.increment();
+        number = n'0';
+        number = number.increment();
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1038,11 +1039,11 @@ void main() {
     });
     test('Decrement', () async {
       final code = '''
-        SET number TO n'0';
-        SET number TO number.decrement();
+        number = n'0';
+        number = number.decrement();
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1050,10 +1051,10 @@ void main() {
     });
     test('Concat', () async {
       final code = '''
-        SET output TO concat(s'hello', s' world');
+        output = concat(s'hello', s' world');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 

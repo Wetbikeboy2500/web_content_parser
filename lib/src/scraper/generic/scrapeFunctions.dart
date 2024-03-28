@@ -4,17 +4,15 @@
 
 import 'dart:async';
 import 'dart:convert';
+
+import 'package:http/http.dart';
 import 'package:web_content_parser/parser.dart';
 import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/src/util/parseUriResult.dart';
-import '../../util/ResultExtended.dart';
-
-import '../headless/headless.dart';
 
 import '../../util/Result.dart';
+import '../../util/ResultExtended.dart';
 import '../../util/firstWhereResult.dart';
-
-import 'package:http/http.dart';
 
 Future<Map<String, dynamic>> postRequest(String url, Object? body, Map<String, String>? headers) async {
   final Result<Uri> uri = UriResult.parse(url);

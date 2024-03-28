@@ -1,0 +1,8 @@
+name: web_content_headless_interface
+description: Provides interfaces for a headless web browser for mobile and desktop.
+version: 1.0.0
+
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
