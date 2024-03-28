@@ -1,8 +1,10 @@
 import 'dart:io';
 
+//utils
+import 'package:web_query_framework_util/util.dart';
+
 import '../../scraper/scraper.dart';
 import '../../scraper/scraperSource.dart';
-//utils
 import '../../util/RequestType.dart';
 import '../../util/log.dart';
 import '../../util/parseUriResult.dart';

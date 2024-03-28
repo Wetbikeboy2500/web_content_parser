@@ -1,3 +1,5 @@
+import 'package:web_query_framework_util/util.dart';
+
 import '../util/log.dart';
 import 'interpreter/interpreter.dart';
 import 'interpreter/parseAndTokenize.dart';

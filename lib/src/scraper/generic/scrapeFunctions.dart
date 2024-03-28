@@ -10,6 +10,7 @@ import 'package:web_content_headless_interface/headless.dart';
 import 'package:web_content_parser/parser.dart';
 import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/src/util/parseUriResult.dart';
+import 'package:web_query_framework_util/util.dart';
 
 import '../../util/ResultExtended.dart';
 import '../../util/firstWhereResult.dart';

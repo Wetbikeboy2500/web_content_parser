@@ -12,6 +12,7 @@ import 'package:web_content_parser/src/wql/parserHelper.dart';
 import 'package:web_content_parser/src/wql/statements/loopStatement.dart';
 import 'package:web_content_parser/src/wql2/wql2.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
+import 'package:web_query_framework_util/util.dart';
 
 import 'blank.dart';
 import 'heroku.dart';

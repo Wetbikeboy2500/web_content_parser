@@ -1,6 +1,6 @@
 import 'package:petitparser/petitparser.dart';
+import 'package:web_query_framework_util/util.dart' as wql_result;
 
-// import '../../../packages/web_query_framework_util/lib/Result.dart' as wql_result;
 import '../util/log.dart';
 import 'interpreter.dart';
 import 'translator.dart';

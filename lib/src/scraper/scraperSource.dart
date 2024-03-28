@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/util/parseYaml.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
+import 'package:web_query_framework_util/util.dart';
 
 import '../util/RequestType.dart';
 import '../util/ResultExtended.dart';

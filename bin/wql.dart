@@ -6,6 +6,8 @@ import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/wql/statements/setStatement.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
 import 'package:web_content_parser/util.dart';
+import 'package:web_query_framework_util/util.dart';
+
 import 'shared.dart';
 
 // ignore: non_constant_identifier_names

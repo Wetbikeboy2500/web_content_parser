@@ -1,3 +1,5 @@
+import 'package:web_query_framework_util/util.dart';
+
 import '../../util/RequestType.dart';
 import '../../util/log.dart';
 import '../json/catalogEntry.dart';
@@ -5,7 +7,6 @@ import '../json/chapter.dart';
 import '../json/chapterID.dart';
 import '../json/id.dart';
 import '../json/post.dart';
-
 ///Base of all sources
 ///Provides a consistent API for the sources
 abstract class SourceTemplate {

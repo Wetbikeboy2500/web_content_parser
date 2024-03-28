@@ -2,9 +2,10 @@ import 'dart:async';
 
 //source
 import 'package:web_content_parser/src/parser/sources/computer.dart';
+//utils
+import 'package:web_query_framework_util/util.dart';
 
 import '../../scraper/scraperSource.dart';
-//utils
 import '../../util/RequestType.dart';
 import '../../util/log.dart';
 import '../json/catalogEntry.dart';

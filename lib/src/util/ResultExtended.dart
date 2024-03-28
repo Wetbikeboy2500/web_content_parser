@@ -1,3 +1,5 @@
+import 'package:web_query_framework_util/util.dart';
+
 import 'log.dart';
 
 ///Useful helps for when dealing with different result outcomes

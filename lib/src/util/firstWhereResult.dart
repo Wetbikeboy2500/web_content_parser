@@ -1,3 +1,4 @@
+import 'package:web_query_framework_util/util.dart';
 
 extension ResultReturns<T> on Iterable<T> {
   ///Finds the first element that passes [test]
