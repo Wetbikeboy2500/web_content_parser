@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart';
+import 'package:web_content_headless_interface/headless.dart';
 import 'package:web_content_parser/parser.dart';
 import 'package:web_content_parser/src/util/log.dart';
 import 'package:web_content_parser/src/util/parseUriResult.dart';

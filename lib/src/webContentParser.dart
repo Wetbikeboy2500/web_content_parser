@@ -1,3 +1,5 @@
+import 'package:web_content_headless_interface/headless.dart';
+
 import 'util/log.dart';
 
 ///Central class for settings
