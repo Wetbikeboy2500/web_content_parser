@@ -1,7 +1,8 @@
 import 'dart:io';
+
 import 'package:json2yaml/json2yaml.dart';
-import 'package:web_content_parser/web_content_parser_full.dart';
 import 'package:path/path.dart' as p;
+import 'package:web_content_parser/web_content_parser_full.dart';
 
 void main(List<String> args) {
   createPackage(args.first, Directory.current);
@@ -58,9 +59,9 @@ void createPackage(String name, Directory dir) {
   String? contentType;
 
   if (createParser) {
-    stdout.write('contentType: (seriesImage) ');
+    stdout.write('contentType: (imageSeries) ');
     final String? value = stdin.readLineSync();
-    contentType = (value ?? '').isEmpty ? 'seriesImage' : value;
+    contentType = (value ?? '').isEmpty ? 'imageSeries' : value;
   }
 
   //get version number

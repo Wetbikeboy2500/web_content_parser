@@ -30,12 +30,12 @@ void main(List<String> args) {
   String filePath = path.join(Directory.current.path, args[0]);
   filePath = path.normalize(filePath);
 
-  run(args[1], Directory(filePath), args[2], entries);
+  run(args[1], Directory(filePath), args[2], Map.fromEntries(entries));
 }
 
 ///Run requests for script sources
-void run(String projectName, Directory dir, String type, List<MapEntry<String, dynamic>> arguments) async {
-  final List<ScraperSource> sources = loadExternalScarperSources(dir);
+void run(String projectName, Directory dir, String type, Map<String, dynamic> arguments) async {
+  final List<ScraperSource> sources = await loadExternalScarperSources(dir);
 
   if (sources.isNotEmpty) {
     try {

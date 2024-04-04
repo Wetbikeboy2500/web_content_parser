@@ -3,25 +3,27 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/util/parseYaml.dart';
-import 'package:web_content_parser/src/wql/wql.dart';
+import 'package:web_content_parser/src/wql2/wql2.dart';
 import 'package:web_query_framework_util/util.dart';
 
 import '../util/RequestType.dart';
 import '../util/ResultExtended.dart';
 import '../util/log.dart';
 
+const wql2 = 'wql.2';
+
 class ScraperSource {
   ///Stores references to the global sources by name
   static final Map<String, ScraperSource> _globalSources = {};
 
   ///Supported programs that can be run
-  static final Set<String> supportedProgramTypes = {'wql'};
+  static final Set<String> supportedProgramTypes = {wql2};
 
   ///Scraping requests that this object can run
-  final Map<String, Request> requests = {};
+  final Map<String, Request> requests;
 
   ///Yaml file info convert and stored
-  late final Map<String, dynamic> info;
+  final Map<String, dynamic> info;
 
   ///Main directory this extension is stored in
   final Directory directory;
@@ -34,35 +36,33 @@ class ScraperSource {
   ///Creates a scrapper that is added to global and can be referenced without having the object
   ///
   ///This is good for defining your scripts on start-up to later be used
-  factory ScraperSource.global(String input, Directory directory) {
-    final ScraperSource source = ScraperSource(input, directory);
+  static Result<ScraperSource> global(String input, Directory directory) {
+    final (:source, :errorMessage) = createScraperSource(input, directory);
+
+    if (source == null || (errorMessage?.isNotEmpty ?? false)) {
+      log2('Error creating global source:', errorMessage, level: const LogLevel.error());
+      return const Fail();
+    }
 
     //add to global scraper source by name
     _globalSources[source.info['source']] = source;
 
-    return source;
+    return Pass(source);
   }
 
   ///Creates a scrapper
-  //TODO: make the logic cleaner and more modular
-  ScraperSource(String input, this.directory) {
+  ScraperSource(this.directory, this.info, this.requests);
+
+  static ({ScraperSource? source, String? errorMessage}) createScraperSource(String input, Directory directory) {
     try {
       final Map<String, dynamic> yaml = parseYaml(input);
 
-      if (!yaml.containsKey('source')) {
-        throw Exception('Source is not defined');
-      }
+      const requireKeys = ['source', 'requests', 'version', 'programType'];
 
-      if (!yaml.containsKey('requests')) {
-        throw Exception('Requests are not defined');
-      }
-
-      if (!yaml.containsKey('version')) {
-        throw Exception('Version is not defined');
-      }
-
-      if (!yaml.containsKey('programType')) {
-        throw Exception('ProgramType is not defined');
+      for (final key in requireKeys) {
+        if (!yaml.containsKey(key)) {
+          throw Exception('$key is not defined');
+        }
       }
 
       if (!supportedProgramTypes.contains(yaml['programType'])) {
@@ -71,8 +71,7 @@ class ScraperSource {
 
       final String globalProgramType = yaml['programType'] as String;
 
-      //save all yaml into info
-      info = yaml;
+      final Map<String, Request> validRequests = {};
 
       //add functions (type, file, entry)
       for (final request in yaml['requests']) {
@@ -89,10 +88,11 @@ class ScraperSource {
         final String? localProgramType = request['programType'] as String?;
 
         if (localProgramType != null && !supportedProgramTypes.contains(localProgramType)) {
-          throw const FormatException('Unknown local program type');
+          log2('Unknown local program type', localProgramType, level: const LogLevel.warn());
+          continue;
         }
 
-        requests[request['type']] = Request(
+        validRequests[request['type']] = Request(
           type: requestMap(request['type']),
           file: File(p.join(directory.path, request['file'])),
           entry: request['entry'] ?? '',
@@ -100,16 +100,22 @@ class ScraperSource {
           programType: localProgramType ?? globalProgramType,
         );
       }
+
+      return (source: ScraperSource(directory, yaml, validRequests), errorMessage: null);
     } catch (e, stack) {
-      log2('Parsing error for global source', e, level: const LogLevel.error());
+      log2('Parsing error for global source:', e, level: const LogLevel.error());
       log(stack, level: const LogLevel.debug());
-      throw const FormatException('Failed to parse source');
+      return (source: null, errorMessage: e.toString());
     }
   }
 
   static bool _loadedWQLFunctions = false;
 
-  Future<Result<T>> makeRequest<T>(String name, List<MapEntry<String, dynamic>> arguments) async {
+  Future<Result<T>> makeRequest<T>(
+    String name,
+    Map<String, dynamic> arguments, {
+    Map<String, Function> functions = const {},
+  }) async {
     log2('Make request: ', name, level: const LogLevel.info());
     final Request? r = requests[name];
 
@@ -120,7 +126,7 @@ class ScraperSource {
         return const Fail();
       }
 
-      if (r.programType == 'wql') {
+      if (r.programType == wql2) {
         if (!_loadedWQLFunctions) {
           loadWQLFunctions();
           _loadedWQLFunctions = true;
@@ -129,8 +135,7 @@ class ScraperSource {
         return await ResultExtended.unsafeAsync<T>(
           () async {
             final String code = await r.file.readAsString();
-            final parameters = Map.fromEntries(arguments);
-            final result = await runWQL(code, parameters: parameters, throwErrors: true);
+            final result = await WQL.run(code, context: arguments, functions: functions);
             if (result case Pass<Map<String, dynamic>>(data: final data)) {
               if (data['return'] is! T) {
                 throw Exception('Return type is not correct');
@@ -158,6 +163,11 @@ class Request {
   final String entry;
   final bool compiled;
   final String programType;
-  const Request(
-      {required this.type, required this.file, required this.entry, required this.programType, this.compiled = false});
+  const Request({
+    required this.type,
+    required this.file,
+    required this.entry,
+    required this.programType,
+    this.compiled = false,
+  });
 }

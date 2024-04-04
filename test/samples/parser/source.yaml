@@ -2,24 +2,18 @@ source: testSource
 baseUrl: testSource.com
 subdomain: null
 version: 1
-contentType: seriesImage
-programType: hetu0.3
+contentType: imageSeries
+programType: wql.2
 requests:
   - type: post
-    file: fetch.ht
-    entry: main
+    file: fetch.wql
   - type: postUrl
-    file: fetch.ht
-    entry: url
+    file: fetch.wql
   - type: chapters
-    file: chapterlist.ht
-    entry: main
+    file: chapterlist.wql
   - type: images
-    file: fetchImages.ht
-    entry: main
+    file: fetchImages.wql
   - type: imagesUrl
-    file: fetchImages.ht
-    entry: url
+    file: fetchImages.wql
   - type: catalogMulti
-    file: catalog.ht
-    entry: main
+    file: catalog.wql

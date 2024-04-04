@@ -1,6 +1,7 @@
 //Make sure to keep this as the first import
 // ignore_for_file: unused_import, prefer_final_locals, prefer_const_constructors
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:html/dom.dart';
@@ -491,109 +492,36 @@ void main() {
   });
 
   group('Scraper', () {
-    test('Parse Yaml to Map', () {
-      final Map<String, dynamic> map = parseYaml('''
-                                  source: testSource
-                                  baseUrl: testSource.com
-                                  subdomain: null
-                                  version: 1
-                                  contentType: seriesImage
-                                  programType: hetu0.3
-                                  requests:
-                                    - type: post
-                                      file: fetch.ht
-                                      entry: main
-                                      compiled: true
-                                    - type: postUrl
-                                      file: fetch.ht
-                                      entry: url
-                                  ''');
-      expect(
-          map,
-          equals({
-            'source': 'testSource',
-            'baseUrl': 'testSource.com',
-            'subdomain': null,
-            'version': 1,
-            'contentType': 'seriesImage',
-            'programType': 'hetu0.3',
-            'requests': [
-              {
-                'type': 'post',
-                'file': 'fetch.ht',
-                'entry': 'main',
-                'compiled': true,
-              },
-              {
-                'type': 'postUrl',
-                'file': 'fetch.ht',
-                'entry': 'url',
-              },
-            ],
-          }));
-    });
-
-    test('Load yaml file', () {
+    test('Load yaml file', () async {
       WebContentParser.verbose = const LogLevel.debug();
 
-      List<ScraperSource> scrapers = loadExternalScarperSources(Directory('test/samples/scraper'));
+      List<ScraperSource> scrapers = await loadExternalScarperSources(Directory('test/samples/scraper'));
       //have one scraper
       expect(scrapers.length, equals(1));
       //scraper has 8 requests
-      expect(scrapers[0].requests.length, equals(10));
+      expect(scrapers[0].requests.length, equals(4));
       //info is correct
       expect(
         scrapers[0].info,
         equals(<String, dynamic>{
           'source': 'testSource',
           'version': 1,
-          'programType': 'wql',
+          'programType': 'wql.2',
           'requests': [
             {
-              'type': 'post',
-              'file': 'fetch.ht',
-              'entry': 'main',
-              'compiled': true,
-            },
-            {
-              'type': 'postUrl',
-              'file': 'fetch.ht',
-              'entry': 'url',
-            },
-            {
-              'type': 'chapters',
-              'file': 'chapterlist.ht',
-              'entry': 'main',
-            },
-            {
-              'type': 'images',
-              'file': 'fetchImages.ht',
-              'entry': 'main',
-            },
-            {
-              'type': 'imagesUrl',
-              'file': 'fetchImages.ht',
-              'entry': 'url',
-            },
-            {
-              'type': 'catalogMulti',
-              'file': 'catalog.ht',
-              'entry': 'main',
-            },
-            {
-              'type': 'test2',
+              'type': 'test',
               'file': 'test.wql',
             },
             {
-              'type': 'test3',
+              'type': 'test2',
               'file': 'test2.wql',
             },
             {
-              'type': 'test3_alt',
+              'type': 'test2_alt',
               'file': 'test2_alt.wql',
             },
             {
-              'type': 'test3_new',
+              'type': 'test2_new',
               'file': 'test2_new.wql',
             }
           ],
@@ -607,19 +535,19 @@ void main() {
     test('Load global scraper source and run WQL entry', () async {
       WebContentParser.verbose = const LogLevel.debug();
 
-      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
+      await loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
       ScraperSource? result = ScraperSource.scrapper('testSource');
 
       expect(result, isNotNull);
 
-      //override setstatement function to work with loading a file
-      SetStatement.functions['getrequest'] = (args) async {
-        return await File(args[0]).readAsString();
-      };
-
-      Result<List> response =
-          await result!.makeRequest<List>('test2', [MapEntry('path', 'test/samples/scraper/test.html')]);
+      Result<List> response = await result!.makeRequest<List>('test', {
+        'path': 'test/samples/scraper/test.html'
+      }, functions: {
+        'getrequest': (args) async {
+          return await File(args[0]).readAsString();
+        }
+      });
 
       expect(response is Pass, isTrue);
 
@@ -628,7 +556,7 @@ void main() {
     test('Load global scraper source and run WQL entry 2', () async {
       WebContentParser.verbose = const LogLevel.debug();
 
-      loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
+      await loadExternalScraperSourcesGlobal(Directory('test/samples/scraper'));
 
       ScraperSource? result = ScraperSource.scrapper('testSource');
 
@@ -639,14 +567,13 @@ void main() {
         return await File(args[0]).readAsString();
       };
 
-      Result<List> response =
-          await result!.makeRequest<List>('test3', [MapEntry('path', 'test/samples/scraper/test.html')]);
+      Result<List> response = await result!.makeRequest<List>('test3', {'path': 'test/samples/scraper/test.html'});
 
       Result<List> responseAlt =
-          await result.makeRequest<List>('test3_alt', [MapEntry('path', 'test/samples/scraper/test.html')]);
+          await result.makeRequest<List>('test3_alt', {'path': 'test/samples/scraper/test.html'});
 
       Result<List> responseNew =
-          await result.makeRequest<List>('test3_new', [MapEntry('path', 'test/samples/scraper/test.html')]);
+          await result.makeRequest<List>('test3_new', {'path': 'test/samples/scraper/test.html'});
 
       expect(response is Pass, isTrue);
       expect(responseAlt is Pass, isTrue);
@@ -912,9 +839,8 @@ void main() {
     test('Custom list access supported', () async {
       final code = '''
         result = getRequest(s'https://github.com/topics')
-        .if{*.getStatusCode().equals(n'200')}
+        .if{*.getStatusCode().equals(n'201')}
         .parseBody().querySelectorAll(s'.py-4.border-bottom')[].select{
-          s'hello world',
           name: *.querySelector(s'.f3').text().trim(),
           description: *.querySelector(s'.f5').text().trim(),
           url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
@@ -923,7 +849,9 @@ void main() {
 
       final Result values = await WQL.run(code);
 
-      print((values as Pass).data['result']);
+      JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      String prettyprint = encoder.convert((values as Pass).data['result']);
+      print(prettyprint);
     });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());

@@ -218,8 +218,8 @@ bool sourceSupports(String source, RequestType type) {
 ///[dir] is directory to be searched recursively for yaml config files.
 ///
 ///Supports loading multiple sources at once inside a directory.
-void loadExternalParseSources(Directory dir) {
-  final List<ScraperSource> scrapers = loadExternalScarperSources(dir);
+Future<void> loadExternalParseSources(Directory dir) async {
+  final List<ScraperSource> scrapers = await loadExternalScarperSources(dir);
   for (final scraper in scrapers) {
     try {
       //pass scraper to the parse interface

@@ -1,31 +1,12 @@
 source: testSource
 version: 1
-programType: wql
+programType: wql.2
 requests:
-  - type: post
-    file: fetch.ht
-    entry: main
-    compiled: true
-  - type: postUrl
-    file: fetch.ht
-    entry: url
-  - type: chapters
-    file: chapterlist.ht
-    entry: main
-  - type: images
-    file: fetchImages.ht
-    entry: main
-  - type: imagesUrl
-    file: fetchImages.ht
-    entry: url
-  - type: catalogMulti
-    file: catalog.ht
-    entry: main
-  - type: test2
+  - type: test
     file: test.wql
-  - type: test3
+  - type: test2
     file: test2.wql
-  - type: test3_alt
+  - type: test2_alt
     file: test2_alt.wql
-  - type: test3_new
+  - type: test2_new
     file: test2_new.wql

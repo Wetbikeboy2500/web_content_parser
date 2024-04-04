@@ -49,7 +49,7 @@ class ParseSource extends SourceTemplate {
       throw Exception('Subdomain is not defined');
     }
 
-    if (strict && !['seriesImage'].contains(scraper.info['contentType'])) {
+    if (strict && !['imageSeries'].contains(scraper.info['contentType'])) {
       throw const FormatException('Doesn\'t have valid contentType');
     }
   }
@@ -60,7 +60,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapterImages(chapterId);
     }
 
-    final result = await scraper.makeRequest(RequestType.images.string, [MapEntry('chapterId', chapterId.toJson())]);
+    final result = await scraper.makeRequest(RequestType.images.string, {'chapterId': chapterId.toJson()});
 
     if (result is! Pass) {
       log('Fetch chapter images request failed', level: const LogLevel.warn());
@@ -82,7 +82,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchChapterImagesUrl(url);
     }
 
-    final result = await scraper.makeRequest(RequestType.imagesUrl.string, [MapEntry('url', url)]);
+    final result = await scraper.makeRequest(RequestType.imagesUrl.string, {'url': url});
 
     if (result is! Pass) {
       log('Fetch chapter images url request failed', level: const LogLevel.warn());
@@ -105,7 +105,7 @@ class ParseSource extends SourceTemplate {
     }
 
     final Result<List> chapters =
-        await scraper.makeRequest<List>(RequestType.chapters.string, [MapEntry('id', id.toJson())]);
+        await scraper.makeRequest<List>(RequestType.chapters.string, {'id': id.toJson()});
 
     if (chapters is! Pass<List>) {
       log('Fetch chapters request failed', level: const LogLevel.warn());
@@ -147,7 +147,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchPostUrl(url);
     }
 
-    final Result post = await scraper.makeRequest(RequestType.postUrl.string, [MapEntry('url', url)]);
+    final Result post = await scraper.makeRequest(RequestType.postUrl.string, {'url': url});
 
     if (post is! Pass) {
       log('Fetch post url request failed', level: const LogLevel.warn());
@@ -171,7 +171,7 @@ class ParseSource extends SourceTemplate {
       return super.fetchPost(id);
     }
 
-    final Result post = await scraper.makeRequest(RequestType.post.string, [MapEntry('id', id.toJson())]);
+    final Result post = await scraper.makeRequest(RequestType.post.string, {'id': id.toJson()});
 
     if (post is! Pass) {
       log('Fetch post request failed', level: const LogLevel.warn());
@@ -203,7 +203,7 @@ class ParseSource extends SourceTemplate {
     }
 
     final Result<List> entries =
-        await scraper.makeRequest<List>(requestType.string, [MapEntry('page', page), MapEntry('options', options)]);
+        await scraper.makeRequest<List>(requestType.string, {'page': page, 'options': options});
 
     if (entries is! Pass<List>) {
       log('Fetch catalog request failed', level: const LogLevel.warn());
