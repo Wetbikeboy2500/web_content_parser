@@ -115,9 +115,9 @@ Result parse(String input, Interpreter interpreter) {
           (stringIgnoreCase('else').trim() & completeParser.wrapChars('{', '}')).optional())
       .map((value) => IfStatement(value[1], true, value[2], value[3]));
 
-  completeParser.set((accessStatement | topIf | dotInput)
-      .optional()
+  completeParser.set((accessStatement | topIf | dotInput | whitespace().star().flatten().map((value) => null))
       .plusSeparated(charTrim(';'))
+      .end()
       .map<List<Statement>>((value) => value.elements.nonNulls.toList().cast<Statement>()));
 
   return completeParser.parse(input);
