@@ -66,7 +66,7 @@ Result parse(String input, Interpreter interpreter) {
   final dotInput = undefined();
 
   final function = (letter().plus().flatten().trim() &
-          dotInput.plusSeparated(charTrim(',')).optional().wrapChars('(', ')').map<List<DotInput>>((value) {
+          (dotInput.plusSeparated(charTrim(',')) & charTrim(',').optional()).pick(0).optional().wrapChars('(', ')').map<List<DotInput>>((value) {
             return value?.elements.cast<DotInput>() ?? [];
           }) &
           digitInput.optional())
@@ -78,10 +78,10 @@ Result parse(String input, Interpreter interpreter) {
             value[2],
           ));
 
-  final selectKeys = ((access & charTrim(':')).pick(0).optional() & dotInput).map((value) => (value[0], value[1]));
+  final selectKeys = (((rawInputSingleQuote | access) & charTrim(':')).pick(0).optional() & dotInput).map((value) => (value[0], value[1]));
 
   final selectStatement = (stringIgnoreCase('select').trim() &
-          selectKeys.plusSeparated(charTrim(',')).wrapChars("{", "}").map((value) => value.elements) &
+          (selectKeys.plusSeparated(charTrim(',')) & charTrim(',').optional()).pick(0).wrapChars("{", "}").map((value) => value.elements) &
           (stringIgnoreCase('from').trim() & charTrim('{') & dotInput & charTrim('}')).pick(2).optional())
       .map<SelectStatement>((value) => SelectStatement(value[1].cast<(String?, DotInput)>(), value[2]));
 
