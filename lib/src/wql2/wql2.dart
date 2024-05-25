@@ -12,6 +12,16 @@ class WQL {
     'trim': (args) => args[0].trim(),
     'merge': (args) => args.expand((l) => (l is List) ? l : [l]).toList(),
     'concat': (args) => args.join(''),
+    'add': (args) {
+      if (args[0] is List) {
+        return args[0]..add(args[1]);
+      } else if (args[0] is num) {
+        return args[0] + (args[1] is num ? args[1] : num.parse(args[1]));
+      } else {
+        throw ArgumentError('First argument must be a List or a num');
+      }
+    },
+    'addall': (args) => args[0].addAll(args[1]),
     'last': (args) => args[0].last,
     'first': (args) => args[0].first,
     'length': (args) => args[0].length,
