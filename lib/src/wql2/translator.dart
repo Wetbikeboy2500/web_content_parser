@@ -117,8 +117,7 @@ Result parse(String input, Interpreter interpreter) {
 
   completeParser.set((accessStatement | topIf | dotInput | whitespace().star().flatten().map((value) => null))
       .plusSeparated(charTrim(';'))
-      .end()
       .map<List<Statement>>((value) => value.elements.nonNulls.toList().cast<Statement>()));
 
-  return completeParser.parse(input);
+  return completeParser.end().parse(input);
 }
