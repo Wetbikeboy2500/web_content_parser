@@ -41,6 +41,7 @@ class WQL {
     'and': (args) => args[0] && args[1],
     'or': (args) => args[0] || args[1],
     'equals': (args) => args[0] == args[1],
+    'throw': (args) => throw Exception(args.join(' ')),
   };
 
   static Future<wql_result.Result<Map<String, dynamic>>> run(
