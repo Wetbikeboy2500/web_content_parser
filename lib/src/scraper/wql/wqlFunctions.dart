@@ -152,8 +152,11 @@ void loadWQLFunctions() {
       }
       return arg0.querySelectorAll(arg1);
     },
-    'replacefirst': (args) {
-      args[0].replaceFirst(args[1], args[2]);
+    'host': (args) {
+      return Uri.parse(args[0]).host;
+    },
+    'replacehost': (args) {
+      return args[0].replaceAll(Uri.parse(args[0]).host, args[1]);
     }
   };
   SetStatement.functions = {
