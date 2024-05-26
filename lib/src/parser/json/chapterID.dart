@@ -14,6 +14,8 @@ class ChapterID extends Equatable {
   final ID id;
   final String uid;
 
+  //TODO: Add support for chapter uid to replace index in the uid
+
   ChapterID({
     required this.url,
     required this.index,
