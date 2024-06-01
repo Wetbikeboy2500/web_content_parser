@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:js_interop';
 
-import 'package:js/js.dart';
-import 'package:typings/core.dart' as js;
+import 'package:web/web.dart' hide Request, Response;
 import 'package:web_content_parser/src/scraper/wql/wqlFunctions.dart';
 import 'package:web_content_parser/src/wql/statements/setStatement.dart';
 import 'package:web_content_parser/src/wql/wql.dart';
@@ -20,8 +20,6 @@ external String? getValue(String key);
 
 typedef JSON = Map<String, dynamic>;
 
-typedef WebSocket = js.WebSocket;
-
 const websocketUrl = 'ws://localhost:4040/ws';
 
 void main() {
@@ -31,15 +29,16 @@ void main() {
     //establish connection
     final WebSocket ws = WebSocket(websocketUrl);
 
-    ws.addEventListener.$1(js.WebSocketEventMap.open, (event) {
+    ws.onopen = (Event event) {
       final status = StatusResponse(getQueue().map((e) => e.uid).toList(), getResults());
-      js.console.log(['Opening connection and sending status', status]);
-      ws.send(jsonEncode(status.toJson()));
+      console.log(['Opening connection and sending status', status].toJSBox);
+      ws.send(jsonEncode(status.toJson()).toJS);
       setIsReady(false);
-    });
+    }.toJS;
 
-    ws.addEventListener.$1(js.WebSocketEventMap.message, (event) {
-      js.console.log([event]);
+    ws.onmessage = (Event event) {
+      console.log(event);
+
       try {
         final message = decodeEvent(event);
 
@@ -52,24 +51,24 @@ void main() {
           saveUrlQueue([]);
           saveRequests({});
         } else {
-          js.console.error(['Unknown message type']);
+          console.error('Unknown message type'.toJS);
         }
       } catch (e, stack) {
-        js.console.error([e]);
-        js.console.error([stack]);
+        console.error(e.toJSBox);
+        console.error(stack.toJSBox);
       }
-    });
+    }.toJS;
   } else if (getReady() && onScrapePage()) {
-    js.console.log(['On scrape page']);
+    console.log('On scrape page'.toJS);
 
     //get request to run
     final urls = getUrlQueue();
 
     final request =
-        urls.firstWhere((element) => element.url == js.window.location.href, orElse: () => UrlQueueItem('', ''));
+        urls.firstWhere((element) => element.url == window.location.href, orElse: () => UrlQueueItem('', ''));
 
     if (request.uid == '') {
-      js.console.error(['Failed to find request']);
+      console.error('Failed to find request'.toJS);
       return;
     }
 
@@ -78,7 +77,7 @@ void main() {
     final index = queue.indexWhere((element) => element.uid == request.uid);
 
     if (index == -1) {
-      js.console.error(['Failed to find request in queue']);
+      console.error('Failed to find request in queue'.toJS);
       return;
     }
 
@@ -87,13 +86,13 @@ void main() {
 
     initializeWQL();
 
-    js.console.log(['run the wql']);
+    console.log('run the wql'.toJS);
 
     runWQL(code, parameters: params, throwErrors: false).then((value) {
-      js.console.log(['Did request pass?', value is Pass]);
+      console.log(['Did request pass?', value is Pass].toJSBox);
       if (value case Pass()) {
         if (value.data.containsKey('return')) {
-          js.console.log(['Data', jsonEncode(value.data['return'])]);
+          console.log(['Data', jsonEncode(value.data['return'])].toJSBox);
         }
       }
       final results = getResults();
@@ -102,7 +101,7 @@ void main() {
         try {
           results[request.uid] = jsonEncode(ResultExtended.toJson(Pass(value.data!['return'])));
         } catch (e) {
-          js.console.error(['Failed to encode result', e]);
+          console.error(['Failed to encode result', e].toJSBox);
           results[request.uid] = jsonEncode(ResultExtended.toJson(const Fail()));
         }
       } else {
@@ -110,47 +109,47 @@ void main() {
       }
 
       if (!saveRequests(results)) {
-        js.console.error(['Failed to save results']);
+        console.error('Failed to save results'.toJS);
         return;
       }
-      js.console.log(['Saved results']);
+      console.log('Saved results'.toJS);
 
       queue.removeAt(index);
       if (!saveQueue(queue)) {
-        js.console.error(['Failed to save queue']);
+        console.error('Failed to save queue'.toJS);
         return;
       }
-      js.console.log(['Saved queue']);
+      console.log('Saved queue'.toJS);
       //TODO: also remove the goto page redirect
 
       setIsReady(true);
       //redirect to ready page
-      js.window.location.href = 'http://localhost:4040/ready';
+      window.location.href = 'http://localhost:4040/ready';
     });
   }
 }
 
 void initializeWQL() {
   loadWQLFunctions();
-  SetStatement.functions['getdocument'] = (args) => js.window.document;
+  SetStatement.functions['getdocument'] = (args) => window.document;
   SetStatement.functions['gotopage'] = (args) {
     print(jsonEncode(args));
     final urlString = (args[0] is List) ? args[0].first : args[0];
     final uid = (args[1] is List) ? args[1].first : args[1];
-    if (Uri.parse(js.window.location.href).toString() == Uri.parse(urlString).toString()) {
+    if (Uri.parse(window.location.href).toString() == Uri.parse(urlString).toString()) {
       return true;
     }
     if (!saveToUrlQueue(uid, urlString)) {
-      js.console.error(['Failed to save url queue']);
+      console.error('Failed to save url queue'.toJS);
       return false;
     }
-    js.window.location.href = urlString;
+    window.location.href = urlString;
     return false;
   };
 }
 
-Map<String, dynamic> decodeEvent(js.Event event) {
-  return jsonDecode((event as js.MessageEvent).data);
+Map<String, dynamic> decodeEvent(Event event) {
+  return jsonDecode((event as MessageEvent).data.toString());
 }
 
 bool saveToUrlQueue(String uid, String url) {
@@ -169,7 +168,7 @@ bool saveUrlQueue(List<UrlQueueItem> queue) {
     setValue('urlQueue', jsonEncode(queue));
     return true;
   } catch (e) {
-    js.console.error([e]);
+    console.error(e.toJSBox);
     return false;
   }
 }
@@ -218,7 +217,7 @@ bool saveQueue(List<QueueItem> queue) {
     setValue('queue', jsonEncode(queue));
     return true;
   } catch (e) {
-    js.console.error([e]);
+    console.error(e.toJSBox);
     return false;
   }
 }
@@ -232,30 +231,30 @@ bool saveRequests(Map<String, String> results) {
     setValue('results', jsonEncode(results));
     return true;
   } catch (e) {
-    js.console.error([e]);
+    console.error(e.toJSBox);
     return false;
   }
 }
 
 bool onReadyPage() {
-  return Uri.parse(js.window.location.href).toString() == Uri.parse('http://localhost:4040/ready').toString();
+  return Uri.parse(window.location.href).toString() == Uri.parse('http://localhost:4040/ready').toString();
 }
 
 bool onScrapePage() {
   final queue = getQueue();
   final urlToQueue = getUrlQueue();
 
-  js.console.log([js.window.location.href, jsonEncode(urlToQueue)]);
+  console.log([window.location.href, jsonEncode(urlToQueue)].toJSBox);
 
   for (final item in urlToQueue) {
-    if (Uri.parse(js.window.location.href).toString() == Uri.parse(item.url).toString()) {
+    if (Uri.parse(window.location.href).toString() == Uri.parse(item.url).toString()) {
       //TODO: can make this more efficent by returning the index
       final index = queue.indexWhere((element) => element.uid == item.uid);
       if (index == -1) {
-        js.console.error(['Failed to find request in queue']);
+        console.error('Failed to find request in queue'.toJS);
         return false;
       }
-      js.console.log(['Found request in queue']);
+      console.log('Found request in queue'.toJS);
       return true;
     }
   }
@@ -277,7 +276,7 @@ void processRequest(Request request, WebSocket ws) {
 
   if (results.containsKey(request.uid)) {
     final response = Response(request.uid, ResultExtended.fromJson(jsonDecode(results[request.uid]!)));
-    ws.send(response.toJson());
+    ws.send(response.toJson().toJSBox);
     return;
   }
 
@@ -286,14 +285,14 @@ void processRequest(Request request, WebSocket ws) {
   request.params['uid'] = request.uid;
   queue.add(QueueItem(request.uid, request.code, request.params));
   if (!saveQueue(queue)) {
-    js.console.error(['Failed to save queue']);
+    console.error('Failed to save queue'.toJS);
     return;
   }
 
   final urlQueue = getUrlQueue();
   urlQueue.removeWhere((element) => element.uid == request.uid);
   if (!saveUrlQueue(urlQueue)) {
-    js.console.error(['Failed to save url queue but proceeding anyway']);
+    console.error('Failed to save url queue but proceeding anyway'.toJS);
   }
 
   setIsReady(true);
@@ -302,15 +301,15 @@ void processRequest(Request request, WebSocket ws) {
 
   try {
     runWQL(request.code, parameters: request.params, throwErrors: true).then((value) {
-      js.console.log(['Did request pass?', value is Pass]);
+      console.log(['Did request pass?', value is Pass].toJSBox);
       if (value case Pass()) {
         if (value.data.containsKey('return')) {
-          js.console.log(['Data', jsonEncode(value.data['return'])]);
+          console.log(['Data', jsonEncode(value.data['return'])].toJSBox);
         }
       }
     });
   } catch (e, stack) {
-    js.console.error([e, stack]);
+    console.error([e, stack].toJSBox);
   }
 }
 
@@ -325,7 +324,7 @@ void processConfirmation(Confirmation confirmation, WebSocket ws) {
   queue.removeWhere((element) => element.uid == confirmation.uid);
   if (queueLength != queue.length) {
     if (!saveQueue(queue)) {
-      js.console.error(['Failed to save queue']);
+      console.error('Failed to save queue'.toJS);
     }
   }
 
@@ -334,7 +333,7 @@ void processConfirmation(Confirmation confirmation, WebSocket ws) {
   urlQueue.removeWhere((element) => element.uid == confirmation.uid);
   if (urlQueueLength != urlQueue.length) {
     if (!saveUrlQueue(urlQueue)) {
-      js.console.error(['Failed to save url queue']);
+      console.error('Failed to save url queue'.toJS);
     }
   }
 
@@ -343,7 +342,7 @@ void processConfirmation(Confirmation confirmation, WebSocket ws) {
   results.removeWhere((key, value) => key == confirmation.uid);
   if (resultsLength != results.length) {
     if (!saveRequests(results)) {
-      js.console.error(['Failed to save results']);
+      console.error('Failed to save results'.toJS);
     }
   }
 }
