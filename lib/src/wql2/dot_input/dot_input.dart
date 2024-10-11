@@ -20,6 +20,15 @@ class DotInput extends Statement {
     final operationsLength = operations.length;
     int i = 0;
 
+    Future runElseIfNextOperation() async {
+      if (i + 1 < operationsLength) {
+        final nextOperation = operations[i + 1];
+        if (nextOperation is StatementOperation && nextOperation.statement is ElseStatement) {
+          await nextOperation.process(context, context, interpreter);
+        }
+      }
+    }
+
     Future<({dynamic result, bool noop})> getValue(Operation operation, dynamic value) async {
       if (operation is ScopeOperation) {
         return (result: await operation.process(context, context, interpreter), noop: false);
@@ -31,14 +40,7 @@ class DotInput extends Statement {
         final StatementReturnValue statementResult = await operation.process(value, context, interpreter);
 
         if (statementResult.noop) {
-          //run the else if that exists for the next op
-          if (i + 1 < operationsLength) {
-            final nextOperation = operations[i + 1];
-            if (nextOperation is StatementOperation && nextOperation.statement is ElseStatement) {
-              await nextOperation.process(context, context, interpreter);
-            }
-          }
-
+          await runElseIfNextOperation();
           return (result: null, noop: true);
         } else {
           return (result: statementResult.result, noop: false);
@@ -93,13 +95,7 @@ class DotInput extends Statement {
         } catch (_) {
           //TODO: add a optional warning here when running in debug mode
 
-          if (i + 1 < operationsLength) {
-            final nextOperation = operations[i + 1];
-            if (nextOperation is StatementOperation && nextOperation.statement is ElseStatement) {
-              await nextOperation.process(context, context, interpreter);
-            }
-          }
-
+          await runElseIfNextOperation();
           return (name: '', result: null, wasExpanded: false, noop: true);
         }
       }
