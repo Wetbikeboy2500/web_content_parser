@@ -1,16 +1,9 @@
-SET html TO getRequest(^.path);
-SET html TO parse(^.html);
-SELECT *.text() as text, *.querySelector(s'.description').text() as description FROM html.querySelectorAll(s'.item')[] INTO items;
-SELECT description FROM items[] INTO first WHEN text contains s'Title 1';
-SELECT description FROM items[] INTO second WHEN text contains s'Title 2';
-SELECT description FROM items[] INTO third WHEN text contains s'Title 3';
-SET return TO merge(^.first[0].description, ^.second[0].description, ^.third[0].description);
-
+html = getRequest(path).parse();
 items = html.querySelectorAll(s'.item')[].select {
     text: *.text(),
     description: *.querySelector(s'.description').text()
 };
-first = items[].if{ text contains s'Title 1' }[0]?.description;
+first = items[].if{ text contains s'Title 1' }[0].description;
 second = items[].if{ text contains s'Title 2' }[0].description;
 third = items[].if{ text contains s'Title 3' }[0].description;
 return = merge(first, second, third);

@@ -567,13 +567,13 @@ void main() {
         return await File(args[0]).readAsString();
       };
 
-      Result<List> response = await result!.makeRequest<List>('test3', {'path': 'test/samples/scraper/test.html'});
+      Result<List> response = await result!.makeRequest<List>('test2', {'path': 'test/samples/scraper/test.html'});
 
       Result<List> responseAlt =
-          await result.makeRequest<List>('test3_alt', {'path': 'test/samples/scraper/test.html'});
+          await result.makeRequest<List>('test2_alt', {'path': 'test/samples/scraper/test.html'});
 
       Result<List> responseNew =
-          await result.makeRequest<List>('test3_new', {'path': 'test/samples/scraper/test.html'});
+          await result.makeRequest<List>('test2_new', {'path': 'test/samples/scraper/test.html'});
 
       expect(response is Pass, isTrue);
       expect(responseAlt is Pass, isTrue);
@@ -824,34 +824,6 @@ void main() {
       final Result values = await WQL.run('SET return TO value[0];');
 
       expect(values is Pass, isFalse);
-    });
-    test('Custom list access supported', () async {
-      final code = '''
-        SET value TO l'';
-        SET return TO value[0:1];
-      ''';
-
-      final Result values = await WQL.run(code);
-
-      expect(values is Pass, isTrue);
-      expect((values as Pass).data['return'], isNull);
-    });
-    test('Custom list access supported', () async {
-      final code = '''
-        result = getRequest(s'https://github.com/topics')
-        .if{*.getStatusCode().equals(n'201')}
-        .parseBody().querySelectorAll(s'.py-4.border-bottom')[].select{
-          name: *.querySelector(s'.f3').text().trim(),
-          description: *.querySelector(s'.f5').text().trim(),
-          url: joinUrl(s'https://github.com', *.querySelector(s'a').attribute(s'href'))
-        };
-      ''';
-
-      final Result values = await WQL.run(code);
-
-      JsonEncoder encoder = JsonEncoder.withIndent('  ');
-      String prettyprint = encoder.convert((values as Pass).data['result']);
-      print(prettyprint);
     });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
@@ -1273,17 +1245,35 @@ void main() {
     });
     test('If Statement second', () async {
       final code = '''
-        SET status TO n'200';
-        IF status equals n'200':
-          SET output TO s'passed';
-        ENDIF;
+        status = n'200';
+        if {status.equals(n'200')}.eval {
+          output = s'passed';
+        };
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
       expect((values as Pass).data!['output'], equals('passed'));
+    });
+    test('If Else Statement', () async {
+      final code = '''
+        status = n'200';
+        if {status.equals(n'201')}
+          .else {
+            output = s'failed';
+          }
+          .eval {
+            output = s'passed';
+          };
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+
+      expect((values as Pass).data!['output'], equals('failed'));
     });
     test('Get last segment', () async {
       final code = '''

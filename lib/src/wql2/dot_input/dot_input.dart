@@ -1,4 +1,5 @@
 import '../interpreter.dart';
+import '../statements/else_statement.dart';
 import '../statements/eval_statement.dart';
 import '../statements/if_statement.dart';
 import '../statements/select_statement.dart';
@@ -16,13 +17,28 @@ class DotInput extends Statement {
     dynamic currentValue = context;
     bool wasExpanded = false;
 
+    final operationsLength = operations.length;
+    int i = 0;
+
     Future<({dynamic result, bool noop})> getValue(Operation operation, dynamic value) async {
       if (operation is ScopeOperation) {
         return (result: await operation.process(context, context, interpreter), noop: false);
       } else if (operation is StatementOperation) {
+        if (operation.statement is ElseStatement) {
+          return (result: value, noop: false);
+        }
+
         final StatementReturnValue statementResult = await operation.process(value, context, interpreter);
 
         if (statementResult.noop) {
+          //run the else if that exists for the next op
+          if (i + 1 < operationsLength) {
+            final nextOperation = operations[i + 1];
+            if (nextOperation is StatementOperation && nextOperation.statement is ElseStatement) {
+              await nextOperation.process(context, context, interpreter);
+            }
+          }
+
           return (result: null, noop: true);
         } else {
           return (result: statementResult.result, noop: false);
@@ -32,7 +48,9 @@ class DotInput extends Statement {
       }
     }
 
-    for (final operation in operations) {
+    for (i = 0; i < operationsLength; i++) {
+      final operation = operations[i];
+
       if (wasExpanded && operation is! ScopeOperation) {
         final List<dynamic> allExpandedResults = [];
 
@@ -74,6 +92,14 @@ class DotInput extends Statement {
           }
         } catch (_) {
           //TODO: add a optional warning here when running in debug mode
+
+          if (i + 1 < operationsLength) {
+            final nextOperation = operations[i + 1];
+            if (nextOperation is StatementOperation && nextOperation.statement is ElseStatement) {
+              await nextOperation.process(context, context, interpreter);
+            }
+          }
+
           return (name: '', result: null, wasExpanded: false, noop: true);
         }
       }
