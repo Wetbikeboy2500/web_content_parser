@@ -979,14 +979,13 @@ void main() {
     });
     test('Concat list', () async {
       final code = '''
-        SET first TO s'he';
-        SET second TO s'llo';
-        SELECT concat(^.first, ^.second) as out FROM * INTO output;
-        SELECT out.concat(s' world') as final FROM output[] INTO output;
-        SET output TO output[0].final;
+        first = s'he';
+        second = s'llo';
+        out = concat(^.first, ^.second);
+        output = out.concat(s' world');
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -994,21 +993,10 @@ void main() {
     });
     test('Trim', () async {
       final code = '''
-        SET output TO trim(s'   hello world   ');
+        output = trim(s'   hello world   ');
       ''';
 
-      final Result values = await runWQL(code);
-
-      expect(values is Pass, isTrue);
-
-      expect((values as Pass).data!['output'], equals('hello world'));
-    });
-    test('Itself', () async {
-      final code = '''
-        SET output TO s'hello world';
-      ''';
-
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1016,10 +1004,10 @@ void main() {
     });
     test('Create Range', () async {
       final code = '''
-        SET output TO createRange(n'0', n'10');
+        output = createRange(n'0', n'10');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1031,20 +1019,20 @@ void main() {
         print(args);
       };
       final code = '''
-        RUN print WITH n'0', n'10';
+        print(n'0', n'10');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
     });
     test('Reverse', () async {
       final code = '''
-        SET range TO createRange(n'0', n'10');
-        SET output TO range.reverse();
+        range = createRange(n'0', n'10');
+        output = range.reverse();
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1052,11 +1040,11 @@ void main() {
     });
     test('Count', () async {
       final code = '''
-        SET range TO createRange(n'0', n'10');
-        SET output TO range.count();
+        range = createRange(n'0', n'10');
+        output = range.count();
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1064,11 +1052,11 @@ void main() {
     });
     test('Merge Key Value', () async {
       final code = '''
-        SET range TO createRange(n'0', n'10');
-        SET output TO mergeKeyValue(range, range);
+        range = createRange(n'0', n'10');
+        output = mergeKeyValue(range, range);
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1089,10 +1077,10 @@ void main() {
     });
     test('Merge key value object', () async {
       final code = '''
-        SET output TO mergeKeyValue(merge(s'first', s'second'), merge(n'1', s'third'));
+        output = mergeKeyValue(merge(s'first', s'second'), merge(n'1', s'third'));
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1105,11 +1093,14 @@ void main() {
     });
     test('Merge and Select', () async {
       final code = '''
-        SET range TO createRange(n'0', n'3');
-        SELECT mergeKeyValue(*, *) as output, merge(*, *) as output1 FROM range[] INTO output;
+        range = createRange(n'0', n'3');
+        output = range[].select{
+          output: mergeKeyValue(*, *)
+          output1: merge(*, *)
+        };
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1132,11 +1123,13 @@ void main() {
     });
     test('Select nums from range', () async {
       final code = '''
-        SET range TO createRange(n'0', n'3');
-        SELECT * as num FROM range[] INTO output;
+        range = createRange(n'0', n'3');
+        output = range[].select{
+          num: *
+        };
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1150,12 +1143,12 @@ void main() {
     });
     test('Merge', () async {
       final code = '''
-        SET rangeOne TO createRange(n'0', n'6');
-        SET rangeTwo TO createRange(n'6', n'10');
-        SET output TO merge(rangeOne, rangeTwo);
+        rangeOne = createRange(n'0', n'6');
+        rangeTwo = createRange(n'6', n'10');
+        output = merge(rangeOne, rangeTwo);
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1163,10 +1156,10 @@ void main() {
     });
     test('toString', () async {
       final code = '''
-        SET output TO toString(n'10');
+        output = toString(n'10');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1174,10 +1167,10 @@ void main() {
     });
     test('decode', () async {
       final code = '''
-        SET output TO decode(s'{"hello": "world"}');
+        output = decode(s'{"hello": "world"}');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1187,11 +1180,25 @@ void main() {
       WebContentParser.verbose = const LogLevel.debug();
 
       final code = '''
-        SET object TO mergeKeyValue(s'hello', s'world');
-        SET output TO object.encode();
+        object = mergeKeyValue(s'hello', s'world');
+        output = object.encode();
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+
+      expect((values as Pass).data!['output'], equals('{"hello":"world"}'));
+    });
+    test('encode select', () async {
+      WebContentParser.verbose = const LogLevel.debug();
+
+      final code = '''
+        object = select{hello: s'world'}[0];
+        output = object.encode();
+      ''';
+
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1199,10 +1206,10 @@ void main() {
     });
     test('Is Empty', () async {
       final code = '''
-        SET output TO isEmpty(l'');
+        output = isEmpty(l'');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1210,10 +1217,10 @@ void main() {
     });
     test('Uppercase', () async {
       final code = '''
-        SET output TO uppercase(s'hello world');
+        output = uppercase(s'hello world');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1221,10 +1228,10 @@ void main() {
     });
     test('Lowercase', () async {
       final code = '''
-        SET output TO lowercase(s'HELLO WORLD');
+        output = lowercase(s'HELLO WORLD');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1232,12 +1239,12 @@ void main() {
     });
     test('If Statement', () async {
       final code = '''
-        IF b'true' equals b'true':
-          SET output TO s'passed';
-        ENDIF;
+        if{equals(b'true', b'true')}.eval {
+          output = s'passed';
+        };
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1277,11 +1284,11 @@ void main() {
     });
     test('Get last segment', () async {
       final code = '''
-        SET url TO s'https://www.example.com/home/testing/';
-        SET output TO url.getLastSegment();
+        url = s'https://www.example.com/home/testing/';
+        output = url.getLastSegment();
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1289,10 +1296,10 @@ void main() {
     });
     test('Json', () async {
       final code = '''
-        SET output TO json(s'{"hello": "world"}');
+        output = json(s'{"hello": "world"}');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1300,10 +1307,10 @@ void main() {
     });
     test('Json Insert', () async {
       final code = '''
-        SET output TO json(s'{"hello": "world"}', s'hello', s'Unknown');
+        output = json(s'{"hello": "world"}', s'hello', s'Unknown');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1311,10 +1318,10 @@ void main() {
     });
     test('Json Insert Nested', () async {
       final code = '''
-        SET output TO json(s'{"hello": {"world": null}}', s'hello.world', s'Unknown');
+        output = json(s'{"hello": {"world": null}}', s'hello.world', s'Unknown');
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1327,10 +1334,10 @@ void main() {
     test('Trim Function High Level', () async {
       WebContentParser.verbose = const LogLevel.debug();
       final code = '''
-        SET output TO trim(s'   hello world   ');
+        output = trim(s'   hello world   ');
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1339,11 +1346,11 @@ void main() {
     test('Trim Function Piped Value', () async {
       WebContentParser.verbose = const LogLevel.debug();
       final code = '''
-        SET first TO s'   hello world   ';
-        SET output TO first.trim();
+        first = s'   hello world   ';
+        output = first.trim();
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1351,14 +1358,18 @@ void main() {
     });
     test('Select When Contains', () async {
       final code = '''
-        SET first TO s'hello';
-        SELECT first FROM * INTO matchOutput WHEN first contains s'ell';
-        SELECT first FROM * INTO noMatchOutput WHEN first contains s'weird';
-        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
-        SELECT matchOutput, noMatchOutput FROM * INTO outputList;
+        first = s'hello';
+        result = s'first';
+        matchOutput = first.if{*.contains(s'ell')}.^.result;
+        noMatchOutput = first.if{*.contains(s'weird')};
+
+        output = select{
+          matchOutput,
+          noMatchOutput
+        };
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
@@ -1366,18 +1377,8 @@ void main() {
           (values as Pass).data!['output'],
           equals([
             {
-              'matchOutput': {'first': 'hello'},
+              'matchOutput': 'first',
               'noMatchOutput': null,
-            }
-          ]));
-      expect(
-          (values as Pass).data!['outputList'],
-          equals([
-            {
-              'matchOutput': [
-                {'first': 'hello'}
-              ],
-              'noMatchOutput': []
             }
           ]));
     });

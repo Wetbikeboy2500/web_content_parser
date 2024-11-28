@@ -30,23 +30,28 @@ class DotInput extends Statement {
     }
 
     Future<({dynamic result, bool noop})> getValue(Operation operation, dynamic value) async {
-      if (operation is ScopeOperation) {
-        return (result: await operation.process(context, context, interpreter), noop: false);
-      } else if (operation is StatementOperation) {
-        if (operation.statement is ElseStatement) {
-          return (result: value, noop: false);
-        }
+      try {
+        if (operation is ScopeOperation) {
+          return (result: await operation.process(context, context, interpreter), noop: false);
+        } else if (operation is StatementOperation) {
+          if (operation.statement is ElseStatement) {
+            return (result: value, noop: false);
+          }
 
-        final StatementReturnValue statementResult = await operation.process(value, context, interpreter);
+          final StatementReturnValue statementResult = await operation.process(value, context, interpreter);
 
-        if (statementResult.noop) {
-          await runElseIfNextOperation();
-          return (result: null, noop: true);
+          if (statementResult.noop) {
+            await runElseIfNextOperation();
+            return (result: null, noop: true);
+          } else {
+            return (result: statementResult.result, noop: false);
+          }
         } else {
-          return (result: statementResult.result, noop: false);
+          return (result: await operation.process(value, context, interpreter), noop: false);
         }
-      } else {
-        return (result: await operation.process(value, context, interpreter), noop: false);
+      } catch (e) {
+        await runElseIfNextOperation();
+        return (result: null, noop: true);
       }
     }
 
@@ -92,8 +97,16 @@ class DotInput extends Statement {
           if (operation.listAccess!.last is AllAccess) {
             wasExpanded = true;
           }
-        } catch (_) {
-          //TODO: add a optional warning here when running in debug mode
+        } catch (err, stack) {
+          assert(() {
+            // ignore: avoid_print
+            print('Warning: Could not access list at $operation');
+            // ignore: avoid_print
+            print(err);
+            // ignore: avoid_print
+            print(stack);
+            return true;
+          }());
 
           await runElseIfNextOperation();
           return (name: '', result: null, wasExpanded: false, noop: true);

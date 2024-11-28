@@ -1,4 +1,4 @@
-library web_content_parser;
+library;
 
 export './src/webContentParser.dart';
 

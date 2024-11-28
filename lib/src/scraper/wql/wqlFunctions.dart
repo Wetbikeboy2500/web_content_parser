@@ -14,7 +14,7 @@ void loadWQLFunctions() {
       //for the second argument, we are going to assume it is a map within a list
       return await getRequest(
         args[0],
-        (args.length > 1) ? args[1] : const <String, String>{},
+        (args.length > 1) ? Map<String, String>.from(args[1]) : const <String, String>{},
       );
     },
     'getdynamicrequest': (args) async {

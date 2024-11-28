@@ -23,7 +23,9 @@ coverage
 .env
 doc
 bin/main.*
+tmp
 
 *.js*
 *.exe
 *.jit
+*.aot

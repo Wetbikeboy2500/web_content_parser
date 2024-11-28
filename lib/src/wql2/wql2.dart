@@ -63,7 +63,12 @@ class WQL {
           return const wql_result.Fail();
         }
       case Failure():
-        log(parsed, level: const LogLevel.error());
+        assert(() {
+          // ignore: avoid_print
+          print('${parsed.toPositionString()} ${parsed.message}');
+          return true;
+        }());
+        log(parsed.message, level: const LogLevel.error());
         return const wql_result.Fail();
     }
   }

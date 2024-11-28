@@ -3,18 +3,6 @@ sealed class ListAccess {
   dynamic process(dynamic input);
 }
 
-class FirstAccess extends ListAccess {
-  const FirstAccess();
-  @override
-  dynamic process(dynamic input) => input.first;
-}
-
-class LastAccess extends ListAccess {
-  const LastAccess();
-  @override
-  dynamic process(dynamic input) => input.last;
-}
-
 class EvenAccess extends IndexRangeStepAccess {
   const EvenAccess() : super(0, -1, 2);
 }

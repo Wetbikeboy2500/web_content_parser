@@ -16,7 +16,7 @@ extension CharWrapper on Parser {
   Parser wrapCharsPreserve(String ch0, String ch1) => (char(ch0) & this & char(ch1)).pick(1);
 }
 
-Parser charTrim(String ch) => char(ch).trim();
+Parser charTrim(String ch) => char(ch, '$ch expected').trim();
 
 Result parse(String input, Interpreter interpreter) {
   final safeChars = patternIgnoreCase('~!@\$%&*_+=/\'"?><|`#a-zA-Z0-9\\-\\^');
@@ -43,13 +43,11 @@ Result parse(String input, Interpreter interpreter) {
       .map<int>((value) => value is String ? (value == 'first' ? 0 : -1) : value);
 
   final arrayAccess = stringIgnoreCase('all').map<AllAccess>((_) => const AllAccess()) |
-      stringIgnoreCase('first').map<FirstAccess>((_) => const FirstAccess()) |
-      number.map<Index1Access>((value) => Index1Access(value)) |
-      stringIgnoreCase('last').map<LastAccess>((_) => const LastAccess()) |
-      (accessIndexTypes & charTrim(':') & accessIndexTypes)
-          .map<IndexRangeAccess>((value) => IndexRangeAccess(value[0], value[2])) |
       (accessIndexTypes & charTrim(':') & accessIndexTypes & charTrim(':') & number)
           .map<IndexRangeStepAccess>((value) => IndexRangeStepAccess(value[0], value[2], value[4])) |
+      (accessIndexTypes & charTrim(':') & accessIndexTypes)
+          .map<IndexRangeAccess>((value) => IndexRangeAccess(value[0], value[2])) |
+      accessIndexTypes.map<Index1Access>((value) => Index1Access(value)) |
       stringIgnoreCase('even').map<EvenAccess>((_) => const EvenAccess()) |
       stringIgnoreCase('odd').map<OddAccess>((_) => const OddAccess());
 
@@ -116,5 +114,5 @@ Result parse(String input, Interpreter interpreter) {
       .plusSeparated(charTrim(';'))
       .map<List<Statement>>((value) => value.elements.nonNulls.toList().cast<Statement>()));
 
-  return completeParser.end().parse(input);
+  return completeParser.end('Input suddenly ends').parse(input);
 }
