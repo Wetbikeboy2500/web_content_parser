@@ -1,6 +1,6 @@
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/wql2/statements/else_statement.dart';
 
+import 'statements/else_statement.dart';
 import 'dot_input/dot_input.dart';
 import 'dot_input/list_access.dart';
 import 'dot_input/operation.dart';
@@ -66,7 +66,11 @@ Result parse(String input, Interpreter interpreter) {
   final dotInput = undefined();
 
   final function = (letter().plus().flatten().trim() &
-          (dotInput.plusSeparated(charTrim(',')) & charTrim(',').optional()).pick(0).optional().wrapChars('(', ')').map<List<DotInput>>((value) {
+          (dotInput.plusSeparated(charTrim(',')) & charTrim(',').optional())
+              .pick(0)
+              .optional()
+              .wrapChars('(', ')')
+              .map<List<DotInput>>((value) {
             return value?.elements.cast<DotInput>() ?? [];
           }) &
           digitInput.optional())
@@ -78,21 +82,25 @@ Result parse(String input, Interpreter interpreter) {
             value[2],
           ));
 
-  final selectKeys = (((rawInputSingleQuote | access) & charTrim(':')).pick(0).optional() & dotInput).map((value) => (value[0], value[1]));
+  final selectKeys = (((rawInputSingleQuote | access) & charTrim(':')).pick(0).optional() & dotInput)
+      .map((value) => (value[0], value[1]));
 
   final selectStatement = (stringIgnoreCase('select').trim() &
-          (selectKeys.plusSeparated(charTrim(',')) & charTrim(',').optional()).pick(0).wrapChars("{", "}").map((value) => value.elements) &
+          (selectKeys.plusSeparated(charTrim(',')) & charTrim(',').optional())
+              .pick(0)
+              .wrapChars("{", "}")
+              .map((value) => value.elements) &
           (stringIgnoreCase('from').trim() & charTrim('{') & dotInput & charTrim('}')).pick(2).optional())
       .map<SelectStatement>((value) => SelectStatement(value[1].cast<(String?, DotInput)>(), value[2]));
 
-  final ifStatement = (stringIgnoreCase('if').trim() & dotInput.wrapChars('{', '}'))
-      .map<IfStatement>((value) => IfStatement(value[1]));
+  final ifStatement =
+      (stringIgnoreCase('if').trim() & dotInput.wrapChars('{', '}')).map<IfStatement>((value) => IfStatement(value[1]));
 
   final evalStatement = (stringIgnoreCase('eval').trim() & completeParser.wrapChars('{', '}'))
-    .map<EvalStatement>((value) => EvalStatement(value[1]));
+      .map<EvalStatement>((value) => EvalStatement(value[1]));
 
   final elseStatement = (stringIgnoreCase('else').trim() & completeParser.wrapChars('{', '}'))
-    .map<ElseStatement>((value) => ElseStatement(value[1]));
+      .map<ElseStatement>((value) => ElseStatement(value[1]));
 
   final statements = ((selectStatement | ifStatement | evalStatement | elseStatement) & digitInput.optional())
       .map((value) => StatementOperation(value[0], value[1]));

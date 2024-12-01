@@ -1,0 +1,17 @@
+name: wql_language_server
+description: A sample command-line application.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+
+environment:
+  sdk: ^3.5.4
+
+# Add regular dependencies here.
+dependencies:
+  lsp_server: ^0.3.2
+  petitparser: ^6.0.0
+  # path: ^1.8.0
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.24.0
