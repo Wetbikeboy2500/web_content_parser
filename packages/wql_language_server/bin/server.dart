@@ -52,14 +52,134 @@ void main() async {
       isIncomplete: false,
       items: [
         CompletionItem(
-          label: 'getRequest',
+          label: 'increment',
           kind: CompletionItemKind.Function,
-          detail: 'Makes an HTTP GET request',
+          detail: 'Increment a number',
         ),
         CompletionItem(
-          label: 'parse',
-          kind: CompletionItemKind.Method,
-          detail: 'Parses HTML content',
+          label: 'decrement',
+          kind: CompletionItemKind.Function,
+          detail: 'Decrement a number',
+        ),
+        CompletionItem(
+          label: 'trim',
+          kind: CompletionItemKind.Function,
+          detail: 'Trim a string',
+        ),
+        CompletionItem(
+          label: 'merge',
+          kind: CompletionItemKind.Function,
+          detail: 'Merge a list of items',
+        ),
+        CompletionItem(
+          label: 'concat',
+          kind: CompletionItemKind.Function,
+          detail: 'Joins a list of items into a single string',
+        ),
+        CompletionItem(
+          label: 'add',
+          kind: CompletionItemKind.Function,
+          detail: 'Add an item to a list or a number',
+        ),
+        CompletionItem(
+          label: 'addAll',
+          kind: CompletionItemKind.Function,
+          detail: 'Add all items from one list to another',
+        ),
+        CompletionItem(
+          label: 'last',
+          kind: CompletionItemKind.Function,
+          detail: 'Get the last item from a list',
+        ),
+        CompletionItem(
+          label: 'first',
+          kind: CompletionItemKind.Function,
+          detail: 'Get the first item from a list',
+        ),
+        CompletionItem(
+          label: 'length',
+          kind: CompletionItemKind.Function,
+          detail: 'Get the length of a list',
+        ),
+        CompletionItem(
+          label: 'split',
+          kind: CompletionItemKind.Function,
+          detail: 'Split a string into a list of items',
+        ),
+        CompletionItem(
+          label: 'indexOf',
+          kind: CompletionItemKind.Function,
+          detail: 'Get the index of an item in a list',
+        ),
+        CompletionItem(
+          label: 'contains',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if a list contains an item',
+        ),
+        CompletionItem(
+          label: 'indexOfStartingAt',
+          kind: CompletionItemKind.Function,
+          detail: 'Get the index of an item in a list starting at a specific index',
+        ),
+        CompletionItem(
+          label: 'substring',
+          kind: CompletionItemKind.Function,
+          detail: 'Get a substring from a string',
+        ),
+        CompletionItem(
+          label: 'replaceAll',
+          kind: CompletionItemKind.Function,
+          detail: 'Replace all occurrences of a substring in a string',
+        ),
+        CompletionItem(
+          label: 'createRange',
+          kind: CompletionItemKind.Function,
+          detail: 'Create a range of numbers',
+        ),
+        CompletionItem(
+          label: 'reverse',
+          kind: CompletionItemKind.Function,
+          detail: 'Reverse a list',
+        ),
+        CompletionItem(
+          label: 'itself',
+          kind: CompletionItemKind.Function,
+          detail: 'Return the input value',
+        ),
+        CompletionItem(
+          label: 'print',
+          kind: CompletionItemKind.Function,
+          detail: 'Print the input values',
+        ),
+        CompletionItem(
+          label: 'isNull',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if a value is null',
+        ),
+        CompletionItem(
+          label: 'not',
+          kind: CompletionItemKind.Function,
+          detail: 'Negate a boolean value',
+        ),
+        CompletionItem(
+          label: 'and',
+          kind: CompletionItemKind.Function,
+          detail: 'Logical AND operation',
+        ),
+        CompletionItem(
+          label: 'or',
+          kind: CompletionItemKind.Function,
+          detail: 'Logical OR operation',
+        ),
+        CompletionItem(
+          label: 'equals',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if two values are equal',
+        ),
+        CompletionItem(
+          label: 'throw',
+          kind: CompletionItemKind.Function,
+          detail: 'Throw an exception which will cause a noop',
         ),
       ],
     );
