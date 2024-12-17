@@ -20,13 +20,16 @@ class DotInput extends Statement {
     final operationsLength = operations.length;
     int i = 0;
 
-    Future runElseIfNextOperation() async {
+    Future<bool> runElseIfNextOperation() async {
       if (i + 1 < operationsLength) {
         final nextOperation = operations[i + 1];
         if (nextOperation is StatementOperation && nextOperation.statement is ElseStatement) {
           await nextOperation.process(context, context, interpreter);
+          return true;
         }
       }
+
+      return false;
     }
 
     Future<({dynamic result, bool noop})> getValue(Operation operation, dynamic value) async {
@@ -41,7 +44,15 @@ class DotInput extends Statement {
           final StatementReturnValue statementResult = await operation.process(value, context, interpreter);
 
           if (statementResult.noop) {
-            await runElseIfNextOperation();
+            //TODO: test how this compiles down
+            final bool handledByElse = await runElseIfNextOperation();
+            assert(() {
+              if (!handledByElse) {
+                // ignore: avoid_print
+                print('Warning: Statement returned no result and caused a noop');
+              }
+              return true;
+            }());
             return (result: null, noop: true);
           } else {
             return (result: statementResult.result, noop: false);
@@ -50,7 +61,21 @@ class DotInput extends Statement {
           return (result: await operation.process(value, context, interpreter), noop: false);
         }
       } catch (e) {
-        await runElseIfNextOperation();
+        final bool handledByElse = await runElseIfNextOperation();
+        assert(() {
+          if (!handledByElse) {
+            if (operation is FunctionOperation) {
+              // ignore: avoid_print
+              print('Warning: Could not call function ${operation.name}. Caused a noop.');
+            } else {
+              // ignore: avoid_print
+              print('Warning: Could not get value at $operation. Caused a noop.');
+            }
+            // ignore: avoid_print
+            print(e);
+          }
+          return true;
+        }());
         return (result: null, noop: true);
       }
     }
@@ -78,7 +103,14 @@ class DotInput extends Statement {
 
         currentValue = allExpandedResults;
       } else {
-        final result = await getValue(operation, currentValue);
+        late final dynamic result;
+
+        if (i == 0 && operation is KeyOperation) {
+          result = await getValue(operation, interpreter.values);
+        } else {
+          result = await getValue(operation, currentValue);
+        }
+
         if (result.noop) {
           return (name: '', result: null, wasExpanded: false, noop: true);
         }

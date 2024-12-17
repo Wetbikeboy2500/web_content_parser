@@ -6,11 +6,18 @@ import 'package:web_query_framework_util/util.dart';
 
 ///Execute a file written in WQL
 ///Usage: dart bin/exec.dart <file>
-
 void main(List<String> args) {
   if (args.isEmpty) {
     stdout.writeln('Usage: dart bin/exec.dart <file>');
     return;
+  }
+
+  args = args.toList();
+
+  bool output = true;
+  if (args.contains('--no-output')) {
+    output = false;
+    args.remove('--no-output');
   }
 
   final file = File(args[0]);
@@ -18,8 +25,16 @@ void main(List<String> args) {
     .then((content) {
       loadWQLFunctions();
 
-      WQL.run(content)
+      WQL.run(content, functions: {
+        'readfile': (args) {
+          return File(args[0]).readAsStringSync();
+        },
+      })
         .then((value) {
+          if (!output) {
+            return;
+          }
+
           if (value case Pass()) {
             for (final MapEntry(:key, :value) in value.data.entries) {
               stdout.writeln('$key: $value');

@@ -42,7 +42,7 @@ class IndexRangeStepAccess extends ListAccess {
     final int max = trueStart < trueEnd ? trueEnd : trueStart;
 
     final List<dynamic> result = [];
-    for (var i = min; i < max; i += step) {
+    for (var i = min; i <= max; i += step) {
       result.add(input[i]);
     }
     return result;

@@ -1458,6 +1458,57 @@ void main() {
         ]),
       );
     });
+    test('Select merge values wql2', () async {
+      final code = '''
+        firstRange = createRange(n'0', n'2');
+        secondRange = createRange(n'0', n'4');
+        output = SELECT{ firstRange[], secondRange[] };
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+      expect(
+        (values as Pass).data!['output'],
+        equals([
+          {
+            'firstRange': 0,
+            'secondRange': 0,
+          },
+          {
+            'firstRange': 1,
+            'secondRange': 1,
+          },
+          {
+            'firstRange': null,
+            'secondRange': 2,
+          },
+          {
+            'firstRange': null,
+            'secondRange': 3,
+          },
+        ]),
+      );
+    }, skip: 'TODO: add context changing using else for missing values');
+    test('Add values wql2', () async {
+      final code = '''
+        firstRange = createRange(n'0', n'3');
+        secondRange = createRange(n'0', n'3');
+        output = add(firstRange[], secondRange[]);
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+      expect(
+        (values as Pass).data!['output'],
+        equals([
+          0,
+          2,
+          4,
+        ]),
+      );
+    });
     test('Select merge values with a single value', () async {
       final code = '''
         SET firstRange TO createRange(n'0', n'2');

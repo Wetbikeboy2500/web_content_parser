@@ -9,14 +9,34 @@ class WQL {
   static Map<String, Function> functions = {
     'increment': (args) => (args[0] is! num) ? num.parse(args[0]) + 1 : args[0] + 1,
     'decrement': (args) => (args[0] is! num) ? num.parse(args[0]) - 1 : args[0] - 1,
+    'subtract': (args) {
+      final arg0 = (args[0] is num) ? args[0] : num.parse(args[0]);
+      final arg1 = (args[1] is num) ? args[1] : num.parse(args[1]);
+      return arg0 - arg1;
+    },
+    'divide': (args) {
+      final arg0 = (args[0] is num) ? args[0] : num.parse(args[0]);
+      final arg1 = (args[1] is num) ? args[1] : num.parse(args[1]);
+      return arg0 / arg1;
+    },
+    'multiply': (args) {
+      final arg0 = (args[0] is num) ? args[0] : num.parse(args[0]);
+      final arg1 = (args[1] is num) ? args[1] : num.parse(args[1]);
+      return arg0 * arg1;
+    },
+    'abs': (args) => (args[0] is num) ? args[0].abs() : num.parse(args[0]).abs(),
     'trim': (args) => args[0].trim(),
     'merge': (args) => args.expand((l) => (l is List) ? l : [l]).toList(),
+    'flatten': (args) => args[0].expand((l) => (l is List) ? l : [l]).toList(),
+    'sort': (args) => args[0].toList()..sort(),
     'concat': (args) => args.join(''),
     'add': (args) {
       if (args[0] is List) {
         return args[0]..add(args[1]);
-      } else if (args[0] is num) {
-        return args[0] + (args[1] is num ? args[1] : num.parse(args[1]));
+      } else if (args[0] is num || args[0] is String) {
+        final arg0 = (args[0] is num) ? args[0] : num.parse(args[0]);
+        final arg1 = (args[1] is num) ? args[1] : num.parse(args[1]);
+        return arg0 + arg1;
       } else {
         throw ArgumentError('First argument must be a List or a num');
       }
@@ -34,8 +54,14 @@ class WQL {
     'createrange': (args) => List<int>.generate(args[1] - args[0], (i) => args[0] + i),
     'reverse': (args) => args[0].reversed.toList(),
     'itself': (args) => args[0],
-    // ignore: avoid_print
-    'print': (args) => print(args.join(', ')),
+    'tostring': (args) => args[0].toString(),
+    'toint': (args) => int.parse(args[0]),
+    'tonumber': (args) => num.parse(args[0]),
+    'print': (args) {
+      // ignore: avoid_print
+      print(args.join(', '));
+      return (args.isNotEmpty) ? args[0] : null;
+    },
     'isnull': (args) => args[0] == null,
     'not': (args) => !args[0],
     'and': (args) => args[0] && args[1],

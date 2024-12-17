@@ -25,6 +25,7 @@ Result parse(String input, Interpreter interpreter) {
 
   final rawInputSingleQuote = pattern("^'").star().flatten().wrapCharsPreserve("'", "'");
 
+  //TODO: add backslash escape chars for string type
   final literal =
       ((char('l') | char('s') | char('b') | char('n')) & rawInputSingleQuote.trim()).map<LiteralOperation>((items) {
     final value = items[1];
