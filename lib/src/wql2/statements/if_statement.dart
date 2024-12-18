@@ -2,6 +2,7 @@ import '../dot_input/dot_input.dart';
 import '../interpreter.dart';
 import 'statement.dart';
 
+//TOOD: look into better handling of noops for expanded vs non-expanded if statement outputs
 class IfStatement extends Statement {
   final DotInput condition;
 

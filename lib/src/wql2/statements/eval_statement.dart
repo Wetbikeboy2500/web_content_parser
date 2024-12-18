@@ -7,7 +7,12 @@ class EvalStatement extends Statement {
 
   @override
   StatementReturn execute(dynamic context, Interpreter interpreter) async {
-    await interpreter.runStatementsWithContext(statements, context, true);
+    final (noop:_, :hasNewContext, :newContext) = await interpreter.runStatementsWithContext(statements, context, true);
+
+    if (hasNewContext) {
+      return (name: '', result: newContext, wasExpanded: false, noop: false);
+    }
+
     return (name: '', result: context, wasExpanded: false, noop: false);
   }
 }

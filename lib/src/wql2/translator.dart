@@ -31,7 +31,13 @@ Result parse(String input, Interpreter interpreter) {
     final value = items[1];
     return LiteralOperation(switch (items[0]) {
       'l' => [],
-      's' => (value is String) ? value : value.toString(),
+      's' => value.replaceAllMapped(RegExp(r'\\(?:[rnt]|\\)'), (Match match) => switch (match[0]) {
+          r'\r' => '\r',
+          r'\n' => '\n',
+          r'\t' => '\t',
+          r'\\' => '\\',
+          _ => match[0] as String,
+        }),
       'n' => (value is num) ? value : num.parse(value),
       'b' => (value is bool) ? value : value.toLowerCase() == 'true',
       _ => throw Exception('Invalid type'),

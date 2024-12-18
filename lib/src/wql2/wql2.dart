@@ -44,6 +44,7 @@ class WQL {
     'addall': (args) => args[0].addAll(args[1]),
     'last': (args) => args[0].last,
     'first': (args) => args[0].first,
+    'at': (args) => args[0][args[1]],
     'length': (args) => args[0].length,
     'split': (args) => args[0].split(args[1]),
     'indexof': (args) => args[0].indexOf(args[1]),
@@ -64,13 +65,17 @@ class WQL {
     },
     'isnull': (args) => args[0] == null,
     'not': (args) => !args[0],
-    'and': (args) => args[0] && args[1],
-    'or': (args) => args[0] || args[1],
+    'and': (args) => args.every((arg) => arg == true),
+    'or': (args) => args.any((arg) => arg == true),
     'equals': (args) => args[0] == args[1],
+    'greaterthan': (args) => args[0] > args[1],
+    'lessthan': (args) => args[0] < args[1],
+    'every': (args) => args[0].every((arg) => arg == true),
+    'any': (args) => args[0].any((arg) => arg == true),
     'throw': (args) => throw Exception(args.join(' ')),
   };
 
-  static Future<wql_result.Result<Map<String, dynamic>>> run(
+  static Future<wql_result.Result<dynamic>> run(
     String wql, {
     Map<String, dynamic> context = const {},
     Map<String, Function> functions = const {},
@@ -81,7 +86,12 @@ class WQL {
     switch (parsed) {
       case Success(value: final value):
         try {
-          await interpreter.runStatements(value, context);
+          final (noop:_, :hasNewContext, :newContext) = await interpreter.runStatements(value, context);
+
+          if (hasNewContext) {
+            return wql_result.Pass(newContext);
+          }
+
           return wql_result.Pass(interpreter.values);
         } catch (e, stack) {
           log(e, level: const LogLevel.error());

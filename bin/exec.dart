@@ -36,8 +36,12 @@ void main(List<String> args) {
           }
 
           if (value case Pass()) {
-            for (final MapEntry(:key, :value) in value.data.entries) {
-              stdout.writeln('$key: $value');
+            if (value.data is Map) {
+              for (final MapEntry(:key, :value) in value.data.entries) {
+                stdout.writeln('$key: $value');
+              }
+            } else {
+              stdout.writeln(value.data);
             }
           } else if (value case Fail()) {
             stderr.writeln(value);

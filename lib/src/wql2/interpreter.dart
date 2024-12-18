@@ -17,7 +17,7 @@ class Interpreter {
       _values.removeWhere((key, value) => !key.startsWith('_'));
       _values.addAll(value);
       return;
-    } else if (name.startsWith('_')) {
+    } else if (name.startsWith('_') || name == '*') {
       assert(_contextStack.isNotEmpty);
       bool hasPrevious = false;
       dynamic previous;
@@ -49,26 +49,35 @@ class Interpreter {
     _contextStack.removeLast();
   }
 
-  Future<({bool noop})> runStatements(List<Statement> statements, Map<String, dynamic> context) async {
+  Future<({bool noop, bool hasNewContext, dynamic newContext})> runStatements(List<Statement> statements, Map<String, dynamic> context) async {
     pushLocalContext();
     for (final entry in context.entries) {
       setValue(entry.key, entry.value);
     }
-    await runStatementsWithContext(statements, values, false);
+    final (noop:_, :hasNewContext, :newContext) = await runStatementsWithContext(statements, values, false);
     popLocalContext();
-    return const (noop: false);
+    return (noop: false, hasNewContext: hasNewContext, newContext: newContext);
   }
 
-  Future<({bool noop})> runStatementsWithContext(List<Statement> statements, dynamic context, bool allowNoopEscape) async {
+  Future<({bool noop, bool hasNewContext, dynamic newContext})> runStatementsWithContext(List<Statement> statements, dynamic context, bool allowNoopEscape) async {
     pushLocalContext();
     for (final statement in statements) {
       final result = await statement.execute(context, this);
       if (result.noop && allowNoopEscape) {
         popLocalContext();
-        return const (noop: true);
+        return const (noop: true, hasNewContext: false, newContext: null);
       }
     }
+
+    bool hasNewContext = false;
+    late final dynamic newContext;
+
+    if (_contextStack.isNotEmpty && _contextStack.last.isNotEmpty && _contextStack.last.containsKey('*')) {
+      hasNewContext = true;
+      newContext = _contextStack.last['*']!.current;
+    }
+
     popLocalContext();
-    return const (noop: false);
+    return (noop: false, hasNewContext: hasNewContext, newContext: newContext);
   }
 }
