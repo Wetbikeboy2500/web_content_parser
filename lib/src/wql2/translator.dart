@@ -24,10 +24,10 @@ Result parse(String input, Interpreter interpreter) {
   final access = safeChars.plus().flatten().trim();
 
   final rawInputSingleQuote = pattern("^'").star().flatten().wrapCharsPreserve("'", "'");
+  final rawInputSingleTick = pattern('^`').star().flatten().wrapCharsPreserve('`', '`');
 
-  //TODO: add backslash escape chars for string type
   final literal =
-      ((char('l') | char('s') | char('b') | char('n')) & rawInputSingleQuote.trim()).map<LiteralOperation>((items) {
+      ((char('l') | char('s') | char('b') | char('n')) & (rawInputSingleQuote | rawInputSingleTick).trim()).map<LiteralOperation>((items) {
     final value = items[1];
     return LiteralOperation(switch (items[0]) {
       'l' => [],

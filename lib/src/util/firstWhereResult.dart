@@ -8,6 +8,6 @@ extension ResultReturns<T> on Iterable<T> {
     for (T element in this) {
       if (test(element)) return Pass(element);
     }
-    return Fail();
+    return const Fail();
   }
 }

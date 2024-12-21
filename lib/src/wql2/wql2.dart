@@ -30,6 +30,7 @@ class WQL {
     'flatten': (args) => args[0].expand((l) => (l is List) ? l : [l]).toList(),
     'sort': (args) => args[0].toList()..sort(),
     'concat': (args) => args.join(''),
+    'join': (args) => args[0].join(args[1]),
     'add': (args) {
       if (args[0] is List) {
         return args[0]..add(args[1]);
@@ -52,6 +53,8 @@ class WQL {
     'indexofstartingat': (args) => args[0].indexOf(args[1], args[2]),
     'substring': (args) => args[0].substring(args[1], args[2]),
     'replaceall': (args) => args[0].replaceAll(args[1], args[2]),
+    'allmatches': (args) => RegExp(args[1]).allMatches(args[0]).map((match) => match.group(0)).toList(),
+    'hasmatch': (args) => RegExp(args[1]).hasMatch(args[0]),
     'createrange': (args) => List<int>.generate(args[1] - args[0], (i) => args[0] + i),
     'reverse': (args) => args[0].reversed.toList(),
     'itself': (args) => args[0],

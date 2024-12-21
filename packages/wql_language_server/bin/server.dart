@@ -323,8 +323,9 @@ Result parse(String input) {
   final access = safeChars.plus().flatten().trim();
 
   final rawInputSingleQuote = pattern("^'").star().flatten().wrapCharsPreserve("'", "'");
+  final rawInputSingleTick = pattern('^`').star().flatten().wrapCharsPreserve('`', '`');
 
-  final literal = ((char('l') | char('s') | char('b') | char('n')) & rawInputSingleQuote.trim())
+  final literal = ((char('l') | char('s') | char('b') | char('n')) & (rawInputSingleQuote | rawInputSingleTick).trim())
       .token()
       .map<SemanticToken>((token) {
     return switch (token.value[0]) {

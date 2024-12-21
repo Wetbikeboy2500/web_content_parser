@@ -21,7 +21,7 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
           const <String>[],
       description: json['description'] as String? ?? '',
       type: json['type'] as String? ?? 'unknown',
-      chapterNumber: json['chapterNumber'] as int? ?? 0,
+      chapterNumber: (json['chapterNumber'] as num?)?.toInt() ?? 0,
       released: Post._dateTime(json['released']),
     );
 
