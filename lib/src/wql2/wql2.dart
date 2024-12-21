@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:petitparser/petitparser.dart';
 import 'package:web_query_framework_util/util.dart' as wql_result;
 
@@ -25,6 +28,16 @@ class WQL {
       return arg0 * arg1;
     },
     'abs': (args) => (args[0] is num) ? args[0].abs() : num.parse(args[0]).abs(),
+    'min': (args) {
+      final arg0 = (args[0] is num) ? args[0] : num.parse(args[0]);
+      final arg1 = (args[1] is num) ? args[1] : num.parse(args[1]);
+      return arg0 < arg1 ? arg0 : arg1;
+    },
+    'max': (args) {
+      final arg0 = (args[0] is num) ? args[0] : num.parse(args[0]);
+      final arg1 = (args[1] is num) ? args[1] : num.parse(args[1]);
+      return arg0 > arg1 ? arg0 : arg1;
+    },
     'trim': (args) => args[0].trim(),
     'merge': (args) => args.expand((l) => (l is List) ? l : [l]).toList(),
     'flatten': (args) => args[0].expand((l) => (l is List) ? l : [l]).toList(),

@@ -75,6 +75,8 @@ class Interpreter {
     if (_contextStack.isNotEmpty && _contextStack.last.isNotEmpty && _contextStack.last.containsKey('*')) {
       hasNewContext = true;
       newContext = _contextStack.last['*']!.current;
+    } else {
+      newContext = null;
     }
 
     popLocalContext();

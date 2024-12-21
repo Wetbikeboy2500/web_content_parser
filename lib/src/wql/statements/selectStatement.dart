@@ -103,7 +103,7 @@ class SelectStatement extends Statement {
       }
     }
 
-    late final List returns = [];
+    final List returns = [];
 
     final List<MapEntry> mergeLists = [];
     final List<MapEntry> values = [];
