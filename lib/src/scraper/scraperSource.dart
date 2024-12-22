@@ -136,15 +136,12 @@ class ScraperSource {
           () async {
             final String code = await r.file.readAsString();
             final result = await WQL.run(code, context: arguments, functions: functions);
-            if (result case Pass<Map<String, dynamic>>(data: final data)) {
-              if (data['return'] is! T) {
-                throw Exception('Return type is not correct');
-              }
 
-              return data['return'];
+            if (result case Pass<T>(data: final data)) {
+              return data;
+            } else {
+              throw Exception('Return type is not correct');
             }
-
-            throw Exception('Fail state was no re-thrown');
           },
           errorMessage: 'Error running WQL',
         );
