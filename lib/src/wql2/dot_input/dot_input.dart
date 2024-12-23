@@ -20,6 +20,7 @@ class DotInput extends Statement {
     final operationsLength = operations.length;
     int i = 0;
 
+    //TODO: if context is set, then do not noop
     Future<bool> runElseIfNextOperation() async {
       if (i + 1 < operationsLength) {
         final nextOperation = operations[i + 1];
