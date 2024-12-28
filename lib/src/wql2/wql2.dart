@@ -66,6 +66,10 @@ class WQL {
     'indexofstartingat': (args) => args[0].indexOf(args[1], args[2]),
     'substring': (args) => args[0].substring(args[1], args[2]),
     'replaceall': (args) => args[0].replaceAll(args[1], args[2]),
+    'startswith': (args) => args[0].startsWith(args[1]),
+    'endswith': (args) => args[0].endsWith(args[1]),
+    'uppercase': (args) => args[0].toUpperCase(),
+    'lowercase': (args) => args[0].toLowerCase(),
     'allmatches': (args) => RegExp(args[1]).allMatches(args[0]).map((match) => match.group(0)).toList(),
     'hasmatch': (args) => RegExp(args[1]).hasMatch(args[0]),
     'createrange': (args) => List<int>.generate(args[1] - args[0], (i) => args[0] + i),
@@ -80,6 +84,7 @@ class WQL {
       return (args.isNotEmpty) ? args[0] : null;
     },
     'isnull': (args) => args[0] == null,
+    'isempty': (args) => args[0].isEmpty,
     'not': (args) => !args[0],
     'and': (args) => args.every((arg) => arg == true),
     'or': (args) => args.any((arg) => arg == true),
@@ -89,6 +94,66 @@ class WQL {
     'every': (args) => args[0].every((arg) => arg == true),
     'any': (args) => args[0].any((arg) => arg == true),
     'throw': (args) => throw Exception(args.join(' ')),
+    'mergekeyvalue': (args) {
+      final value1 = (args[0] is List) ? args[0] : [args[0]];
+      final value2 = (args[1] is List) ? args[1] : [args[1]];
+      final result = {};
+
+      bool stringMap = true;
+      bool numMap = true;
+
+      int index = 0;
+      for (final key in value1) {
+        if (stringMap && key is! String) {
+          stringMap = false;
+        }
+
+        if (numMap && key is! num) {
+          numMap = false;
+        }
+
+        result[key] = value2[index];
+        index++;
+      }
+
+      if (numMap) {
+        return Map<int, dynamic>.from(result);
+      } else if (stringMap) {
+        return Map<String, dynamic>.from(result);
+      } else {
+        return result;
+      }
+    },
+    'json': (args) {
+      final arg0 = args[0];
+
+      dynamic localJson;
+
+      if (arg0 is String) {
+        localJson = json.decode(arg0);
+      } else {
+        localJson = arg0;
+      }
+
+      if (args.length > 1) {
+        for (var i = 1; i < args.length - 1; i += 2) {
+          final dynamic selector = args[i];
+          final dynamic value = args[i + 1];
+
+          final split = selector.split('.');
+          var current = localJson;
+          for (var i = 0; i < split.length; i++) {
+            if (i == split.length - 1) {
+              current[split[i]] = value;
+            } else {
+              current = current[split[i]];
+            }
+          }
+        }
+      }
+
+      return localJson;
+    },
   };
 
   static Future<wql_result.Result<dynamic>> run(

@@ -1,3 +1,4 @@
+import 'package:petitparser/debug.dart';
 import 'package:petitparser/petitparser.dart';
 
 import 'statements/else_statement.dart';
@@ -12,32 +13,42 @@ import 'statements/set_statement.dart';
 import 'statements/statement.dart';
 
 extension CharWrapper on Parser {
-  Parser wrapChars(String ch0, String ch1) => (charTrim(ch0) & this & charTrim(ch1)).pick(1);
-  Parser wrapCharsPreserve(String ch0, String ch1) => (char(ch0) & this & char(ch1)).pick(1);
+  Parser wrapChars(String ch0, String ch1) => (char(ch0).trimAround() & this & char(ch1).trimAround()).pick(1);
 }
 
-Parser charTrim(String ch) => char(ch, '$ch expected').trim();
+Parser comment() => string('//') & pattern('^\n').star() & whitespace().star();
+
+extension WhitespaceComments on Parser {
+  Parser trimAround() =>
+      skip(before: whitespace().star() & comment().star(), after: whitespace().star() & comment().star());
+}
+
+Parser charTrim(String ch) => char(ch, '$ch expected').trimAround();
+Parser stringIgnoreCaseTrim(String value) => stringIgnoreCase(value, '$value expected').trimAround();
 
 Result parse(String input, Interpreter interpreter) {
   final safeChars = patternIgnoreCase('~!@\$%&*_+=/\'"?><|`#a-zA-Z0-9\\-\\^');
 
-  final access = safeChars.plus().flatten().trim();
+  final access = safeChars.plus().flatten().trimAround();
 
-  final rawInputSingleQuote = pattern("^'").star().flatten().wrapCharsPreserve("'", "'");
-  final rawInputSingleTick = pattern('^`').star().flatten().wrapCharsPreserve('`', '`');
+  final rawInputSingleQuote = pattern("^'").star().flatten().skip(before: char("'"), after: char("'"));
+  final rawInputSingleTick = pattern('^`').star().flatten().skip(before: char('`'), after: char('`'));
 
   final literal =
-      ((char('l') | char('s') | char('b') | char('n')) & (rawInputSingleQuote | rawInputSingleTick).trim()).map<LiteralOperation>((items) {
+      ((char('l') | char('s') | char('b') | char('n')) & (rawInputSingleQuote | rawInputSingleTick).trimAround())
+          .map<LiteralOperation>((items) {
     final value = items[1];
     return LiteralOperation(switch (items[0]) {
       'l' => [],
-      's' => value.replaceAllMapped(RegExp(r'\\(?:[rnt]|\\)'), (Match match) => switch (match[0]) {
-          r'\r' => '\r',
-          r'\n' => '\n',
-          r'\t' => '\t',
-          r'\\' => '\\',
-          _ => match[0] as String,
-        }),
+      's' => value.replaceAllMapped(
+          RegExp(r'\\(?:[rnt]|\\)'),
+          (Match match) => switch (match[0]) {
+                r'\r' => '\r',
+                r'\n' => '\n',
+                r'\t' => '\t',
+                r'\\' => '\\',
+                _ => match[0] as String,
+              }),
       'n' => (value is num) ? value : num.parse(value),
       'b' => (value is bool) ? value : value.toLowerCase() == 'true',
       _ => throw Exception('Invalid type'),
@@ -72,7 +83,7 @@ Result parse(String input, Interpreter interpreter) {
   final completeParser = undefined();
   final dotInput = undefined();
 
-  final function = (letter().plus().flatten().trim() &
+  final function = (letter().plus().flatten().trimAround() &
           (dotInput.plusSeparated(charTrim(',')) & charTrim(',').optional())
               .pick(0)
               .optional()
@@ -92,21 +103,21 @@ Result parse(String input, Interpreter interpreter) {
   final selectKeys = (((rawInputSingleQuote | access) & charTrim(':')).pick(0).optional() & dotInput)
       .map((value) => (value[0], value[1]));
 
-  final selectStatement = (stringIgnoreCase('select').trim() &
+  final selectStatement = (stringIgnoreCaseTrim('select') &
           (selectKeys.plusSeparated(charTrim(',')) & charTrim(',').optional())
               .pick(0)
               .wrapChars("{", "}")
               .map((value) => value.elements) &
-          (stringIgnoreCase('from').trim() & charTrim('{') & dotInput & charTrim('}')).pick(2).optional())
+          (stringIgnoreCaseTrim('from') & charTrim('{') & dotInput & charTrim('}')).pick(2).optional())
       .map<SelectStatement>((value) => SelectStatement(value[1].cast<(String?, DotInput)>(), value[2]));
 
   final ifStatement =
-      (stringIgnoreCase('if').trim() & dotInput.wrapChars('{', '}')).map<IfStatement>((value) => IfStatement(value[1]));
+      (stringIgnoreCaseTrim('if') & dotInput.wrapChars('{', '}')).map<IfStatement>((value) => IfStatement(value[1]));
 
-  final evalStatement = (stringIgnoreCase('eval').trim() & completeParser.wrapChars('{', '}'))
+  final evalStatement = (stringIgnoreCaseTrim('eval') & completeParser.wrapChars('{', '}'))
       .map<EvalStatement>((value) => EvalStatement(value[1]));
 
-  final elseStatement = (stringIgnoreCase('else').trim() & completeParser.wrapChars('{', '}'))
+  final elseStatement = (stringIgnoreCaseTrim('else') & completeParser.wrapChars('{', '}'))
       .map<ElseStatement>((value) => ElseStatement(value[1]));
 
   final statements = ((selectStatement | ifStatement | evalStatement | elseStatement) & digitInput.optional())

@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:lsp_server/lsp_server.dart';
 import 'package:petitparser/petitparser.dart';
 
-final documents = <String, String>{};
+final Map<String, String> documents = {};
 
-const tokenTypes = [
+const List<String> tokenTypes = [
   'function',
   'variable',
   'string',
@@ -13,6 +13,7 @@ const tokenTypes = [
   'operator',
   'type',
   'number',
+  'comment',
 ];
 
 List flattenList(List list) {
@@ -49,7 +50,7 @@ void main() async {
 
   connection.onCompletion((params) async {
     return CompletionList(
-      isIncomplete: false,
+      isIncomplete: true,
       items: [
         CompletionItem(
           label: 'increment',
@@ -62,6 +63,36 @@ void main() async {
           detail: 'Decrement a number',
         ),
         CompletionItem(
+          label: 'subtract',
+          kind: CompletionItemKind.Function,
+          detail: 'Subtract two numbers',
+        ),
+        CompletionItem(
+          label: 'divide',
+          kind: CompletionItemKind.Function,
+          detail: 'Divide two numbers',
+        ),
+        CompletionItem(
+          label: 'multiply',
+          kind: CompletionItemKind.Function,
+          detail: 'Multiply two numbers',
+        ),
+        CompletionItem(
+          label: 'abs',
+          kind: CompletionItemKind.Function,
+          detail: 'Get absolute value of a number',
+        ),
+        CompletionItem(
+          label: 'min',
+          kind: CompletionItemKind.Function,
+          detail: 'Get minimum of two numbers',
+        ),
+        CompletionItem(
+          label: 'max',
+          kind: CompletionItemKind.Function,
+          detail: 'Get maximum of two numbers',
+        ),
+        CompletionItem(
           label: 'trim',
           kind: CompletionItemKind.Function,
           detail: 'Trim a string',
@@ -69,17 +100,32 @@ void main() async {
         CompletionItem(
           label: 'merge',
           kind: CompletionItemKind.Function,
-          detail: 'Merge a list of items',
+          detail: 'Merge multiple lists into one',
+        ),
+        CompletionItem(
+          label: 'flatten',
+          kind: CompletionItemKind.Function,
+          detail: 'Flatten a nested list',
+        ),
+        CompletionItem(
+          label: 'sort',
+          kind: CompletionItemKind.Function,
+          detail: 'Sort a list',
         ),
         CompletionItem(
           label: 'concat',
           kind: CompletionItemKind.Function,
-          detail: 'Joins a list of items into a single string',
+          detail: 'Concatenate multiple values into a string',
+        ),
+        CompletionItem(
+          label: 'join',
+          kind: CompletionItemKind.Function,
+          detail: 'Join list elements with a separator',
         ),
         CompletionItem(
           label: 'add',
           kind: CompletionItemKind.Function,
-          detail: 'Add an item to a list or a number',
+          detail: 'Add an item to a list or add two numbers',
         ),
         CompletionItem(
           label: 'addAll',
@@ -89,27 +135,32 @@ void main() async {
         CompletionItem(
           label: 'last',
           kind: CompletionItemKind.Function,
-          detail: 'Get the last item from a list',
+          detail: 'Get last item of a list',
         ),
         CompletionItem(
           label: 'first',
           kind: CompletionItemKind.Function,
-          detail: 'Get the first item from a list',
+          detail: 'Get first item of a list',
+        ),
+        CompletionItem(
+          label: 'at',
+          kind: CompletionItemKind.Function,
+          detail: 'Get item at specific index',
         ),
         CompletionItem(
           label: 'length',
           kind: CompletionItemKind.Function,
-          detail: 'Get the length of a list',
+          detail: 'Get length of a list or string',
         ),
         CompletionItem(
           label: 'split',
           kind: CompletionItemKind.Function,
-          detail: 'Split a string into a list of items',
+          detail: 'Split a string by delimiter',
         ),
         CompletionItem(
           label: 'indexOf',
           kind: CompletionItemKind.Function,
-          detail: 'Get the index of an item in a list',
+          detail: 'Find index of an item',
         ),
         CompletionItem(
           label: 'contains',
@@ -119,17 +170,27 @@ void main() async {
         CompletionItem(
           label: 'indexOfStartingAt',
           kind: CompletionItemKind.Function,
-          detail: 'Get the index of an item in a list starting at a specific index',
+          detail: 'Find index of an item starting from position',
         ),
         CompletionItem(
           label: 'substring',
           kind: CompletionItemKind.Function,
-          detail: 'Get a substring from a string',
+          detail: 'Get a substring',
         ),
         CompletionItem(
           label: 'replaceAll',
           kind: CompletionItemKind.Function,
-          detail: 'Replace all occurrences of a substring in a string',
+          detail: 'Replace all occurrences in a string',
+        ),
+        CompletionItem(
+          label: 'allMatches',
+          kind: CompletionItemKind.Function,
+          detail: 'Get all regex matches in a string',
+        ),
+        CompletionItem(
+          label: 'hasMatch',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if string matches regex pattern',
         ),
         CompletionItem(
           label: 'createRange',
@@ -144,22 +205,37 @@ void main() async {
         CompletionItem(
           label: 'itself',
           kind: CompletionItemKind.Function,
-          detail: 'Return the input value',
+          detail: 'Return the input value unchanged',
+        ),
+        CompletionItem(
+          label: 'toString',
+          kind: CompletionItemKind.Function,
+          detail: 'Convert value to string',
+        ),
+        CompletionItem(
+          label: 'toInt',
+          kind: CompletionItemKind.Function,
+          detail: 'Parse string to integer',
+        ),
+        CompletionItem(
+          label: 'toNumber',
+          kind: CompletionItemKind.Function,
+          detail: 'Parse string to number',
         ),
         CompletionItem(
           label: 'print',
           kind: CompletionItemKind.Function,
-          detail: 'Print the input values',
+          detail: 'Print values to console',
         ),
         CompletionItem(
           label: 'isNull',
           kind: CompletionItemKind.Function,
-          detail: 'Check if a value is null',
+          detail: 'Check if value is null',
         ),
         CompletionItem(
           label: 'not',
           kind: CompletionItemKind.Function,
-          detail: 'Negate a boolean value',
+          detail: 'Logical NOT operation',
         ),
         CompletionItem(
           label: 'and',
@@ -174,12 +250,32 @@ void main() async {
         CompletionItem(
           label: 'equals',
           kind: CompletionItemKind.Function,
-          detail: 'Check if two values are equal',
+          detail: 'Check if values are equal',
+        ),
+        CompletionItem(
+          label: 'greaterThan',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if first value is greater than second',
+        ),
+        CompletionItem(
+          label: 'lessThan',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if first value is less than second',
+        ),
+        CompletionItem(
+          label: 'every',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if every item in list is true',
+        ),
+        CompletionItem(
+          label: 'any',
+          kind: CompletionItemKind.Function,
+          detail: 'Check if any item in list is true',
         ),
         CompletionItem(
           label: 'throw',
           kind: CompletionItemKind.Function,
-          detail: 'Throw an exception which will cause a noop',
+          detail: 'Throw an exception',
         ),
       ],
     );
@@ -208,6 +304,10 @@ void main() async {
       final tokens = flattenList(result.value).whereType<SemanticToken>().toList();
 
       for (var token in tokens) {
+        if (token.tokenType == tokenTypes.indexOf('comment')) {
+          continue;
+        }
+
         //base information of off the token type
         final SymbolKind kind = switch (tokenTypes[token.tokenType]) {
           'function' => SymbolKind.Function,
@@ -293,7 +393,6 @@ void main() async {
 
 extension CharWrapper on Parser {
   Parser wrapChars(String ch0, String ch1) => (charTrim(ch0) & this & charTrim(ch1)).pick(1);
-  Parser wrapCharsPreserve(String ch0, String ch1) => (char(ch0) & this & char(ch1)).pick(1);
   Parser toSemanticToken(int tokenType) => map<SemanticToken>((token) {
         return SemanticToken(
           line: token.line,
@@ -305,6 +404,12 @@ extension CharWrapper on Parser {
       });
 }
 
+// extension WhitespaceComments on Parser {
+//   Parser trimAround() => skip(
+//       before: (string('//') & pattern('^\\n').star()).optional().trim(),
+//       after: (string('//') & pattern('^\\n').star()).optional().trim());
+// }
+
 SemanticToken toSemanticToken(Token token, int tokenType) {
   return SemanticToken(
     line: token.line,
@@ -315,17 +420,22 @@ SemanticToken toSemanticToken(Token token, int tokenType) {
   );
 }
 
-Parser charTrim(String ch) => char(ch, '$ch expected').trim();
+Parser charTrim(String ch) => char(ch, '$ch expected').trimAround();
+Parser stringIgnoreCaseTrim(String value) => stringIgnoreCase(value, '$value expected').trimAround();
+
+Parser<Token<String>?> whitespaceOrComment() => (string('//') & pattern('^\\n').star()).flatten().token().optional().trim();
 
 Result parse(String input) {
   final safeChars = patternIgnoreCase('~!@\$%&*_+=/\'"?><|`#a-zA-Z0-9\\-\\^');
 
-  final access = safeChars.plus().flatten().trim();
+  final Parser<List> access = (whitespaceOrComment() & safeChars.plus().flatten().token() & whitespaceOrComment()).map((values) {
+    return [values[0]?.toSemanticToken(tokenTypes.indexOf('comment')), values[1], values[2]?.toSemanticToken(tokenTypes.indexOf('comment'))];
+  });
 
-  final rawInputSingleQuote = pattern("^'").star().flatten().wrapCharsPreserve("'", "'");
-  final rawInputSingleTick = pattern('^`').star().flatten().wrapCharsPreserve('`', '`');
+  final rawInputSingleQuote = pattern("^'").star().flatten().skip(before: char("'"), after: char("'"));
+  final rawInputSingleTick = pattern('^`').star().flatten().skip(before: char('`'), after: char('`'));
 
-  final literal = ((char('l') | char('s') | char('b') | char('n')) & (rawInputSingleQuote | rawInputSingleTick).trim())
+  final literal = ((char('l') | char('s') | char('b') | char('n')) & (rawInputSingleQuote | rawInputSingleTick).trimAround())
       .token()
       .map<SemanticToken>((token) {
     return switch (token.value[0]) {
@@ -362,7 +472,7 @@ Result parse(String input) {
   final completeParser = undefined();
   final dotInput = undefined();
 
-  final function = (letter().plus().flatten().trim().token().toSemanticToken(tokenTypes.indexOf('function')) &
+  final function = (letter().plus().flatten().trimAround().token().toSemanticToken(tokenTypes.indexOf('function')) &
       (dotInput.plusSeparated(charTrim(',')).map((value) => value.elements) & charTrim(',').optional())
           .pick(0)
           .optional()
@@ -376,24 +486,24 @@ Result parse(String input) {
               dotInput)
           .map((value) => [value[0], value[1]]);
 
-  final selectStatement = (stringIgnoreCase('select').trim().token().toSemanticToken(tokenTypes.indexOf('keyword')) &
+  final selectStatement = (stringIgnoreCaseTrim('select').token().toSemanticToken(tokenTypes.indexOf('keyword')) &
       (selectKeys.plusSeparated(charTrim(',')) & charTrim(',').optional())
           .pick(0)
           .wrapChars("{", "}")
           .map((value) => value.elements) &
-      (stringIgnoreCase('from').trim().token().toSemanticToken(tokenTypes.indexOf('keyword')) &
+      (stringIgnoreCaseTrim('from').token().toSemanticToken(tokenTypes.indexOf('keyword')) &
               charTrim('{') &
               dotInput &
               charTrim('}'))
           .optional());
 
-  final ifStatement = (stringIgnoreCase('if').trim().token().toSemanticToken(tokenTypes.indexOf('keyword')) &
+  final ifStatement = (stringIgnoreCaseTrim('if').token().toSemanticToken(tokenTypes.indexOf('keyword')) &
       dotInput.wrapChars('{', '}'));
 
-  final evalStatement = (stringIgnoreCase('eval').trim().token().toSemanticToken(tokenTypes.indexOf('keyword')) &
+  final evalStatement = (stringIgnoreCaseTrim('eval').token().toSemanticToken(tokenTypes.indexOf('keyword')) &
       completeParser.wrapChars('{', '}'));
 
-  final elseStatement = (stringIgnoreCase('else').trim().token().toSemanticToken(tokenTypes.indexOf('keyword')) &
+  final elseStatement = (stringIgnoreCaseTrim('else').token().toSemanticToken(tokenTypes.indexOf('keyword')) &
       completeParser.wrapChars('{', '}'));
 
   final statements = ((selectStatement | ifStatement | evalStatement | elseStatement) & digitInput.optional());

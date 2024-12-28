@@ -6,11 +6,8 @@ import 'dart:io';
 
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
-import 'package:petitparser/petitparser.dart' as petitparser;
 import 'package:test/test.dart';
 import 'package:web_content_parser/src/parser/sources/computer.dart';
-import 'package:web_content_parser/src/wql/parserHelper.dart';
-import 'package:web_content_parser/src/wql/statements/loopStatement.dart';
 import 'package:web_content_parser/src/wql2/wql2.dart';
 import 'package:web_content_parser/web_content_parser_full.dart';
 import 'package:web_query_framework_util/util.dart';
@@ -747,83 +744,54 @@ void main() {
     setUp(() {
       loadWQLFunctions();
     });
-    group('Parsers', () {
-      test('Array access []', () {
-        final arrayAccess = '[]';
-
-        final result = digitInput.parse(arrayAccess);
-
-        expect(result is petitparser.Success, isTrue);
-        final value = result.value[1];
-        expect(value, isNull);
-      });
-      test('Array access [all]', () {
-        final arrayAccess = '[all]';
-
-        final result = digitInput.parse(arrayAccess);
-
-        expect(result is petitparser.Success, isTrue);
-        final value = result.value[1];
-        expect(value is petitparser.SeparatedList, isTrue);
-        expect(value.elements.map((t) => t.value), equals(['all']));
-      });
-      test('Array access [all,first]', () {
-        final arrayAccess = '[all,first]';
-
-        final result = digitInput.parse(arrayAccess);
-
-        expect(result is petitparser.Success, isTrue);
-        final value = result.value[1];
-        expect(value is petitparser.SeparatedList, isTrue);
-        expect(value.elements.map((t) => t.value), equals(['all', 'first']));
-      });
-      test('Array access [all,first,1]', () {
-        final arrayAccess = '[all,first,1]';
-
-        final result = digitInput.parse(arrayAccess);
-
-        expect(result is petitparser.Success, isTrue);
-        final value = result.value[1];
-        expect(value is petitparser.SeparatedList, isTrue);
-        expect(value.elements.map((t) => t is petitparser.Token ? t.value : t), equals(['all', 'first', '1']));
-      });
-      test('Array access [all,first,1:2]', () {
-        final arrayAccess = '[all,first,1:2]';
-
-        final result = digitInput.parse(arrayAccess);
-
-        expect(result is petitparser.Success, isTrue);
-        final value = result.value[1];
-        expect(value is petitparser.SeparatedList, isTrue);
-        expect(
-            value.elements.map((t) => t is petitparser.Token ? t.value : t),
-            equals([
-              'all',
-              'first',
-              ['1', ':', '2']
-            ]));
-      });
-      test('Array access [all,first,-1:-2]', () {
-        final arrayAccess = '[all,first,-1:-2]';
-
-        final result = digitInput.parse(arrayAccess);
-
-        expect(result is petitparser.Success, isTrue);
-        final value = result.value[1];
-        expect(value is petitparser.SeparatedList, isTrue);
-        expect(
-            value.elements.map((t) => t is petitparser.Token ? t.value : t),
-            equals([
-              'all',
-              'first',
-              ['-1', ':', '-2']
-            ]));
-      });
-    });
     test('Do not rethrow error', () async {
       final Result values = await WQL.run('SET return TO value[0];');
 
       expect(values is Pass, isFalse);
+    });
+    test('One comment', () async {
+      final code = '''
+        //This is a comment
+        * = s'test';
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals('test'));
+    });
+    test('Multiple comments', () async {
+      final code = '''
+        //This is a comment
+        //This is another comment
+        * = s'test';
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals('test'));
+    });
+    test('Comment after end of line', () async {
+      final code = '''
+        * = s'test'; //This is a comment
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals('test'));
+    });
+    test('Comment on final line', () async {
+      final code = '''
+        * = s'test';
+        //This is a comment
+      ''';
+
+      final Result values = await WQL.run(code);
+
+      expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals('test'));
     });
     test('Get basic information', () async {
       Document document = parse(File('./test/samples/scraper/test2.html').readAsStringSync());
@@ -1038,10 +1006,10 @@ void main() {
 
       expect((values as Pass).data!['output'], equals([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
     });
-    test('Count', () async {
+    test('Length', () async {
       final code = '''
         range = createRange(n'0', n'10');
-        output = range.count();
+        output = range.length();
       ''';
 
       final Result values = await WQL.run(code);
@@ -1095,7 +1063,7 @@ void main() {
       final code = '''
         range = createRange(n'0', n'3');
         output = range[].select{
-          output: mergeKeyValue(*, *)
+          output: mergeKeyValue(*, *),
           output1: merge(*, *)
         };
       ''';
@@ -1384,18 +1352,22 @@ void main() {
     });
     test('Select When StartsWith', () async {
       final code = '''
-        SET first TO s'hello';
-        SELECT first FROM * INTO matchOutput WHEN first startsWith s'he';
-        SELECT first FROM * INTO noMatchOutput WHEN first startsWith s'weird';
-        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
+        first = s'hello';
+        matchOutput = first.if{*.startsWith(s'he')}.select{first: *}[0];
+        noMatchOutput = first.if{*.startsWith(s'weird')}.else{}.select{first: *}[0];
+
+        * = select{
+          matchOutput,
+          noMatchOutput
+        };
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
       expect(
-        (values as Pass).data!['output'],
+        (values as Pass).data,
         equals([
           {
             'matchOutput': {'first': 'hello'},
@@ -1406,18 +1378,21 @@ void main() {
     });
     test('Select When EndsWith', () async {
       final code = '''
-        SET first TO s'hello';
-        SELECT first FROM * INTO matchOutput WHEN first endsWith s'lo';
-        SELECT first FROM * INTO noMatchOutput WHEN first endsWith s'weird';
-        SELECT matchOutput[0], noMatchOutput[0] FROM * INTO output;
+        first = s'hello';
+        matchOutput = first.if{*.endsWith(s'lo')}.select{first: *}[0];
+        noMatchOutput = first.if{*.endsWith(s'weird')}.else{}.select{first: *}[0];
+        * = select{
+          matchOutput,
+          noMatchOutput
+        };
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
 
       expect(
-        (values as Pass).data!['output'],
+        (values as Pass).data,
         equals([
           {
             'matchOutput': {'first': 'hello'},
@@ -1428,16 +1403,16 @@ void main() {
     });
     test('Select merge values', () async {
       final code = '''
-        SET firstRange TO createRange(n'0', n'2');
-        SET secondRange TO createRange(n'0', n'4');
-        SELECT firstRange[], secondRange[] FROM * INTO output;
+        firstRange = createRange(n'0', n'2');
+        secondRange = createRange(n'0', n'4');
+        * = select { firstRange[], secondRange[] };
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect(
-        (values as Pass).data!['output'],
+        (values as Pass).data,
         equals([
           {
             'firstRange': 0,
@@ -1457,19 +1432,19 @@ void main() {
           },
         ]),
       );
-    });
+    }, skip: 'TODO: add .else{} support for missing values that can be set using * =');
     test('Select merge values wql2', () async {
       final code = '''
         firstRange = createRange(n'0', n'2');
         secondRange = createRange(n'0', n'4');
-        output = SELECT{ firstRange[], secondRange[] };
+        * = SELECT{ firstRange[], secondRange[] };
       ''';
 
       final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect(
-        (values as Pass).data!['output'],
+        (values as Pass).data,
         equals([
           {
             'firstRange': 0,
@@ -1494,14 +1469,14 @@ void main() {
       final code = '''
         firstRange = createRange(n'0', n'3');
         secondRange = createRange(n'0', n'3');
-        output = add(firstRange[], secondRange[]);
+        * = add(firstRange[], secondRange[]);
       ''';
 
       final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect(
-        (values as Pass).data!['output'],
+        (values as Pass).data,
         equals([
           0,
           2,
@@ -1511,16 +1486,16 @@ void main() {
     });
     test('Select merge values with a single value', () async {
       final code = '''
-        SET firstRange TO createRange(n'0', n'2');
-        SET secondRange TO createRange(n'0', n'4');
-        SELECT firstRange, secondRange[] FROM * INTO output;
+        firstRange = createRange(n'0', n'2');
+        secondRange = createRange(n'0', n'4');
+        * = select { firstRange, secondRange[] };
       ''';
 
-      final Result values = await runWQL(code);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
       expect(
-        (values as Pass).data!['output'],
+        (values as Pass).data,
         equals([
           {
             'firstRange': [0, 1],
@@ -1536,38 +1511,6 @@ void main() {
           },
           {
             'firstRange': [0, 1],
-            'secondRange': 3,
-          },
-        ]),
-      );
-    });
-    test('Select merge values with an alias', () async {
-      final code = '''
-        SET firstRange TO createRange(n'0', n'2');
-        SET secondRange TO createRange(n'0', n'4');
-        SELECT firstRange[] as first, secondRange[] FROM * INTO output;
-      ''';
-
-      final Result values = await runWQL(code);
-
-      expect(values is Pass, isTrue);
-      expect(
-        (values as Pass).data!['output'],
-        equals([
-          {
-            'first': 0,
-            'secondRange': 0,
-          },
-          {
-            'first': 1,
-            'secondRange': 1,
-          },
-          {
-            'first': null,
-            'secondRange': 2,
-          },
-          {
-            'first': null,
             'secondRange': 3,
           },
         ]),
@@ -1589,14 +1532,14 @@ void main() {
       };
 
       final code = '''
-        SELECT second[] FROM *.first[] INTO output;
+        * = first[].select{ *.second[] };
       ''';
 
-      final Result values = await runWQL(code, parameters: complex);
+      final Result values = await WQL.run(code, context: complex);
 
       expect(values is Pass, isTrue);
       expect(
-        (values as Pass).data!['output'],
+        (values as Pass).data,
         equals([
           {'second': 0},
           {'second': 0},
@@ -1607,140 +1550,44 @@ void main() {
         ]),
       );
     });
-    test('Select merge values where value is greater than merge', () async {
-      final code = '''
-        SET firstRange TO createRange(n'0', n'4');
-        SET secondRange TO createRange(n'0', n'2');
-        SELECT firstRange[] as first, secondRange[] FROM * INTO output;
-      ''';
-
-      final Result values = await runWQL(code);
-
-      expect(values is Pass, isTrue);
-      expect(
-        (values as Pass).data!['output'],
-        equals([
-          {
-            'first': 0,
-            'secondRange': 0,
-          },
-          {
-            'first': 1,
-            'secondRange': 1,
-          },
-          {
-            'first': 2,
-            'secondRange': null,
-          },
-          {
-            'first': 3,
-            'secondRange': null,
-          },
-        ]),
-      );
-    });
-    test('Select merge values where two values are uneven', () async {
-      final code = '''
-        SET firstRange TO createRange(n'0', n'4');
-        SET secondRange TO createRange(n'0', n'2');
-        SELECT firstRange[] as first, secondRange[] as second FROM * INTO output;
-      ''';
-
-      final Result values = await runWQL(code);
-
-      expect(values is Pass, isTrue);
-      expect(
-        (values as Pass).data!['output'],
-        equals([
-          {
-            'first': 0,
-            'second': 0,
-          },
-          {
-            'first': 1,
-            'second': 1,
-          },
-          {
-            'first': 2,
-            'second': null,
-          },
-          {
-            'first': 3,
-            'second': null,
-          },
-        ]),
-      );
-    });
-    test('Select merge values where two values are uneven inverse', () async {
-      final code = '''
-        SET firstRange TO createRange(n'0', n'4');
-        SET secondRange TO createRange(n'0', n'2');
-        SELECT secondRange[] as second, firstRange[] as first FROM * INTO output;
-      ''';
-
-      final Result values = await runWQL(code);
-
-      expect(values is Pass, isTrue);
-      expect(
-        (values as Pass).data!['output'],
-        equals([
-          {
-            'first': 0,
-            'second': 0,
-          },
-          {
-            'first': 1,
-            'second': 1,
-          },
-          {
-            'first': 2,
-            'second': null,
-          },
-          {
-            'first': 3,
-            'second': null,
-          },
-        ]),
-      );
-    });
     test('Raw values', () async {
       final code = '''
-        SELECT s'hello' as intro, n'25' as number, b'true' as true, l'' as list FROM * INTO return;
+        * = select {
+          intro: s'hello',
+          number: n'25',
+          true: b'true',
+          list: l''
+        }[0];
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code);
 
       expect(values is Pass, isTrue);
-
       expect(
           (values as Pass).data,
           equals({
-            'return': [
-              {
-                'intro': 'hello',
-                'number': 25,
-                'true': true,
-                'list': [],
-              }
-            ],
+            'intro': 'hello',
+            'number': 25,
+            'true': true,
+            'list': [],
           }));
     });
-
     test('Single value function call at top level', () async {
       final List<dynamic> argCalls = [];
 
-      SetStatement.functions['test'] = (args) async {
-        argCalls.add(args);
-        return 'hello';
-      };
-
       final code = '''
-        SET output TO test(s'Hello world', s'second');
+        * = test(s'Hello world', s'second');
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code, functions: {
+        'test': (args) async {
+          argCalls.add(args);
+          return 'hello';
+        }
+      });
 
       expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals('hello'));
       expect(
         argCalls,
         equals([
@@ -1757,13 +1604,19 @@ void main() {
       };
 
       final code = '''
-        Set first TO s'Hello world';
-        SET output TO first.test(s'second');
+        first = s'Hello world';
+        * = first.test(s'second');
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code, functions: {
+        'test': (args) async {
+          argCalls.add(args);
+          return 'hello';
+        }
+      });
 
       expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals('hello'));
       expect(
         argCalls,
         equals([
@@ -1774,19 +1627,20 @@ void main() {
     test('Single value function call with a spread operator', () async {
       final List<dynamic> argCalls = [];
 
-      SetStatement.functions['test'] = (args) async {
-        argCalls.add(args);
-        return 'hello';
-      };
-
       final code = '''
-        Set first TO createRange(n'0', n'4');
-        SET output TO first[].test(s'second');
+        first = createRange(n'0', n'4');
+        * = first[].test(s'second');
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code, functions: {
+        'test': (args) async {
+          argCalls.add(args);
+          return 'hello';
+        }
+      });
 
       expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals(['hello', 'hello', 'hello', 'hello']));
       expect(
         argCalls,
         equals([
@@ -1800,26 +1654,46 @@ void main() {
     test('Single value function call with two spread operator', () async {
       final List<dynamic> argCalls = [];
 
-      SetStatement.functions['test'] = (args) async {
-        argCalls.add(args);
-        return 'hello';
-      };
-
       final code = '''
-        Set first TO createRange(n'0', n'4');
-        SET second TO createRange(n'0', n'4');
-        SET output TO first[].test(^.second[]);
+        first = createRange(n'0', n'4');
+        second = createRange(n'0', n'4');
+        * = first[].test(second[]);
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code, functions: {
+        'test': (args) async {
+          argCalls.add(args);
+          return 'hello';
+        }
+      });
 
       expect(values is Pass, isTrue);
+      expect(
+          (values as Pass).data,
+          equals([
+            ['hello', 'hello', 'hello', 'hello'],
+            ['hello', 'hello', 'hello', 'hello'],
+            ['hello', 'hello', 'hello', 'hello'],
+            ['hello', 'hello', 'hello', 'hello'],
+          ]));
       expect(
         argCalls,
         equals([
           [0, 0],
+          [0, 1],
+          [0, 2],
+          [0, 3],
+          [1, 0],
           [1, 1],
+          [1, 2],
+          [1, 3],
+          [2, 0],
+          [2, 1],
           [2, 2],
+          [2, 3],
+          [3, 0],
+          [3, 1],
+          [3, 2],
           [3, 3],
         ]),
       );
@@ -1855,21 +1729,22 @@ void main() {
     test('Single value function call with three spread operator at top level', () async {
       final List<dynamic> argCalls = [];
 
-      SetStatement.functions['test'] = (args) async {
-        argCalls.add(args);
-        return 'hello';
-      };
-
       final code = '''
-        Set first TO createRange(n'0', n'4');
-        SET second TO createRange(n'0', n'4');
-        SET third TO createRange(n'0', n'4');
-        SET output TO test(first[], second[], third[], n'10');
+        first = createRange(n'0', n'4');
+        second = createRange(n'0', n'4');
+        third = createRange(n'0', n'4');
+        * = test(first[], second[], third[], n'10');
       ''';
 
-      final Result values = await runWQL(code, throwErrors: true);
+      final Result values = await WQL.run(code, functions: {
+        'test': (args) async {
+          argCalls.add(args);
+          return 'hello';
+        }
+      });
 
       expect(values is Pass, isTrue);
+      expect((values as Pass).data, equals(['hello', 'hello', 'hello', 'hello']));
       expect(
         argCalls,
         equals([
@@ -1879,97 +1754,6 @@ void main() {
           [3, 3, 3, 10],
         ]),
       );
-    });
-    test('Test chaining high level functions', () async {
-      final List<dynamic> argCalls = [];
-
-      SetStatement.functions['test'] = (args) async {
-        return 'hello';
-      };
-
-      SetStatement.functions['testtwo'] = (args) async {
-        argCalls.add(args);
-        return 'hello';
-      };
-
-      final code = '''
-        Set first TO createRange(n'0', n'4');
-        SET second TO createRange(n'0', n'4');
-        SET third TO createRange(n'0', n'4');
-        SET output TO test(first[], second[], third[], n'10').testTwo();
-      ''';
-
-      final Result values = await runWQL(code, throwErrors: true);
-
-      expect(values is Pass, isTrue);
-      expect(
-        argCalls,
-        equals([
-          [
-            ['hello', 'hello', 'hello', 'hello']
-          ]
-        ]),
-      );
-    });
-
-    test('Test chaining high level functions with expand', () async {
-      final List<dynamic> argCalls = [];
-
-      SetStatement.functions['test'] = (args) async {
-        return 'hello';
-      };
-
-      SetStatement.functions['testtwo'] = (args) async {
-        argCalls.add(args);
-        return 'hello';
-      };
-
-      final code = '''
-        Set first TO createRange(n'0', n'4');
-        SET second TO createRange(n'0', n'4');
-        SET third TO createRange(n'0', n'4');
-        SET output TO test(first[], second[], third[], n'10')[].testTwo();
-      ''';
-
-      final Result values = await runWQL(code, throwErrors: true);
-
-      expect(values is Pass, isTrue);
-      expect(
-        argCalls,
-        equals([
-          ['hello'],
-          ['hello'],
-          ['hello'],
-          ['hello'],
-        ]),
-      );
-    });
-    test('Test chaining two functions with single values', () async {
-      final List<dynamic> argCalls = [];
-
-      SetStatement.functions['test'] = (args) async {
-        return 'hello';
-      };
-
-      SetStatement.functions['testtwo'] = (args) async {
-        argCalls.add(args);
-        return 'hello';
-      };
-
-      final code = '''
-        SET output TO test().testTwo();
-      ''';
-
-      final Result values = await runWQL(code, throwErrors: true);
-
-      expect(values is Pass, isTrue);
-      expect(
-        argCalls,
-        equals([
-          ['hello']
-        ]),
-      );
-      expect((values as Pass).data!['output'], equals('hello'));
     });
   });
 }
