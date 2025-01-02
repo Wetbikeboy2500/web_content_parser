@@ -1,4 +1,3 @@
-import 'package:petitparser/debug.dart';
 import 'package:petitparser/petitparser.dart';
 
 import 'statements/else_statement.dart';
