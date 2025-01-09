@@ -249,5 +249,5 @@ array.at(index);
 - No variable references in array selection
 - No implicit type conversion
 - No direct object/map support
-- eval blocks require explicit returns
-- No built-in async operations
+- eval blocks, else blocks, and the top level script do not have implicit returns
+- No explicit async operator for flow control. Will await everything that returns a Future from Dart.
