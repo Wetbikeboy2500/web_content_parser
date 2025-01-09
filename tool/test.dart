@@ -15,8 +15,8 @@ void main(List<String> args) {
       Directory('lib').listSync(recursive: true).map((e) => e.path.replaceAll('\\', '/')).where((element) {
     if (!element.endsWith('.dart') ||
         element.endsWith('g.dart') ||
-        element.endsWith('lib/web_content_parser.dart') ||
-        element.endsWith('lib/web_content_parser_full.dart') ||
+        element.endsWith('lib/web_query_framework.dart') ||
+        element.endsWith('lib/web_query_framework_full.dart') ||
         element.endsWith('lib/util.dart') ||
         element.endsWith('lib/scraper.dart') ||
         element.endsWith('lib/parser.dart') ||
@@ -28,7 +28,7 @@ void main(List<String> args) {
 
     return true;
   }).map((e) => "import 'package:web_query_framework/${e.replaceFirst('lib/', '')}';");
-  final File testFile = File('test/web_content_parser_test.dart');
+  final File testFile = File('test/web_query_framework_test.dart');
   final List<String> lines = testFile.readAsLinesSync();
   final int index = lines.indexWhere((element) => element.startsWith('import \'package:web_query_framework'));
   if (index == -1) {

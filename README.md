@@ -1,22 +1,32 @@
-[![Build](https://github.com/Wetbikeboy2500/web_content_parser/actions/workflows/build.yml/badge.svg)](https://github.com/Wetbikeboy2500/web_content_parser/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/Wetbikeboy2500/web_content_parser/branch/main/graph/badge.svg?token=I49J6Q80WP)](https://codecov.io/gh/Wetbikeboy2500/web_content_parser)
+[![Build](https://github.com/Wetbikeboy2500/web_query_framework/actions/workflows/build.yml/badge.svg)](https://github.com/Wetbikeboy2500/web_query_framework/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/Wetbikeboy2500/web_query_framework/branch/main/graph/badge.svg?token=I49J6Q80WP)](https://codecov.io/gh/Wetbikeboy2500/web_query_framework)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# Web Content Parser
+# Web Query Framework
 
-One goal: Unify web content parsing between projects.
+A powerful web scraping and parsing framework for Dart, featuring WQL (Web Query Language) - a custom scripting language designed specifically for web content extraction.
 
-This package is separated into two parts: the scraper and the parser.
+## Key Features
 
-The scraper is responsible for extract of data. It can retrieve web pages and execute extraction scripts.
+- **Custom Scripting Language (WQL)**: A declarative language built specifically for web scraping, making scripts easier to write and maintain
+- **Headless Browser Support**: Built-in support for both mobile and desktop platforms using puppeteer and flutter_inappwebview
+- **Flexible Architecture**: Separate scraping and parsing systems that can be used independently
+- **Cross-Platform**: Works on Android, Linux, Windows, and other platforms that support Dart
+- **Type-Safe**: Built with Dart's strong typing system for reliable data extraction
 
-The parser is responsible for transforming the raw data and loading it into a known Dart object structure.
+## Architecture
 
-The scraping system is separate from the parsing system and can be used independently. This scraping system allows users to write scripts in [WQL](#wql-web-query-language), a language designed for scraping websites. Custom functions are also implemented in WQL to make scripting easier. These functions that are exposed can also be used in regular Dart projects. There are also methods to get webpages through a headless browser for mobile and desktop. These interfaces are available separately in the packages directory. If you need a dynamic system to parse websites, this is it.
+The framework consists of two main components:
 
-Web Content Parser will not support downloading of any content. This project isn't a download manager. Web Content Parser's goal, from a functionality standpoint, is to be an interface and a system for standardization.
+1. **Scraper**: Handles web content extraction using:
+   - WQL scripts for static content
+   - Headless browsers for dynamic content
+   - Customizable request handling
 
-This project is still in development but does have complete functionality. I am working towards refining function names and the structure of the project. There is also always room to explore what scripts can do and how to define new functionality for them. I would recommend to add this project through git with a hash specified. If you want to try out the web_content_headless portion, include a dependency override with the hash to remove dependency errors. Once things are to my standard and stable, I will switch to semantic versioning.
+2. **Parser**: Transforms raw data into structured Dart objects with:
+   - Type-safe data models
+   - Built-in validation
+   - Extensible parsing system
 
 ## Focus
 
@@ -26,7 +36,7 @@ Building a versatile system for many different types of content. This includes p
 
 Import everything:
 ```dart
-import 'package:web_query_framework/web_content_parser_full.dart';
+import 'package:web_query_framework/web_query_framework_full.dart';
 ```
 
 This project can be thought of in three different code bases based on the directories inside lib/src.
@@ -243,4 +253,4 @@ Lastly, I can't find a comparable language. From a few iterations while using it
 
 ### How to use it
 
-Currently, the best examples are written in the test file. There are examples of making requests directly as well as integrating into the scraper system.
+Check out the [WQL documentation](wql_documentation.md) for more information on how to use it. It is a short document that provides a quick overview of the language. Currently, the best examples are written in the test file. There are examples of making requests directly, integrating with the scraper system, and writing custom Dart functions for WQL.
