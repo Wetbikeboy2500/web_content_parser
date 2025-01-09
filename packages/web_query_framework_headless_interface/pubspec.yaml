@@ -12,6 +12,6 @@ resolution: workspace
 dependencies:
   web_query_framework_util:
     git:
-      url: https://github.com/Wetbikeboy2500/web_content_parser.git
+      url: https://github.com/Wetbikeboy2500/web_query_framework.git
       ref: dev
       path: packages/web_query_framework_util

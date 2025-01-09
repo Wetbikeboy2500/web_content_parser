@@ -1,4 +1,4 @@
-import 'package:web_query_framework/web_content_parser_full.dart';
+import 'package:web_query_framework/web_query_framework_full.dart';
 
 //Tests exceptions for missing sources and subdomain stuff
 class BlankSource extends SourceTemplate {

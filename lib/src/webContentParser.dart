@@ -1,4 +1,4 @@
-import 'package:web_content_headless_interface/headless.dart';
+import 'package:web_query_framework_headless_interface/headless.dart';
 
 import 'util/log.dart';
 

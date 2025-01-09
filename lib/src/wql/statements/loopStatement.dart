@@ -1,6 +1,6 @@
 import '../interpreter/parseStatements.dart';
 import '../suboperations/operator.dart';
-import '../../../web_content_parser_full.dart';
+import '../../../web_query_framework_full.dart';
 
 class OperatorOrStatement {
   final Operator? operation;

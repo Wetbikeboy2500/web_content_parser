@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:web_query_framework/src/wql2/wql2.dart';
-import 'package:web_query_framework/web_content_parser_full.dart';
+import 'package:web_query_framework/web_query_framework_full.dart';
 import 'package:web_query_framework_util/util.dart';
 
 ///Execute a file written in WQL

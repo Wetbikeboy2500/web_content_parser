@@ -9,7 +9,7 @@ import 'package:html/parser.dart';
 import 'package:test/test.dart';
 import 'package:web_query_framework/src/parser/sources/computer.dart';
 import 'package:web_query_framework/src/wql2/wql2.dart';
-import 'package:web_query_framework/web_content_parser_full.dart';
+import 'package:web_query_framework/web_query_framework_full.dart';
 import 'package:web_query_framework_util/util.dart';
 
 import 'blank.dart';

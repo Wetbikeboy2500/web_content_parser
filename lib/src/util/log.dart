@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print
 
-import '../../web_content_parser.dart';
+import '../../web_query_framework.dart';
 
 export 'logLevel.dart';
 
