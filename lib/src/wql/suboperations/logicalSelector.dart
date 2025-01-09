@@ -1,5 +1,5 @@
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/wql/statements/setStatement.dart';
+import 'package:web_query_framework/src/wql/statements/setStatement.dart';
 import '../interpreter/interpreter.dart';
 import '../parserHelper.dart';
 import 'operator.dart';

@@ -1,11 +1,13 @@
-name: web_content_headless
+name: web_query_framework_headless
 description: Provides implementations for a headless web browser for mobile and desktop.
 version: 1.0.0
 
 publish_to: none
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ^3.6.0
+
+resolution: workspace
 
 dependencies:
   web_content_headless_interface:

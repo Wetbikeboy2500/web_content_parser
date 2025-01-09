@@ -5,8 +5,8 @@ import 'dart:io' show Platform;
 
 import 'package:puppeteer/protocol/network.dart';
 import 'package:puppeteer/puppeteer.dart';
-import 'package:web_content_parser/headless.dart';
-import 'package:web_content_parser/web_content_parser_full.dart';
+import 'package:web_query_framework/headless.dart';
+import 'package:web_query_framework/web_content_parser_full.dart';
 
 class DesktopHeadless extends Headless {
   @override

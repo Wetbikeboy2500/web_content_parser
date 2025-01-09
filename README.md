@@ -26,7 +26,7 @@ Building a versatile system for many different types of content. This includes p
 
 Import everything:
 ```dart
-import 'package:web_content_parser/web_content_parser_full.dart';
+import 'package:web_query_framework/web_content_parser_full.dart';
 ```
 
 This project can be thought of in three different code bases based on the directories inside lib/src.
@@ -37,7 +37,7 @@ This project can be thought of in three different code bases based on the direct
 
     Individual import:
     ```dart
-    import 'package:web_content_parser/util.dart';
+    import 'package:web_query_framework/util.dart';
     ```
 
 * [Scraper](#scraper)
@@ -46,7 +46,7 @@ This project can be thought of in three different code bases based on the direct
 
     Individual import:
     ```dart
-    import 'package:web_content_parser/scraper.dart';
+    import 'package:web_query_framework/scraper.dart';
     ```
 
 * [Parser](#parser)
@@ -55,7 +55,7 @@ This project can be thought of in three different code bases based on the direct
 
     Individual import:
     ```dart
-    import 'package:web_content_parser/parser.dart';
+    import 'package:web_query_framework/parser.dart';
     ```
 
 ## Util
@@ -137,7 +137,7 @@ Headless browsers provide a lot of power to scrape dynamic pages. This project c
 
 **Note:** These packages have only been tested on Android, Linux, and Windows systems.
 
-The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browsers with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_content_parser/headless.dart';`
+The headless browser system is optional and needs the developer to "add" them to the scraper. This is done for tree shaking and allowing the use of custom headless browsers with the package. The interfaces that need to be initialized in the package can be obtained from `import 'package:web_query_framework/headless.dart';`
 
 #### Mobile:
 
@@ -151,7 +151,7 @@ WebContentParser.addHeadless(MobileHeadless());
 WebContentParser.addHeadless(DesktopHeadless());
 ```
 
-Once the headless browsers are added, they can be used through an interface define for them. The standard interface is implemented through `Future<Result<String>> getDynamicPage(String url) async` function. `getDynamicPage` returns all the HTML of a page as a single string wrapped with a `Result` class to indicate if the operation passed or failed. You can pass the function a `url`, and the supported headless browser will be chosen and used to get the requested information. How multiple requests are handled is up to the headless browser implementation. Current implementations have a basic queue system to only allow one request at a time. The `getDynamicPage` function is exposed through `import 'package:web_content_parser/scraper.dart';`
+Once the headless browsers are added, they can be used through an interface define for them. The standard interface is implemented through `Future<Result<String>> getDynamicPage(String url) async` function. `getDynamicPage` returns all the HTML of a page as a single string wrapped with a `Result` class to indicate if the operation passed or failed. You can pass the function a `url`, and the supported headless browser will be chosen and used to get the requested information. How multiple requests are handled is up to the headless browser implementation. Current implementations have a basic queue system to only allow one request at a time. The `getDynamicPage` function is exposed through `import 'package:web_query_framework/scraper.dart';`
 
 ### Loading in scraping sources
 

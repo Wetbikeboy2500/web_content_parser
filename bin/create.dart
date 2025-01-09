@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:json2yaml/json2yaml.dart';
 import 'package:path/path.dart' as p;
-import 'package:web_content_parser/web_content_parser_full.dart';
+import 'package:web_query_framework/web_content_parser_full.dart';
 
 void main(List<String> args) {
   createPackage(args.first, Directory.current);

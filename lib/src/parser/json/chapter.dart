@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:web_content_parser/src/parser/sources/computeDecorator.dart';
+import 'package:web_query_framework/src/parser/sources/computeDecorator.dart';
 
 import './chapterID.dart';
 

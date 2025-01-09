@@ -1,6 +1,6 @@
 
 import 'package:petitparser/petitparser.dart';
-import 'package:web_content_parser/src/wql/statements/runStatement.dart';
+import 'package:web_query_framework/src/wql/statements/runStatement.dart';
 
 import '../suboperations/logicalSelector.dart';
 import '../statements/selectStatement.dart';

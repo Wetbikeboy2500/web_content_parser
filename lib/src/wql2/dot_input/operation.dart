@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:web_content_parser/src/util/log.dart';
+import 'package:web_query_framework/src/util/log.dart';
 
 import '../interpreter.dart';
 import '../statements/statement.dart';

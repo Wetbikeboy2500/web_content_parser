@@ -1,11 +1,17 @@
-name: web_content_parser
-description: A parser for online content. This package defines a base design for the relation of data and parsing of it.
+name: web_query_framework
+description: A comprehensive framework for web scraping and parsing in Dart, featuring a custom scripting language (WQL) and support for headless browsers.
 version: 1.0.0
 
 publish_to: none
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: ^3.6.0
+
+workspace:
+  - packages/web_query_framework_headless
+  - packages/web_query_framework_headless_interface
+  - packages/web_query_framework_util
+  - packages/wql_language_server
 
 dependencies:
   yaml: ^3.1.0
@@ -18,11 +24,11 @@ dependencies:
   intl: ^0.19.0
   petitparser: ^6.0.0
   web: ^1.0.0
-  web_content_headless_interface:
+  web_query_framework_headless_interface:
     git:
       url: https://github.com/Wetbikeboy2500/web_content_parser.git
       ref: dev
-      path: packages/web_content_headless_interface
+      path: packages/web_query_framework_headless_interface
   web_query_framework_util:
     git:
       url: https://github.com/Wetbikeboy2500/web_content_parser.git

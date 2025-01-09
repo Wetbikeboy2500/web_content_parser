@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
-import 'package:web_content_parser/scraper.dart';
-import 'package:web_content_parser/src/util/log.dart';
+import 'package:web_query_framework/scraper.dart';
+import 'package:web_query_framework/src/util/log.dart';
 import 'package:web_query_framework_util/util.dart';
 
 ///Example: dart bin/run.dart ./test/samples/wql google text

@@ -1,4 +1,4 @@
-import 'package:web_content_parser/util.dart';
+import 'package:web_query_framework/util.dart';
 import 'package:web_query_framework_util/util.dart';
 typedef JSON = Map<String, dynamic>;
 

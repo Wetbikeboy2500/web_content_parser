@@ -1,7 +1,7 @@
 import 'dart:async';
 
 //source
-import 'package:web_content_parser/src/parser/sources/computer.dart';
+import 'package:web_query_framework/src/parser/sources/computer.dart';
 //utils
 import 'package:web_query_framework_util/util.dart';
 

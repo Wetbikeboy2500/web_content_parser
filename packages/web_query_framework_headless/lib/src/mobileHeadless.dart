@@ -4,8 +4,8 @@ import 'dart:collection';
 import 'dart:io' show Platform;
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:web_content_parser/headless.dart';
-import 'package:web_content_parser/web_content_parser_full.dart';
+import 'package:web_query_framework/headless.dart';
+import 'package:web_query_framework/web_content_parser_full.dart';
 
 class MobileHeadless extends Headless {
   @override

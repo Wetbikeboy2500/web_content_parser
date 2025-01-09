@@ -27,10 +27,10 @@ void main(List<String> args) {
     }
 
     return true;
-  }).map((e) => "import 'package:web_content_parser/${e.replaceFirst('lib/', '')}';");
+  }).map((e) => "import 'package:web_query_framework/${e.replaceFirst('lib/', '')}';");
   final File testFile = File('test/web_content_parser_test.dart');
   final List<String> lines = testFile.readAsLinesSync();
-  final int index = lines.indexWhere((element) => element.startsWith('import \'package:web_content_parser'));
+  final int index = lines.indexWhere((element) => element.startsWith('import \'package:web_query_framework'));
   if (index == -1) {
     print('No import to replace');
     return;

@@ -1,5 +1,5 @@
 import 'package:petitparser/parser.dart';
-import 'package:web_content_parser/src/util/log.dart';
+import 'package:web_query_framework/src/util/log.dart';
 
 import '../interpreter/interpreter.dart';
 import '../suboperations/operator.dart';
