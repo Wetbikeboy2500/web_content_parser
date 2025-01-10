@@ -98,19 +98,26 @@ if {condition}
 
 ## Best Practices
 
+Prefer not using `eval` blocks for simple transformations. Use methods directly on the context:
+```wql
+data.transform();  // Direct method call
+```
+
+Prefer not using `eval` for if statements. Use `if` statements directly on the context:
+```wql
+* = if {condition}.transform();  // Direct if statement that only sets return value if condition is true
+```
+
 ### Return Values
 Only set returns when transformation is needed:
 ```wql
-// Good - explicit return for transformation
+// Unnecessary - returns same as input
 data.eval {
     processed = *.transform();
     * = processed;  // New value needed
 };
-
-// Good - implicit return when just performing actions
-data.eval {
-    print(*);  // Original data returned
-};
+//Instead use:
+data.transform();
 
 // Unnecessary - returns same as input
 data.eval {
@@ -174,63 +181,27 @@ nums = array.toNumber();
 
 ## Best Practices
 
-### Declarative Pattern
-Prefer transforming data through chains:
-```wql
-// Good
-result = input
-    .split(s'\n')
-    .eval {
-        * = *.trim();
-    }
-    .toNumber()
-    .sort();
-
-// Avoid
-result = l'';
-input.split(s'\n')[].eval {
-    temp = *.trim();
-    result = merge(result, temp);
-};
-result = result.toNumber().sort();
-```
-
 ### Context Management
-Always be explicit about context changes:
+Don't use `eval` blocks for simple transformations. Use methods directly on the context:
 ```wql
 // Good
-data.eval {
-    current = *;
-    * = current.transform();
-};
+data.transform();
 
 // Avoid
 data.eval {
-    transform();  // Unclear context
+    * = *.transform(); // Unnecessary return
 };
 ```
 
 ## Common Pitfalls
 
-### Return Values
-```wql
-// Both valid depending on needs
-data.eval {
-    processed = *.transform();
-    * = processed;  // Explicit return of new value
-};
-
-data.eval {
-    print(*);  // Implicit return of input
-};
-```
-
-### Array Selection
+### Dynamic Array Selection
 ```wql
 index = n'0';
 // Wrong
 array[index];
 array[^];
+array[*];
 
 // Correct
 array.at(index);

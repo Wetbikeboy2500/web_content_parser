@@ -13,6 +13,9 @@ workspace:
   - packages/web_query_framework_util
   - packages/wql_language_server
 
+executables:
+  wql: exec
+
 dependencies:
   yaml: ^3.1.0
   path: ^1.8.0
@@ -21,7 +24,7 @@ dependencies:
   json_annotation: ^4.4.0
   equatable: ^2.0.0
   convert: ^3.0.0
-  intl: ^0.19.0
+  intl: ^0.20.1
   petitparser: ^6.0.0
   web: ^1.0.0
   web_query_framework_headless_interface:
